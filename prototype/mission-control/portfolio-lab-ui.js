@@ -10,7 +10,9 @@
     artifactIssues: [],
     validation: null,
     analysisRecords: [],
-    scores: []
+    scores: [],
+    candidate: null,
+    assessmentStarted: false
   };
 
   const samples = {
@@ -59,18 +61,19 @@
   }
 
   function clearWorkbench() {
-    ["mapping-panel", "validation-report", "unit-limit-panel", "analysis-results"].forEach((id) => { document.querySelector(`#${id}`).hidden = true; });
+    ["mapping-panel", "validation-report", "unit-limit-panel", "analysis-results", "portfolio-assessment"].forEach((id) => { document.querySelector(`#${id}`).hidden = true; });
     document.querySelector("#upload-lab-empty").hidden = false;
     document.querySelector("#unit-selector").hidden = true;
     document.querySelector("#analyze-selected").hidden = true;
   }
 
   function resetLab() {
-    Object.assign(labState, { artifact: null, mapping: null, dependencyLinks: [], constraints: null, artifactIssues: [], validation: null, analysisRecords: [], scores: [] });
+    Object.assign(labState, { artifact: null, mapping: null, dependencyLinks: [], constraints: null, artifactIssues: [], validation: null, analysisRecords: [], scores: [], candidate: null, assessmentStarted: false });
     ["portfolio-file", "dependencies-file", "constraints-file"].forEach((id) => { document.querySelector(`#${id}`).value = ""; });
     document.querySelector("#portfolio-file-name").textContent = "Choose portfolio.csv or JSON";
     document.querySelector("#dependencies-file-name").textContent = "Choose dependencies.csv";
     document.querySelector("#constraints-file-name").textContent = "Choose constraints.json";
+    document.querySelector("#start-uploaded-journey").disabled = true;
     clearWorkbench();
   }
 
@@ -90,6 +93,14 @@
     renderValidation();
   }
 
+  async function readTextFile(file) {
+    if (file.size > engine.MAX_FILE_BYTES) throw new Error(`${file.name} exceeds the 2 MB Portfolio Intelligence Lab limit.`);
+    const text = await file.text();
+    if (text.includes("\uFFFD")) throw new Error(`${file.name} is not valid UTF-8.`);
+    if (/[\u0000-\u0008\u000B\u000C\u000E-\u001F]/.test(text)) throw new Error(`${file.name} contains unsupported binary content.`);
+    return text;
+  }
+
   async function readOptionalArtifacts() {
     labState.artifactIssues = [];
     const dependencyFile = document.querySelector("#dependencies-file").files[0];
@@ -97,7 +108,7 @@
       document.querySelector("#dependencies-file-name").textContent = dependencyFile.name;
       if (!dependencyFile.name.toLowerCase().endsWith(".csv")) labState.artifactIssues.push({ severity: "error", code: "unsupported-format", message: "Unsupported dependency format. Use dependencies.csv." });
       else {
-        try { labState.dependencyLinks = engine.parseDependencyArtifact(await dependencyFile.text()); }
+        try { labState.dependencyLinks = engine.parseDependencyArtifact(await readTextFile(dependencyFile)); }
         catch (error) { labState.artifactIssues.push({ severity: "error", code: "dependencies", message: error.message }); }
       }
     } else labState.dependencyLinks = [];
@@ -107,7 +118,7 @@
       if (!constraintsFile.name.toLowerCase().endsWith(".json")) labState.artifactIssues.push({ severity: "error", code: "unsupported-format", message: "Unsupported constraints format. Use constraints.json." });
       else {
         try {
-          labState.constraints = JSON.parse(await constraintsFile.text());
+          labState.constraints = JSON.parse(await readTextFile(constraintsFile));
           if (!labState.constraints || Array.isArray(labState.constraints) || typeof labState.constraints !== "object") throw new Error("constraints.json must contain a JSON object.");
         } catch (error) { labState.artifactIssues.push({ severity: "error", code: "constraints", message: `Invalid constraints.json: ${error.message}` }); }
       }
@@ -119,13 +130,18 @@
     if (!file) { showArtifactError("portfolio.csv or a JSON portfolio is required."); return; }
     document.querySelector("#portfolio-file-name").textContent = file.name;
     try {
-      labState.artifact = engine.parsePortfolioArtifact(file.name, await file.text());
+      labState.artifact = engine.parsePortfolioArtifact(file.name, await readTextFile(file));
       await readOptionalArtifacts();
       prepareMappingOrValidation();
     } catch (error) { showArtifactError(error.message); }
   }
 
   function prepareMappingOrValidation() {
+    if (!labState.artifact.records.length) {
+      labState.mapping = Object.fromEntries(engine.SCHEMA.map((field) => [field, field]));
+      validateMappedRecords();
+      return;
+    }
     const suggested = engine.suggestMapping(labState.artifact.headers);
     labState.mapping = suggested;
     const requiresConfirmation = engine.SCHEMA.some((field) => suggested[field] !== field);
@@ -154,6 +170,9 @@
   function validateMappedRecords() {
     const mapped = engine.applyColumnMapping(labState.artifact.records, labState.mapping);
     const validation = engine.validatePortfolio(mapped, { dependencies: labState.dependencyLinks, emptyRows: labState.artifact.emptyRows });
+    const usedHeaders = new Set(Object.values(labState.mapping).filter(Boolean));
+    const ignoredHeaders = labState.artifact.headers.filter((header) => !usedHeaders.has(header) && !engine.OPTIONAL_ENGINEERING_FIELDS.includes(String(header).trim().toLowerCase().replace(/[ -]+/g, "_")));
+    if (ignoredHeaders.length) validation.issues.push({ severity: "warning", code: "ignored-columns", message: `Ignored columns: ${ignoredHeaders.join(", ")}.` });
     validation.issues = [...labState.artifactIssues, ...validation.issues];
     labState.validation = validation;
     renderValidation();
@@ -170,6 +189,7 @@
       ? labState.validation.issues.map((issue) => `<div class="validation-issue ${issue.severity === "error" ? "is-error" : ""}"><strong>${issue.severity.toUpperCase()}</strong><span>${issue.row ? `Row ${issue.row}: ` : ""}${escapeHtml(issue.message)}</span></div>`).join("")
       : `<div class="validation-issue"><strong>READY</strong><span>No schema, ID, type, dependency, or empty-row issues found.</span></div>`;
     document.querySelector("#continue-accepted").disabled = !labState.validation.accepted.length;
+    document.querySelector("#empty-portfolio-actions").hidden = labState.validation.accepted.length > 0;
   }
 
   function continueAccepted() {
@@ -208,40 +228,78 @@
   function analyzeRecords(records) {
     labState.analysisRecords = records.slice(0, 10);
     labState.scores = engine.scorePortfolio(labState.analysisRecords);
+    labState.candidate = engine.qualifiedCandidate(labState.scores);
+    labState.assessmentStarted = false;
     renderAnalysis();
   }
 
   function renderAnalysis() {
     document.querySelector("#analysis-results").hidden = false;
-    const candidate = labState.scores[0];
-    const strongest = [["technical urgency", candidate.technicalUrgency], ["business value", candidate.businessValue], ["operating cost", candidate.operatingCost], ["dependency readiness", candidate.dependencyReadiness], ["risk reduction", candidate.riskReduction], ["evidence confidence", candidate.evidenceConfidence]].sort((left, right) => right[1] - left[1]).slice(0, 2).map(([label, value]) => `${label} ${value}`).join(" and ");
+    const candidate = labState.candidate;
     const recommendation = document.querySelector("#candidate-recommendation");
-    recommendation.className = "candidate-recommendation";
-    recommendation.innerHTML = `<div><small>PRIMARY MODERNIZATION CANDIDATE</small><strong>${escapeHtml(candidate.record.asset_name)}</strong><span>Recommended because its weighted profile is led by ${strongest}. All values are calculated from validated portfolio metadata.</span></div><div class="candidate-score">${candidate.total}</div>`;
+    if (candidate) {
+      const strongest = [["technical urgency", candidate.technicalUrgency], ["business value", candidate.businessValue], ["operating cost", candidate.operatingCost], ["dependency readiness", candidate.dependencyReadiness], ["risk reduction", candidate.riskReduction], ["evidence confidence", candidate.evidenceConfidence]].sort((left, right) => right[1] - left[1]).slice(0, 2).map(([label, value]) => `${label} ${value}`).join(" and ");
+      recommendation.className = "candidate-recommendation";
+      recommendation.innerHTML = `<div><small>PRIMARY MODERNIZATION CANDIDATE · MINIMUM ${engine.MIN_MODERNIZATION_SCORE}</small><strong>${escapeHtml(candidate.record.asset_name)}</strong><span>Recommended because its weighted profile is led by ${strongest}. All values are calculated from validated portfolio metadata.</span></div><div class="candidate-score">${candidate.total}</div>`;
+    } else {
+      const top = labState.scores[0];
+      recommendation.className = "candidate-recommendation no-qualified-candidate";
+      recommendation.innerHTML = `<div><small>QUALIFICATION RESULT · MINIMUM ${engine.MIN_MODERNIZATION_SCORE}</small><strong>No Qualified Modernization Candidate</strong><span>The highest score is ${top ? top.total : 0}. Review the primary qualification factors before adding evidence or reassessing the portfolio.</span><ul><li>Low business value</li><li>Low technical urgency</li><li>Insufficient evidence</li><li>Dependency readiness</li></ul></div>`;
+    }
     document.querySelector("#score-table").innerHTML = `<div class="score-row is-header"><span>Asset</span><span>Priority</span><span>Tech urgency</span><span>Business value</span><span>Op. cost</span><span>Dependency</span><span>Risk reduction</span><span>Evidence</span></div>${labState.scores.map((score) => `<div class="score-row"><strong>${escapeHtml(score.record.asset_name)}</strong><span class="total-score">${score.total}</span><span>${score.technicalUrgency}</span><span>${score.businessValue}</span><span>${score.operatingCost}</span><span>${score.dependencyReadiness}</span><span>${score.riskReduction}</span><span>${score.evidenceConfidence}</span></div>`).join("")}`;
+    const startButton = document.querySelector("#start-uploaded-journey");
+    startButton.disabled = !candidate;
+    startButton.innerHTML = candidate ? `Start Modernization Journey <svg aria-hidden="true"><use href="#icon-arrow"></use></svg>` : "No Qualified Candidate";
     document.querySelector("#analysis-results").scrollIntoView({ behavior: "smooth", block: "start" });
   }
 
   function startJourney() {
-    if (!labState.scores.length) return;
-    const candidate = labState.scores[0].record;
-    resetDemo();
-    setGuidedDemo(false);
-    document.querySelector("#uploaded-journey-title").textContent = `${candidate.asset_name} Modernization Case`;
-    document.querySelector("#uploaded-candidate-name").textContent = candidate.asset_name;
-    document.querySelector("#uploaded-unit-count").textContent = String(labState.analysisRecords.length);
-    document.querySelector("#uploaded-journey-context").hidden = false;
-    document.querySelector("#mission-case-dock .mission-case-identity strong").textContent = `${candidate.asset_name} Modernization Case`;
-    document.querySelector("#portfolio-title + p").textContent = `Standard guided journey active for ${candidate.asset_name}. Uploaded names and validated metadata remain attached; deeper engineering requires representative technical evidence.`;
-    closeLab(false);
-    setEntryVisible(false);
-    window.location.hash = "portfolio";
-    document.querySelector("#uploaded-journey-context").scrollIntoView({ behavior: "smooth", block: "start" });
+    if (!labState.candidate) return;
+    labState.assessmentStarted = true;
+    renderPortfolioAssessment();
+  }
+
+  function renderPortfolioAssessment() {
+    const candidate = labState.candidate.record;
+    const capabilityAssets = labState.analysisRecords.filter((record) => record.business_capability === candidate.business_capability);
+    const dependencies = [...new Set(capabilityAssets.flatMap((record) => engine.dependencyIds(record.dependencies)))];
+    const evidence = engine.engineeringEvidence(candidate);
+    document.querySelector("#assessment-candidate").textContent = candidate.asset_name;
+    document.querySelector("#assessment-capability").textContent = candidate.business_capability;
+    document.querySelector("#assessment-units").textContent = capabilityAssets.map((record) => record.asset_name).join(" · ") || candidate.asset_name;
+    document.querySelector("#assessment-dependencies").textContent = dependencies.length ? dependencies.join(" · ") : "No declared dependencies";
+    const gate = document.querySelector("#engineering-metadata-gate");
+    gate.className = `engineering-metadata-gate${evidence.complete ? " is-complete" : ""}`;
+    gate.innerHTML = evidence.complete
+      ? `<small>ENGINEERING EVIDENCE GATE</small><strong>Engineering metadata recorded.</strong><p>Portfolio Intelligence has completed assessment. Arbitrary engineering execution remains outside this experimental lab.</p>`
+      : `<small>ENGINEERING EVIDENCE GATE · STOPPED AFTER ASSESSMENT</small><strong>Engineering Journey requires additional engineering metadata.</strong><p>Provide all three evidence types before a governed engineering handoff:</p><ul><li>Representative SQL</li><li>Source Schema</li><li>Target Platform</li></ul>`;
+    document.querySelector("#portfolio-assessment").hidden = false;
+    document.querySelector("#portfolio-assessment").scrollIntoView({ behavior: "smooth", block: "start" });
   }
 
   function resetUploadedJourney() {
     document.querySelector("#uploaded-journey-context").hidden = true;
-    document.querySelector("#mission-case-dock .mission-case-identity strong").textContent = "Customer Intelligence Capability";
+    const caseTitle = document.querySelector("#mission-case-dock .mission-case-identity strong");
+    if (caseTitle) caseTitle.textContent = "Customer Intelligence Capability";
+  }
+
+  globalThis.resetPortfolioUploadLab = () => { resetLab(); resetUploadedJourney(); };
+
+  function retryUpload() {
+    resetLab();
+    document.querySelector("#portfolio-file").focus();
+  }
+
+  function downloadTemplate() {
+    const csv = `${engine.SCHEMA.join(",")}\n`;
+    const url = URL.createObjectURL(new Blob([csv], { type: "text/csv;charset=utf-8" }));
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = "portfolio-template.csv";
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    URL.revokeObjectURL(url);
   }
 
   function loadSample(sector) {
@@ -274,13 +332,16 @@
     document.querySelector("#validate-upload").addEventListener("click", processPortfolioFile);
     document.querySelector("#apply-column-mapping").addEventListener("click", applyMapping);
     document.querySelector("#continue-accepted").addEventListener("click", continueAccepted);
+    document.querySelector("#retry-upload").addEventListener("click", retryUpload);
+    document.querySelector("#load-empty-sample").addEventListener("click", () => loadSample("manufacturing"));
+    document.querySelector("#download-template").addEventListener("click", downloadTemplate);
     document.querySelector("#analyze-first-ten").addEventListener("click", () => analyzeRecords(engine.selectModernizationUnits(labState.validation.accepted, "first")));
     document.querySelector("#select-ten").addEventListener("click", showUnitSelector);
     document.querySelector("#unit-selector").addEventListener("change", updateUnitSelection);
     document.querySelector("#analyze-selected").addEventListener("click", analyzeSelected);
     document.querySelector("#start-uploaded-journey").addEventListener("click", startJourney);
+    document.querySelector("#return-to-scores").addEventListener("click", () => document.querySelector("#analysis-results").scrollIntoView({ behavior: "smooth", block: "start" }));
     document.querySelector("#return-upload-lab").addEventListener("click", openLab);
-    document.querySelector("#reset-demo").addEventListener("click", resetUploadedJourney);
     document.addEventListener("keydown", (event) => { if (event.key === "Escape" && !document.querySelector("#portfolio-upload-lab").hidden) closeLab(false); });
   }
 

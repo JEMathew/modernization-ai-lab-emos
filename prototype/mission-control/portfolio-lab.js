@@ -11,6 +11,12 @@
     "annual_cost", "technical_health", "business_value"
   ];
   const VALID_ASSET_TYPES = new Set(["application", "data_platform"]);
+  const MAX_FILE_BYTES = 2 * 1024 * 1024;
+  const MIN_MODERNIZATION_SCORE = 60;
+  const OPTIONAL_ENGINEERING_FIELDS = ["representative_sql", "source_schema", "target_platform"];
+  const VALID_LIFECYCLE_STATUSES = new Set(["current", "supported", "aging", "end of support", "deprecated", "obsolete"]);
+  const VALID_TECHNICAL_HEALTH = new Set(["critical", "poor", "weak", "fair", "good", "strong", "excellent"]);
+  const VALID_BUSINESS_VALUE = new Set(["low", "medium", "high", "critical", "strategic"]);
   const COLUMN_ALIASES = {
     asset_id: ["asset id", "id", "system id"],
     asset_name: ["asset name", "system name", "application name", "platform name"],
@@ -37,12 +43,24 @@
     return match || null;
   }
 
+  function assertTextArtifact(text) {
+    const source = String(text || "");
+    if (source.length > MAX_FILE_BYTES) throw new Error("File exceeds the 2 MB Portfolio Intelligence Lab limit.");
+    if (source.includes("\uFFFD")) throw new Error("Invalid UTF-8 encoding. Save the file as UTF-8 and try again.");
+    if (/[\u0000-\u0008\u000B\u000C\u000E-\u001F]/.test(source)) throw new Error("Binary content is not supported. Upload a UTF-8 CSV or JSON file.");
+    return source;
+  }
+
   function parseCsv(text) {
     const rows = [];
     let row = [];
     let field = "";
     let quoted = false;
-    const source = String(text || "").replace(/^\uFEFF/, "");
+    const source = assertTextArtifact(text).replace(/^\uFEFF/, "");
+    const firstLine = source.split(/\r?\n/, 1)[0] || "";
+    if (!firstLine.includes(",") && (firstLine.includes(";") || firstLine.includes("\t"))) {
+      throw new Error("Unsupported CSV delimiter. Save the file as comma-separated CSV.");
+    }
     for (let index = 0; index < source.length; index += 1) {
       const character = source[index];
       if (character === '"') {
@@ -59,6 +77,9 @@
     if (field.length || row.length) { row.push(field.trim()); rows.push(row); }
     if (!rows.length) return { headers: [], records: [], emptyRows: 0 };
     const headers = rows.shift().map((header) => header.trim());
+    const normalizedHeaders = headers.map(normalizeHeader);
+    const duplicateHeader = normalizedHeaders.find((header, index) => header && normalizedHeaders.indexOf(header) !== index);
+    if (duplicateHeader) throw new Error(`Duplicate column header: ${duplicateHeader}.`);
     let emptyRows = 0;
     const records = rows.flatMap((values, rowIndex) => {
       if (values.every((value) => !String(value).trim())) { emptyRows += 1; return []; }
@@ -74,9 +95,10 @@
     if (!filename || !["csv", "json"].includes(extension)) {
       throw new Error("Unsupported format. Upload portfolio.csv or a JSON portfolio only.");
     }
-    if (extension === "csv") return { format: "CSV", ...parseCsv(text) };
+    const source = assertTextArtifact(text);
+    if (extension === "csv") return { format: "CSV", ...parseCsv(source) };
     let parsed;
-    try { parsed = JSON.parse(text); } catch (error) { throw new Error("Invalid JSON. Correct the file and try again."); }
+    try { parsed = JSON.parse(source); } catch (error) { throw new Error("Invalid JSON. Correct the file and try again."); }
     const records = Array.isArray(parsed) ? parsed : parsed && Array.isArray(parsed.portfolio) ? parsed.portfolio : null;
     if (!records) throw new Error("JSON must be an array of assets or an object with a portfolio array.");
     const headers = [...new Set(records.flatMap((record) => Object.keys(record || {})))];
@@ -94,6 +116,10 @@
     return records.map((record) => {
       const mapped = { __row: record.__row };
       SCHEMA.forEach((field) => { mapped[field] = record[mapping[field] || field] ?? ""; });
+      OPTIONAL_ENGINEERING_FIELDS.forEach((field) => {
+        const source = Object.keys(record).find((key) => normalizeHeader(key).replace(/ /g, "_") === field);
+        mapped[field] = source ? record[source] : "";
+      });
       return mapped;
     });
   }
@@ -122,9 +148,10 @@
     const issues = [];
     const seen = new Set();
     const externalDependencies = options.dependencies || [];
-    const rows = records.filter((record) => record && Object.values(record).some((value) => String(value ?? "").trim()));
+    const rows = records.filter((record) => record && Object.entries(record).some(([key, value]) => key !== "__row" && String(value ?? "").trim()));
     const ids = new Set(rows.map((record) => String(record.asset_id || "").trim()).filter(Boolean));
     const accepted = [];
+    if (!rows.length) issues.push({ severity: "error", code: "empty-portfolio", row: null, assetId: null, message: "Portfolio contains no modernization assets." });
     rows.forEach((record, index) => {
       const row = record.__row || index + 2;
       const id = String(record.asset_id || "").trim();
@@ -136,7 +163,13 @@
       if (!VALID_ASSET_TYPES.has(assetType)) issues.push({ severity: "error", code: "invalid-asset-type", row, assetId: id, message: `Invalid asset type: ${record.asset_type || "empty"}. Use application or data_platform.` });
       const cost = Number(String(record.annual_cost || "").replace(/[$,]/g, ""));
       if (!Number.isFinite(cost) || cost < 0) issues.push({ severity: "error", code: "invalid-cost", row, assetId: id, message: "annual_cost must be a non-negative number." });
-      if (!missing.length && id && !seenDuplicateBefore(records, index, id) && VALID_ASSET_TYPES.has(assetType) && Number.isFinite(cost) && cost >= 0) {
+      const lifecycleValid = validLabelOrScore(record.lifecycle_status, VALID_LIFECYCLE_STATUSES);
+      const healthValid = validLabelOrScore(record.technical_health, VALID_TECHNICAL_HEALTH);
+      const valueValid = validLabelOrScore(record.business_value, VALID_BUSINESS_VALUE);
+      if (!lifecycleValid) issues.push({ severity: "error", code: "invalid-lifecycle-status", row, assetId: id, message: `Unsupported lifecycle_status: ${record.lifecycle_status}.` });
+      if (!healthValid) issues.push({ severity: "error", code: "invalid-technical-health", row, assetId: id, message: `Unsupported technical_health: ${record.technical_health}.` });
+      if (!valueValid) issues.push({ severity: "error", code: "invalid-business-value", row, assetId: id, message: `Unsupported business_value: ${record.business_value}.` });
+      if (!missing.length && id && !seenDuplicateBefore(records, index, id) && VALID_ASSET_TYPES.has(assetType) && Number.isFinite(cost) && cost >= 0 && lifecycleValid && healthValid && valueValid) {
         accepted.push({ ...record, asset_id: id, asset_type: assetType, annual_cost: cost, dependencies: dependencyIds(record.dependencies) });
       }
     });
@@ -150,12 +183,20 @@
       record.dependencies = [...new Set(allTargets)];
       record.broken_dependencies = [...new Set(broken)];
     });
+    if (rows.length && !accepted.length) issues.push({ severity: "error", code: "empty-portfolio", row: null, assetId: null, message: "Portfolio contains no modernization assets." });
     if (options.emptyRows) issues.push({ severity: "warning", code: "empty-rows", row: null, assetId: null, message: `${options.emptyRows} empty row${options.emptyRows === 1 ? "" : "s"} ignored.` });
     return { accepted, rejectedCount: rows.length - accepted.length, issues, sourceCount: rows.length };
   }
 
   function seenDuplicateBefore(records, index, id) {
     return records.slice(0, index).some((record) => String(record.asset_id || "").trim() === id);
+  }
+
+  function validLabelOrScore(value, allowed) {
+    const normalized = normalizeHeader(value);
+    if (allowed.has(normalized)) return true;
+    const numeric = Number(normalized);
+    return Number.isFinite(numeric) && numeric >= 0 && numeric <= 100;
   }
 
   function labelScore(value, scale, fallback = 50) {
@@ -196,5 +237,14 @@
     return selected;
   }
 
-  return { SCHEMA, VALID_ASSET_TYPES, canonicalHeader, parseCsv, parsePortfolioArtifact, parseDependencyArtifact, suggestMapping, applyColumnMapping, validatePortfolio, scorePortfolio, selectModernizationUnits, dependencyIds };
+  function qualifiedCandidate(scores) {
+    return scores.find((score) => score.total >= MIN_MODERNIZATION_SCORE) || null;
+  }
+
+  function engineeringEvidence(record) {
+    const missing = OPTIONAL_ENGINEERING_FIELDS.filter((field) => !String(record?.[field] ?? "").trim());
+    return { complete: missing.length === 0, missing };
+  }
+
+  return { SCHEMA, VALID_ASSET_TYPES, MAX_FILE_BYTES, MIN_MODERNIZATION_SCORE, OPTIONAL_ENGINEERING_FIELDS, canonicalHeader, parseCsv, parsePortfolioArtifact, parseDependencyArtifact, suggestMapping, applyColumnMapping, validatePortfolio, scorePortfolio, selectModernizationUnits, qualifiedCandidate, engineeringEvidence, dependencyIds };
 }));

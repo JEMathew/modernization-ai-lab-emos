@@ -1,4 +1,4 @@
-# Modernization AI Lab — Mission Control 1.0
+# Modernization AI Lab — Mission Control 1.0.1
 
 Turn a synthetic legacy portfolio into a traceable, human-approved modernization roadmap and implementation-ready migration starter package in under three minutes.
 
@@ -44,7 +44,7 @@ Modernization HQ ┘      │
 - `styles.css` provides responsive enterprise presentation, one-shot motion, Fast pace, and reduced-motion support.
 - `script.js` contains mocked data, deterministic workflow state, provider-neutral contracts, validation results, judge-mode cues, and reset reconstruction.
 - `portfolio-lab.js` contains the standalone parser, schema validation, dependency checks, ten-unit limit, and deterministic scoring engine.
-- `portfolio-lab-ui.js` connects that engine to the upload, mapping, validation-report, sample, scoring, and journey-handoff interface.
+- `portfolio-lab-ui.js` connects that engine to upload, mapping, validation, sample, scoring, capability-formation, assessment, and engineering-evidence-gate views.
 
 No React, Streamlit, npm, TypeScript, external library, API, or backend is used by this standalone prototype.
 
@@ -92,9 +92,11 @@ The lab accepts:
 - optional `dependencies.csv` with `source_asset_id` and `target_asset_id`; and
 - optional `constraints.json` containing a JSON object.
 
-Validation reports missing values or mappings, duplicate IDs, invalid asset types, broken dependencies, empty rows, invalid costs, malformed artifacts, and unsupported formats. Familiar source names such as `System Name`, `Category`, and `Importance` can be mapped to the canonical schema. Accepted portfolios are limited to ten modernization units using **Analyze First 10** or **Select 10**.
+Validation reports missing values or mappings, duplicate IDs or headers, invalid asset types, broken dependencies, empty portfolios and rows, invalid costs or enumerated values, ignored columns, malformed UTF-8 or binary artifacts, unsupported delimiters, oversized files, and unsupported formats. Empty portfolios remain stopped with retry, sample, and CSV-template recovery actions. Familiar source names such as `System Name`, `Category`, and `Importance` can be mapped to the canonical schema. Accepted portfolios are limited to ten modernization units using **Analyze First 10** or **Select 10**. Files are capped at 2 MB.
 
-The Modernization Priority Score is calculated locally from Technical Urgency (30%), Business Value (25%), Operating Cost (15%), Dependency Readiness (15%), Risk Reduction (10%), and Evidence Confidence (5%). Every component score is displayed and one primary candidate is recommended. The handoff starts the standard guided journey with the uploaded candidate name and validated metadata attached as experimental context. Deep modernization still requires representative SQL, schema, or engineering metadata.
+The Modernization Priority Score is calculated locally from Technical Urgency (30%), Business Value (25%), Operating Cost (15%), Dependency Readiness (15%), Risk Reduction (10%), and Evidence Confidence (5%). Every component score is displayed. A primary candidate is recommended only when its total is at least 60; otherwise the lab reports **No Qualified Modernization Candidate** and does not start a journey.
+
+An uploaded candidate can progress through capability formation and portfolio assessment only. The lab then enforces an engineering evidence gate requiring **Representative SQL**, **Source Schema**, and **Target Platform**. Metadata-only portfolios stop with **Engineering Journey requires additional engineering metadata.** The upload lab never enters the Apex Engineering, Validation, or Executive workspaces and never generates Apex artifacts for arbitrary uploads. Use **Run Guided Demo** for the complete synthetic Apex Aerospace journey.
 
 ## Three-minute demo path
 
@@ -158,7 +160,8 @@ Use a current desktop version of Chrome, Edge, Firefox, or Safari with JavaScrip
 - No live GPT-5.6 or Codex API execution.
 - No persistence after browser refresh.
 - No deployment, authentication, collaboration, enterprise connectors, persistence, or large-portfolio analysis.
-- Portfolio Upload Lab is capped at ten units and does not parse documents, repositories, images, source code, or architecture diagrams.
+- Portfolio Upload Lab is capped at ten units and 2 MB per primary file. It does not parse documents, repositories, images, source code, or architecture diagrams.
+- Uploaded portfolios end at assessment in this release; arbitrary engineering, validation, and executive execution are intentionally unavailable.
 - No production database or external service.
 - Wave 1 approval does not deploy or launch workloads.
 

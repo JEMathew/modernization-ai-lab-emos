@@ -2137,12 +2137,14 @@ function resetDemo() {
   button.firstChild.textContent = "Begin Portfolio Discovery ";
   navigate("portfolio", false);
   openExperience("mission-control");
+  if (typeof globalThis.resetPortfolioUploadLab === "function") globalThis.resetPortfolioUploadLab();
 }
 
 function init() {
   initializeEntityStates();
   renderProducts();
   renderAgents();
+  $("#reset-demo").addEventListener("click", resetDemo);
   $$('[data-view]').forEach((control) => control.addEventListener("click", () => navigate(control.dataset.view)));
   $$('[data-view-link]').forEach((link) => link.addEventListener("click", (event) => { event.preventDefault(); navigate(link.dataset.viewLink, false); openExperience("mission-control"); }));
   $$('[data-experience-switch]').forEach((button) => button.addEventListener("click", () => openExperience(button.dataset.experienceSwitch)));
@@ -2197,7 +2199,6 @@ function init() {
   $("#executive-actions").addEventListener("click", (event) => { const action = event.target.closest("[data-executive-action]"); if (action) handleExecutiveAction(action.dataset.executiveAction); });
   $("#executive-work-objects").addEventListener("click", (event) => { const object = event.target.closest("[data-executive-object]"); if (object) inspectExecutiveObject(object.dataset.executiveObject); });
   $("#wave-approval-gate").addEventListener("click", (event) => { const decision = event.target.closest("[data-wave-decision]"); if (decision) handleWaveDecision(decision.dataset.waveDecision); });
-  $("#reset-demo").addEventListener("click", resetDemo);
   document.addEventListener("keydown", (event) => { if (event.key === "Escape" && !$("#demo-info-panel").hidden) toggleDemoInfo(false); });
   $$('[data-hq-agent]').forEach((persona) => persona.addEventListener("click", () => selectHqAgent(persona.dataset.hqAgent)));
   $("#hq-context-panel").addEventListener("click", (event) => {
