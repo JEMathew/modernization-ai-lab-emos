@@ -1,5 +1,7 @@
 "use strict";
 
+const enterpriseContext = globalThis.EnterpriseContext;
+
 const products = [
   { id: "app-01", group: "applications", name: "Supplier Quality Portal", platform: "Java / Oracle", owner: "Supply Chain", criticality: "High", age: "12 years", disposition: "Replatform", summary: "Coordinates supplier nonconformance cases and corrective actions across the production network." },
   { id: "app-02", group: "applications", name: "Maintenance System", platform: "IBM Maximo", owner: "Plant Operations", criticality: "Critical", age: "15 years", disposition: "Retain", summary: "Schedules asset maintenance and preserves the production-service history for critical equipment." },
@@ -209,6 +211,7 @@ const state = {
   hqCaseLocation: "portfolio-studio",
   selectedHqAgent: null,
   selectedWorkObjectId: null,
+  selectedEnterpriseContextId: null,
   workspaceStage: -1,
   workspaceStatus: "idle",
   workspaceTransition: false,
@@ -703,6 +706,49 @@ function workObjectStatus(index) {
   return "Waiting";
 }
 
+function enterpriseContextStatus(id, snapshot) {
+  if (id === "initiative") return state.executiveStatus === "approved" ? "WAVE 1 AUTHORIZED" : "ACTIVE";
+  if (id === "portfolio") return state.portfolioState.toUpperCase();
+  if (id === "program") {
+    if (state.executiveStatus === "approved") return "WAVE 1 APPROVED";
+    if (state.executiveEntered) return "EXECUTIVE REVIEW";
+    if (state.engineeringEntered || state.validationEntered) return "DELIVERY READINESS";
+    return state.capabilityState ? "ACTIVE" : "AWAITING CASE FORMATION";
+  }
+  return snapshot.stage.toUpperCase();
+}
+
+function renderEnterpriseContext() {
+  if (!enterpriseContext?.validateHierarchy()) return;
+  const snapshot = currentCaseSnapshot();
+  $$('[data-enterprise-context-rail]').forEach((rail) => {
+    if (rail.childElementCount) return;
+    rail.innerHTML = enterpriseContext.levels.map((node, index) => `${index ? '<i aria-hidden="true">→</i>' : ""}<button type="button" data-enterprise-context-id="${node.id}" aria-pressed="false"><small>${node.type.toUpperCase()}</small><strong>${node.name}</strong><span>${node.id === "case" ? node.reference : node.owner}</span><em data-enterprise-context-status="${node.id}">${enterpriseContextStatus(node.id, snapshot)}</em></button>`).join("");
+  });
+  $$('[data-enterprise-context-status]').forEach((node) => {
+    node.textContent = enterpriseContextStatus(node.dataset.enterpriseContextStatus, snapshot);
+  });
+  $$('[data-enterprise-context-id]').forEach((button) => {
+    const selected = button.dataset.enterpriseContextId === state.selectedEnterpriseContextId;
+    button.classList.toggle("is-selected", selected);
+    button.setAttribute("aria-pressed", String(selected));
+  });
+  $$('[data-enterprise-context-detail]').forEach((detail) => {
+    const node = enterpriseContext.getLevel(state.selectedEnterpriseContextId);
+    detail.hidden = !node;
+    if (!node) { detail.innerHTML = ""; return; }
+    const owner = node.id === "case" ? snapshot.owner : node.owner;
+    const nextResponsibility = node.id === "case" ? snapshot.next : node.nextResponsibility;
+    detail.innerHTML = `<div class="enterprise-context-detail-heading"><div><small>${node.type.toUpperCase()} / ${node.reference}</small><h3>${node.name}</h3></div><strong>${enterpriseContextStatus(node.id, snapshot)}</strong></div><div class="enterprise-context-detail-grid"><span><small>ACCOUNTABLE OWNER</small><strong>${owner}</strong></span><span><small>PURPOSE</small><strong>${node.purpose}</strong></span><span><small>EXPECTED BUSINESS OUTCOME</small><strong>${node.outcome}</strong></span><span><small>RELATIONSHIP</small><strong>${node.relationship}</strong></span><span><small>NEXT RESPONSIBILITY</small><strong>${nextResponsibility}</strong></span></div>`;
+  });
+}
+
+function selectEnterpriseContext(id) {
+  if (!enterpriseContext?.getLevel(id)) return;
+  state.selectedEnterpriseContextId = state.selectedEnterpriseContextId === id ? null : id;
+  renderEnterpriseContext();
+}
+
 function renderMissionCase() {
   const snapshot = currentCaseSnapshot();
   $("#mission-case-stage").textContent = snapshot.stage.toUpperCase();
@@ -713,6 +759,7 @@ function renderMissionCase() {
   $("#mission-validation-status").textContent = state.migrationPackage.validationStatus.toUpperCase();
   $("#mission-roadmap-status").textContent = state.executiveStatus === "approved" ? "WAVE 1 APPROVED" : state.capacitySimulationActive ? "SIMULATION PREVIEW" : state.executivePrepared ? "BASELINE READY" : "NOT PREPARED";
   $("#mission-case-dock").classList.toggle("is-blocked", snapshot.blocker !== "None");
+  renderEnterpriseContext();
 }
 
 function renderWorkObjects() {
@@ -1861,6 +1908,7 @@ function renderCasePanel(focus = "summary") {
   }[focus] || "Select a focused case action to inspect ownership, blockers, or the next handoff.";
   state.selectedHqAgent = null;
   state.selectedWorkObjectId = null;
+  state.selectedEnterpriseContextId = null;
   $("#hq-context-panel").innerHTML = `<div class="hq-panel-content case-detail"><p class="eyebrow">MODERNIZATION CASE / DR-CIC-001</p><h2>Customer Intelligence Capability</h2><p class="panel-summary">One shared record for three products and the external Finance Warehouse dependency.</p><div class="hq-panel-state"><span><small>CURRENT STAGE</small><strong>${snapshot.stage.toUpperCase()}</strong></span><span><small>CURRENT OWNER</small><strong>${snapshot.owner.toUpperCase()}</strong></span></div><div class="case-detail-actions"><button type="button" data-case-detail="owner">Inspect Current Owner</button><button type="button" data-case-detail="blocker">Show Blocker</button><button type="button" data-case-detail="next">Show Next Action</button></div><div class="hq-agent-response" id="case-detail-response">${focused}</div><div class="case-detail-products"><span>Customer Analytics Warehouse</span><span>Customer Service Portal</span><span>Product Telemetry Platform</span><span class="is-dependency">Finance Warehouse / external dependency</span></div></div>`;
 }
 
@@ -1998,6 +2046,7 @@ function resetHqState() {
   state.hqCaseLocation = "portfolio-studio";
   state.selectedHqAgent = null;
   state.selectedWorkObjectId = null;
+  state.selectedEnterpriseContextId = null;
   state.workspaceStage = -1;
   state.workspaceStatus = "idle";
   state.workspaceTransition = false;
@@ -2145,6 +2194,10 @@ function init() {
   renderProducts();
   renderAgents();
   $("#reset-demo").addEventListener("click", resetDemo);
+  $$('[data-enterprise-context]').forEach((context) => context.addEventListener("click", (event) => {
+    const node = event.target.closest('[data-enterprise-context-id]');
+    if (node) selectEnterpriseContext(node.dataset.enterpriseContextId);
+  }));
   $$('[data-view]').forEach((control) => control.addEventListener("click", () => navigate(control.dataset.view)));
   $$('[data-view-link]').forEach((link) => link.addEventListener("click", (event) => { event.preventDefault(); navigate(link.dataset.viewLink, false); openExperience("mission-control"); }));
   $$('[data-experience-switch]').forEach((button) => button.addEventListener("click", () => openExperience(button.dataset.experienceSwitch)));

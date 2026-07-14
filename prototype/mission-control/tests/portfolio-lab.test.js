@@ -1,7 +1,19 @@
 "use strict";
 
 const assert = require("node:assert/strict");
+const fs = require("node:fs");
 const engine = require("../portfolio-lab.js");
+const enterpriseContext = require("../enterprise-context.js");
+
+assert.equal(enterpriseContext.validateHierarchy(), true, "enterprise work hierarchy is complete and ordered");
+assert.deepEqual(enterpriseContext.levels.map((level) => level.id), ["initiative", "portfolio", "program", "case"], "context follows Initiative to Portfolio to Program to Case");
+assert.deepEqual(enterpriseContext.lineageForCase("DR-CIC-001"), ["BI-CX-2026-01", "PF-APEX-TECH-01", "MP-CI-01", "DR-CIC-001"], "active case preserves complete enterprise lineage");
+assert.deepEqual(enterpriseContext.lineageForCase("UNKNOWN"), [], "unknown cases cannot inherit synthetic lineage");
+assert.equal(enterpriseContext.getLevel("program").owner, "Transformation Office", "program ownership is explicit");
+assert.equal(enterpriseContext.getLevel("unknown"), null, "unknown context levels are rejected");
+const prototypeHtml = fs.readFileSync(require.resolve("../index.html"), "utf8");
+assert.equal((prototypeHtml.match(/data-enterprise-context(?=[\s>])/g) || []).length, 2, "Mission Control and HQ both render the shared enterprise context");
+assert.equal((prototypeHtml.match(/data-enterprise-context-rail/g) || []).length, 2, "both experiences render from the shared hierarchy definition");
 
 const headers = engine.SCHEMA.join(",");
 const csv = `${headers}\nAPP-1,Service Portal,application,Customer Service,.NET,High,Customer Ops,aging,DATA-1,900000,poor,critical\nDATA-1,Analytics Warehouse,data_platform,Customer Intelligence,Oracle,Critical,Data Office,end of support,,1500000,critical,critical\n`;

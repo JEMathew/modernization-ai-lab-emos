@@ -6,9 +6,10 @@
     <meta name="description" content="Standalone Modernization AI Lab mission-control prototype.">
     <title>Modernization AI Lab — Mission Control</title>
     <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='4' fill='%230b1720'/%3E%3Cpath d='M7 23V15h4v8m3 0V10h4v13m3 0V6h4v17' stroke='%234bd6c2' stroke-width='2'/%3E%3C/svg%3E">
-    <link rel="stylesheet" href="styles.css?v=1.1">
+    <link rel="stylesheet" href="styles.css?v=1.2">
     <script src="portfolio-lab.js?v=1.0.1-stable3" defer></script>
-    <script src="script.js?v=1.0.1-stable3" defer></script>
+    <script src="enterprise-context.js?v=1.1" defer></script>
+    <script src="script.js?v=1.1" defer></script>
     <script src="portfolio-lab-ui.js?v=1.0.1-stable5" defer></script>
   </head>
   <body>
@@ -24,7 +25,7 @@
       <header class="topbar">
         <a class="brand" href="#portfolio" data-view-link="portfolio" aria-label="Mission Control home">
           <span class="brand-mark" aria-hidden="true"><span></span><span></span><span></span></span>
-          <span><strong>MODERNIZATION AI LAB</strong><small>OPENAI BUILD WEEK / V1.0.1</small></span>
+          <span><strong>MODERNIZATION AI LAB</strong><small>ENTERPRISE CONTEXT / V1.1</small></span>
         </a>
         <div class="experience-switch" role="group" aria-label="Experience switch">
           <button class="is-active" type="button" data-experience-switch="mission-control" aria-pressed="true">Mission Control</button>
@@ -128,6 +129,12 @@
       </nav>
 
       <main data-experience-panel="mission-control">
+        <section class="enterprise-context" data-enterprise-context aria-label="Enterprise modernization context">
+          <header><div><small>ENTERPRISE WORK HIERARCHY</small><strong>Why this case exists and who owns it</strong></div><span>ONE TRACEABLE LINEAGE</span></header>
+          <div class="enterprise-context-rail" data-enterprise-context-rail></div>
+          <div class="enterprise-context-detail" data-enterprise-context-detail hidden aria-live="polite"></div>
+        </section>
+
         <section class="mission-case-dock" id="mission-case-dock" aria-label="Active modernization case">
           <div class="mission-case-identity"><span class="case-live-dot" aria-hidden="true"></span><span><small>ACTIVE MODERNIZATION CASE</small><strong>Customer Intelligence Capability</strong></span></div>
           <div><small>STAGE</small><strong id="mission-case-stage">AWAITING FORMATION</strong></div>
@@ -314,7 +321,7 @@
 
       <section class="hq-experience" id="hq-experience" data-experience-panel="hq" aria-labelledby="hq-title" hidden>
         <header class="hq-header">
-          <div><p class="eyebrow">VERSION 1.0 / BUILD WEEK JUDGE MODE</p><h1 id="hq-title">Modernization HQ</h1><p>Follow one traceable case from portfolio evidence to a governed Wave 1 decision.</p></div>
+          <div><p class="eyebrow">VERSION 1.1 / ENTERPRISE CONTEXT</p><h1 id="hq-title">Modernization HQ</h1><p>Follow one traceable case from portfolio evidence to a governed Wave 1 decision.</p></div>
           <div class="hq-stage-strip" aria-label="Current HQ workflow context">
             <span><small>WORKFLOW STAGE</small><strong id="hq-workflow-stage">PORTFOLIO UNVERIFIED</strong></span>
             <span><small>SELECTED CAPABILITY</small><strong id="hq-selected-capability">AWAITING FORMATION</strong></span>
@@ -325,6 +332,12 @@
             <span><small>PORTFOLIO ROADMAP</small><strong id="hq-roadmap-status">NOT PREPARED</strong></span>
           </div>
         </header>
+
+        <section class="enterprise-context" data-enterprise-context aria-label="Enterprise modernization context">
+          <header><div><small>ENTERPRISE WORK HIERARCHY</small><strong>Shared context for the active workspace</strong></div><span>ONE TRACEABLE LINEAGE</span></header>
+          <div class="enterprise-context-rail" data-enterprise-context-rail></div>
+          <div class="enterprise-context-detail" data-enterprise-context-detail hidden aria-live="polite"></div>
+        </section>
 
         <section class="workspace-observatory" id="workspace-observatory" aria-labelledby="workspace-observatory-title">
           <div class="workspace-commandbar">

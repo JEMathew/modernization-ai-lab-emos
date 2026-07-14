@@ -1,4 +1,4 @@
-# Modernization AI Lab — Mission Control 1.0.1
+# Modernization AI Lab — Mission Control 1.1
 
 Turn a synthetic legacy portfolio into a traceable, human-approved modernization roadmap and implementation-ready migration starter package in under three minutes.
 
@@ -7,6 +7,7 @@ Mission Control is a standalone HTML, CSS, and JavaScript prototype created for 
 ## What this prototype demonstrates
 
 - Portfolio discovery across ten synthetic applications and data platforms.
+- A visible Business Initiative → Enterprise Portfolio → Modernization Program → Modernization Case hierarchy with accountable ownership and expected outcomes.
 - Formation of the Customer Intelligence Capability around shared consequence.
 - A Living Workspace where specialist ownership and work-object movement are visible.
 - Human resolution of conflicting specialist recommendations.
@@ -27,22 +28,26 @@ Screenshot placeholders for the submission package:
 
 ## Architecture overview
 
-The prototype has one shared in-memory case state rendered through two synchronized experiences:
+The prototype has one shared in-memory case state rendered through two synchronized experiences and attached to one explicit enterprise-work hierarchy:
 
 ```text
-Mission Control ─┐
-                 ├─ Shared Modernization Case DR-CIC-001
-Modernization HQ ┘      │
-                        ├─ Evidence and specialist decisions
-                        ├─ Provider-neutral contracts
-                        ├─ Mocked engineering artifacts
-                        ├─ Deterministic validation results
-                        └─ Executive roadmap and approval record
+Connected Customer Growth / BI-CX-2026-01
+  └─ Apex Enterprise Technology Portfolio / PF-APEX-TECH-01
+      └─ Customer Intelligence Modernization Program / MP-CI-01
+          └─ Shared Modernization Case / DR-CIC-001
+              ├─ Mission Control rendering
+              ├─ Modernization HQ rendering
+              ├─ Evidence and specialist decisions
+              ├─ Provider-neutral contracts
+              ├─ Mocked engineering artifacts
+              ├─ Deterministic validation results
+              └─ Executive roadmap and approval record
 ```
 
 - `index.html` contains semantic structure and inline SVG symbols.
 - `styles.css` provides responsive enterprise presentation, one-shot motion, Fast pace, and reduced-motion support.
 - `script.js` contains mocked data, deterministic workflow state, provider-neutral contracts, validation results, judge-mode cues, and reset reconstruction.
+- `enterprise-context.js` defines and validates the provider-neutral Initiative, Portfolio, Program, and Case lineage.
 - `portfolio-lab.js` contains the standalone parser, schema validation, dependency checks, ten-unit limit, and deterministic scoring engine.
 - `portfolio-lab-ui.js` connects that engine to upload, mapping, validation, sample, scoring, capability-formation, assessment, and engineering-evidence-gate views.
 
@@ -81,6 +86,12 @@ Then open `http://localhost:8080/`.
 5. At any point, use **Reset Current Stage**, **Restart Guided Demo**, or **Reset Full Demo**.
 
 Guided Demo reads the existing shared workflow state. It does not create, skip, or maintain a separate workflow. Switching between Mission Control and Modernization HQ preserves the cue and case state.
+
+## Enterprise work hierarchy
+
+The hierarchy above the active case answers why the modernization exists, which portfolio supplies the evidence, which program owns coordinated delivery, and which case currently carries the work. Select any hierarchy level in Mission Control or Modernization HQ to inspect its reference, accountable owner, purpose, expected business outcome, relationship, live status, and next responsibility.
+
+Both experiences render the same hierarchy and case status. The case owner and next responsibility update from the existing workflow state; no second workflow or duplicate case record is created. All hierarchy names and references are synthetic.
 
 ## Portfolio Upload Lab
 
