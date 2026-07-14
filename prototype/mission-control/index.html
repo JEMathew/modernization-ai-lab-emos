@@ -6,8 +6,8 @@
     <meta name="description" content="Standalone Modernization AI Lab mission-control prototype.">
     <title>Modernization AI Lab — Mission Control</title>
     <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='4' fill='%230b1720'/%3E%3Cpath d='M7 23V15h4v8m3 0V10h4v13m3 0V6h4v17' stroke='%234bd6c2' stroke-width='2'/%3E%3C/svg%3E">
-    <link rel="stylesheet" href="styles.css?v=0.7">
-    <script src="script.js?v=0.7" defer></script>
+    <link rel="stylesheet" href="styles.css?v=0.8">
+    <script src="script.js?v=0.8" defer></script>
   </head>
   <body>
     <svg class="icon-library" aria-hidden="true">
@@ -22,7 +22,7 @@
       <header class="topbar">
         <a class="brand" href="#portfolio" data-view-link="portfolio" aria-label="Mission Control home">
           <span class="brand-mark" aria-hidden="true"><span></span><span></span><span></span></span>
-          <span><strong>MODERNIZATION AI LAB</strong><small>CONNECTED EXPERIENCES / V0.7</small></span>
+          <span><strong>MODERNIZATION AI LAB</strong><small>CONNECTED EXPERIENCES / V0.8</small></span>
         </a>
         <div class="experience-switch" role="group" aria-label="Experience switch">
           <button class="is-active" type="button" data-experience-switch="mission-control" aria-pressed="true">Mission Control</button>
@@ -63,6 +63,7 @@
           <div><small>BLOCKER</small><strong id="mission-case-blocker">NONE</strong></div>
           <div><small>NEXT</small><strong id="mission-case-next">BEGIN DISCOVERY</strong></div>
           <div><small>GENERATED ARTIFACTS</small><strong id="mission-artifact-count">0</strong></div>
+          <div><small>PACKAGE VALIDATION</small><strong id="mission-validation-status">NOT RUN</strong></div>
           <button type="button" data-case-action="inspect">Inspect Case</button>
           <button type="button" data-case-action="hq">Switch to Modernization HQ</button>
         </section>
@@ -240,13 +241,14 @@
 
       <section class="hq-experience" id="hq-experience" data-experience-panel="hq" aria-labelledby="hq-title" hidden>
         <header class="hq-header">
-          <div><p class="eyebrow">VERSION 0.7 / ENGINEERING WORKSPACE</p><h1 id="hq-title">Modernization HQ</h1><p>Watch an approved modernization decision become a governed, validation-ready engineering package.</p></div>
+          <div><p class="eyebrow">VERSION 0.8 / VALIDATION WORKSPACE</p><h1 id="hq-title">Modernization HQ</h1><p>Watch independent validation turn generated engineering into a trusted package with visible conditions.</p></div>
           <div class="hq-stage-strip" aria-label="Current HQ workflow context">
             <span><small>WORKFLOW STAGE</small><strong id="hq-workflow-stage">PORTFOLIO UNVERIFIED</strong></span>
             <span><small>SELECTED CAPABILITY</small><strong id="hq-selected-capability">AWAITING FORMATION</strong></span>
             <span><small>ACTIVE SPECIALISTS</small><strong id="hq-active-count">0</strong></span>
             <span><small>NEXT ACTION</small><strong id="hq-next-action">BEGIN DISCOVERY IN MISSION CONTROL</strong></span>
             <span><small>GENERATED ARTIFACTS</small><strong id="hq-artifact-count">0 / 6</strong></span>
+            <span><small>PACKAGE VALIDATION</small><strong id="hq-validation-status">NOT RUN</strong></span>
           </div>
         </header>
 
@@ -345,6 +347,28 @@
           <div class="engineering-actions" id="engineering-actions" aria-label="Engineering workspace actions"><button type="button" data-engineering-action="contract">Inspect Engineering Contract</button><button type="button" data-engineering-action="lineage">Show Artifact Lineage</button><button type="button" data-engineering-action="decision">Show Source Decision</button><button type="button" data-engineering-action="constraint">Show Applied Constraint</button><button type="button" data-engineering-action="dependencies">Show Dependencies</button><button type="button" data-engineering-action="sql">Compare Oracle and BigQuery SQL</button><button type="button" data-engineering-action="validation">Review Validation Coverage</button><button type="button" data-engineering-action="governance">Review Governance Prerequisite</button><button type="button" data-engineering-action="assemble">Assemble Package</button><button type="button" data-engineering-action="revised">Return to Revised Plan</button><button type="button" data-case-action="mission">Return to Mission Control</button></div>
           <section class="engineering-inspector" id="engineering-inspector" aria-live="polite"><p class="eyebrow">ENGINEERING INTENT / GOVERNED INPUT</p><h3>Inspect the contract before generation</h3><p>Artifacts are not generated until the Mission Commander explicitly authorizes the Migration Starter Package.</p></section>
           <section class="validation-handoff" id="validation-handoff" hidden aria-live="polite"><div><p class="eyebrow">MIGRATION STARTER PACKAGE / VALIDATION READY</p><h3>Six generated artifacts are ready for independent validation</h3><p>Validation Specialist owns DR-CIC-001. Next action: Run Independent Validation.</p><small>Governance prerequisite remains open before cutover.</small></div><button class="primary-action" id="continue-validation" type="button">Continue to Validation Workspace</button><span id="validation-boundary">Version 0.8 activates independent validation.</span></section>
+        </section>
+
+        <section class="validation-workspace" id="validation-workspace" hidden aria-labelledby="validation-workspace-title">
+          <header class="validation-header"><div><p class="eyebrow">INDEPENDENT VALIDATION LAB / DR-CIC-001</p><h2 id="validation-workspace-title">Migration Starter Package Quality Gate</h2><p>Generation is not trust. The Validation Specialist independently tests the governed package.</p></div><div class="validation-command"><small>CASE STATUS</small><strong id="validation-status">VALIDATION IN PROGRESS</strong><span id="validation-owner">VALIDATION SPECIALIST</span><button class="primary-action" id="run-validation" type="button">Run Independent Validation</button></div></header>
+
+          <section class="validation-contract" aria-labelledby="validation-contract-title"><div class="workspace-section-heading"><span>PROVIDER-NEUTRAL VALIDATION CONTRACT</span><strong id="validation-contract-title">VC-DR-CIC-001</strong></div><div id="validation-contract-fields"></div><p>Correction authority: Mission Commander approval required before applying code changes.</p></section>
+
+          <div class="validation-package-flow" id="validation-package-flow"><div class="validation-package"><small>PACKAGE UNDER TEST</small><strong>Migration Starter Package</strong><span>6 artifacts · Oracle → Google BigQuery</span></div><i>→</i><div class="validation-specialist"><span>VS</span><div><small>VALIDATION AUTHORITY</small><strong>Validation Specialist</strong><em id="validation-specialist-state">CONTRACT REVIEW</em></div></div><i>→</i><div class="validation-result-node"><small>QUALITY GATE</small><strong id="validation-result-state">NOT RUN</strong><span id="validation-result-count">0 / 7 CHECKS</span></div></div>
+
+          <section class="validation-checks" aria-labelledby="validation-checks-title"><div class="workspace-section-heading"><span>DETERMINISTIC VALIDATION CHECKS</span><strong id="validation-checks-title">7 REQUIRED</strong></div><div id="validation-check-list"></div></section>
+
+          <section class="validation-failure" id="validation-failure" hidden aria-live="polite"><div><p class="eyebrow">HIGH-SEVERITY VALIDATION EXCEPTION</p><h3>Quarterly customer-renewal aggregate differs by 1.8%</h3><p>Executive renewal reporting may be materially inconsistent.</p></div><button class="primary-action" id="investigate-failure" type="button">Investigate Failure</button></section>
+
+          <section class="correction-proposal" id="correction-proposal" hidden aria-labelledby="correction-title"><div class="workspace-section-heading"><span>CODEX CORRECTION PROPOSAL</span><strong id="correction-title">CP-DR-CIC-001</strong></div><div class="correction-provider"><span>ME</span><div><small>MODERNIZATION ENGINEER</small><strong>Powered by Codex</strong><em>PROPOSAL ONLY · NOT APPLIED</em></div></div><div id="correction-content"></div><div class="correction-gate"><p>Mission Commander approval is required before replacing the affected artifact.</p><button type="button" data-correction-decision="approve">Approve Correction and Rerun</button><button type="button" data-correction-decision="reject">Reject Correction</button><button type="button" data-correction-decision="evidence">Request More Evidence</button><button type="button" data-correction-decision="artifact">Return to Engineering Artifact</button></div><div id="correction-decision-status" role="status" aria-live="polite"></div></section>
+
+          <section class="targeted-rerun" id="targeted-rerun" hidden aria-labelledby="targeted-rerun-title"><div><p class="eyebrow">CORRECTION APPLIED / TARGETED VALIDATION</p><h3 id="targeted-rerun-title">Only three impacted checks will rerun</h3><p>Null-Behaviour Equivalence · Aggregate Equivalence · Representative-Query Comparison</p></div><button class="primary-action" id="rerun-impacted" type="button">Rerun Impacted Validation</button></section>
+
+          <div class="validation-grid"><section class="validation-objects" aria-labelledby="validation-objects-title"><div class="workspace-section-heading"><span>VALIDATION WORK OBJECTS</span><strong id="validation-objects-title">ATTACHED TO DR-CIC-001</strong></div><div id="validation-work-objects"></div></section><section class="validation-report" id="validation-report" aria-labelledby="validation-report-title"><div class="workspace-section-heading"><span>VALIDATION REPORT</span><strong id="validation-report-title">PENDING</strong></div><div id="validation-report-fields"><p>Complete the independent validation and governed correction flow to publish the report.</p></div></section></div>
+
+          <div class="validation-actions" id="validation-actions" aria-label="Validation workspace actions"><button type="button" data-validation-action="contract">Inspect Validation Contract</button><button type="button" data-validation-action="failed">Show Failed Artifact</button><button type="button" data-validation-action="root">Show Root Cause</button><button type="button" data-validation-action="impact">Show Business Impact</button><button type="button" data-validation-action="proposal">Inspect Correction Proposal</button><button type="button" data-validation-action="sql">Compare Original and Corrected SQL</button><button type="button" data-validation-action="regression">Show Regression Test</button><button type="button" data-validation-action="rerun">Inspect Targeted Rerun</button><button type="button" data-validation-action="report">Inspect Validation Report</button><button type="button" data-validation-action="engineering">Return to Engineering Workspace</button><button type="button" data-case-action="mission">Return to Mission Control</button></div>
+          <section class="validation-inspector" id="validation-inspector" aria-live="polite"><p class="eyebrow">INDEPENDENT QUALITY GATE / AWAITING AUTHORIZATION</p><h3>Validation has not started</h3><p>Inspect the Validation Contract, then explicitly run the seven deterministic checks.</p></section>
+          <section class="executive-handoff" id="executive-handoff" hidden aria-live="polite"><div><p class="eyebrow">VALIDATION COMPLETE / VALIDATED WITH CONDITIONS</p><h3>Executive Advisor now owns DR-CIC-001</h3><p>All seven critical checks pass. Governance ownership remains a condition before cutover.</p></div><button class="primary-action" id="continue-executive" type="button">Continue to Executive Workspace</button><span id="executive-boundary">Version 0.9 prepares the Executive Modernization Roadmap.</span></section>
         </section>
 
         <div class="hq-layout">

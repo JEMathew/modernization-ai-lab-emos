@@ -1,4 +1,4 @@
-# Modernization AI Lab — Mission Control 0.7
+# Modernization AI Lab — Mission Control 0.8
 
 Mission Control is a standalone visual and interaction prototype for exploring
 the Modernization AI Lab as three connected environments:
@@ -7,10 +7,9 @@ the Modernization AI Lab as three connected environments:
 2. Agent Decision Room
 3. Codex Modernization Factory
 
-Version 0.7 preserves the complete Mission Control, Modernization HQ, Living
-Workspace, Shared Decision Room, and visible propagation journeys. It extends
-the shared Customer Intelligence Capability case with a governed Engineering
-Workspace attached to `DR-CIC-001`.
+Version 0.8 preserves the complete Mission Control, Modernization HQ, Living
+Workspace, Shared Decision Room, propagation, and Engineering Workspace
+journeys. It extends `DR-CIC-001` with an independent Validation Workspace.
 
 After Assessment Ready, the user can start a deterministic specialist sequence:
 Portfolio Intelligence hands off evidence, Architecture attaches its review,
@@ -38,7 +37,18 @@ Generation starts only after an explicit click. Six mocked artifacts then
 appear progressively with purpose, lineage, dependencies, governance condition,
 validation status, preview, and next action. A separate package-assembly action
 moves the case to Validation Ready with the Validation Specialist as owner.
-Version 0.7 does not execute validation.
+The provider-neutral Validation Contract defines seven deterministic checks,
+thresholds, authority, constraints, and governance prerequisites. An explicit
+validation run preserves six passes and surfaces one intentional Aggregate
+Equivalence failure caused by nested Oracle null-handling semantic drift. The
+Modernization Engineer proposes a one-artifact correction and regression test;
+Mission Commander approval is required before it is applied.
+
+Only Null-Behaviour Equivalence, Aggregate Equivalence, and Representative-Query
+Comparison rerun. The final report records seven of seven critical checks
+passing, a 1.8% to 0.0% aggregate variance correction, High confidence, and a
+Validated with Conditions package status. Version 0.8 does not create the
+executive roadmap.
 
 No recurring timer, continuous loop, backend, or live model call is used.
 

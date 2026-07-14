@@ -106,6 +106,26 @@ function createMigrationPackage() {
   return { caseId: "DR-CIC-001", contractId: "EC-DR-CIC-001", generatedArtifacts: [], artifactDependencies: {}, lineageReferences: ["DR-CIC-001", "Human Constraint", "Approved Revised Plan"], generationStatus: "Not started", validationStatus: "Not run", governancePrerequisites: ["Resolve ownership and change authority for twelve dependent reports before cutover"], nextAction: "Generate Migration Starter Package" };
 }
 
+const validationChecks = [
+  { id: "schema", name: "Schema Compatibility", artifact: "target_schema.sql", expected: "Oracle and BigQuery structures satisfy the approved mapping.", initialActual: "All representative fields and types are compatible.", evidence: "Schema diff VC-E01", severity: "Medium", nextAction: "Preserve pass", initialStatus: "Pass" },
+  { id: "row-count", name: "Row-Count Reconciliation", artifact: "reconciliation_tests.py", expected: "Source and target row counts reconcile within 0.1%.", initialActual: "0.0% variance across the representative partition.", evidence: "Row-count result VC-E02", severity: "High", nextAction: "Preserve pass", initialStatus: "Pass" },
+  { id: "null", name: "Null-Behaviour Equivalence", artifact: "customer_metrics_converted.sql", expected: "Null behavior is equivalent for representative expressions.", initialActual: "Top-level null cases match; nested aggregate condition not yet exercised.", evidence: "Null behavior sample VC-E03", severity: "High", nextAction: "Rerun after regression-test addition", initialStatus: "Pass" },
+  { id: "aggregate", name: "Aggregate Equivalence", artifact: "customer_metrics_converted.sql", expected: "Oracle and BigQuery aggregates match within 0.1%.", initialActual: "Quarterly customer-renewal aggregate differs by 1.8%.", evidence: "Aggregate comparison VC-E04", severity: "High", nextAction: "Investigate translated null handling", initialStatus: "Fail" },
+  { id: "date", name: "Date-Logic Equivalence", artifact: "customer_metrics_converted.sql", expected: "Oracle TRUNC and BigQuery DATE logic return equivalent periods.", initialActual: "Representative daily and quarterly windows match.", evidence: "Date logic result VC-E05", severity: "Medium", nextAction: "Preserve pass", initialStatus: "Pass" },
+  { id: "finance", name: "Finance-Report Preservation", artifact: "dual_run_plan.md", expected: "Twelve finance reports retain unchanged contracts.", initialActual: "Compatibility views preserve all sampled report contracts.", evidence: "Report preservation result VC-E06", severity: "Critical", nextAction: "Preserve pass; retain governance condition", initialStatus: "Pass" },
+  { id: "representative", name: "Representative-Query Comparison", artifact: "customer_metrics_converted.sql", expected: "Representative queries return equivalent results.", initialActual: "Six of seven representative queries match; aggregate finding governs correction.", evidence: "Query comparison VC-E07", severity: "High", nextAction: "Rerun impacted query after correction", initialStatus: "Pass" }
+];
+
+const validationContract = { caseId: "DR-CIC-001", packageId: "Migration Starter Package", sourcePlatform: "Oracle", targetPlatform: "Google BigQuery", checks: validationChecks.map((check) => check.id), thresholds: { aggregateVariance: "≤ 0.1%", rowCountVariance: "≤ 0.1%" }, constraints: ["Finance reports frozen for six months", "Six-week dual run"], governancePrerequisites: ["Resolve ownership and change authority for twelve dependent reports before cutover"], validationAuthority: "Validation Specialist", correctionApprovalRequired: true };
+
+function createValidationRun() { return { runId: "VR-DR-CIC-001-01", caseId: "DR-CIC-001", packageId: "Migration Starter Package", executedChecks: [], passedChecks: [], failedChecks: [], findings: [], status: "Not started", startedAt: null, completedAt: null }; }
+function createCorrectionProposal() { return { proposalId: "CP-DR-CIC-001", failedCheckId: "aggregate", affectedArtifact: "customer_metrics_converted.sql", originalVersion: "v1", correctedVersion: "v2", explanation: "Move null normalization inside the nested CASE expression before aggregation.", addedTests: ["Quarterly renewal null-handling regression test"], impactedChecks: ["null", "aggregate", "representative"], unchangedArtifacts: engineeringArtifacts.filter((item) => item.id !== "converted-sql").map((item) => item.filename), evidenceReferences: ["VC-E03", "VC-E04", "VC-E07"], approvalStatus: "Pending" }; }
+function createValidationReport() { return { caseId: "DR-CIC-001", packageId: "Migration Starter Package", initialResults: { checksExecuted: 7, passes: 6, failures: 1 }, correctionApplied: true, rerunResults: { impactedChecks: 3, passes: 3, aggregateVariance: "0.0%" }, finalStatus: "Validated with Conditions", confidence: "High", remainingConditions: ["Resolve ownership and change authority for twelve dependent finance reports before cutover"], nextAction: "Prepare Executive Modernization Roadmap" }; }
+
+const validationWorkObjects = [
+  { id: "validation-contract-object", title: "Validation Contract" }, { id: "validation-run-object", title: "Validation Run" }, { id: "validation-finding-object", title: "Validation Finding" }, { id: "failure-investigation-object", title: "Failure Investigation" }, { id: "correction-proposal-object", title: "Correction Proposal" }, { id: "correction-approval-object", title: "Correction Approval" }, { id: "targeted-rerun-object", title: "Targeted Rerun" }, { id: "validation-report-object", title: "Validation Report" }
+];
+
 const state = {
   view: "portfolio",
   productId: null,
@@ -144,6 +164,17 @@ const state = {
   engineeringWorkObjectIds: new Set(),
   selectedArtifactId: null,
   migrationPackage: createMigrationPackage(),
+  validationEntered: false,
+  validationStatus: "idle",
+  validationStep: -1,
+  validationCheckStatuses: new Map(),
+  validationWorkObjectIds: new Set(),
+  validationRun: createValidationRun(),
+  correctionProposal: createCorrectionProposal(),
+  correctedArtifactVersion: "v1",
+  regressionTestAttached: false,
+  rerunStep: -1,
+  validationReport: null,
   productStates: new Map(),
   agentStates: new Map()
 };
@@ -511,6 +542,13 @@ function assessAsInitiative() {
 }
 
 function hqNextAction() {
+  if (state.validationStatus === "complete") return "PREPARE EXECUTIVE MODERNIZATION ROADMAP";
+  if (state.validationStatus === "rerunning") return "RERUN IMPACTED VALIDATION";
+  if (state.validationStatus === "correction-applied") return "RERUN IMPACTED VALIDATION";
+  if (["correction-proposed", "evidence-requested", "correction-rejected"].includes(state.validationStatus)) return "MISSION COMMANDER CORRECTION DECISION";
+  if (state.validationStatus === "exception") return "INVESTIGATE VALIDATION FAILURE";
+  if (state.validationStatus === "running") return "RUNNING INDEPENDENT VALIDATION";
+  if (state.validationStatus === "contract-review") return "RUN INDEPENDENT VALIDATION";
   if (state.engineeringStatus === "validation-ready") return "RUN INDEPENDENT VALIDATION";
   if (state.engineeringStatus === "package-generated") return "ASSEMBLE MIGRATION PACKAGE";
   if (state.engineeringStatus === "generating") return "GENERATING MIGRATION STARTER PACKAGE";
@@ -535,6 +573,13 @@ function hqNextAction() {
 }
 
 function currentCaseSnapshot() {
+  if (state.validationStatus === "complete") return { stage: "Validation Complete", owner: "Executive Advisor", ownerId: "agent-08", task: "Validated with Conditions", blocker: "Governance prerequisite before cutover", next: "Prepare Executive Modernization Roadmap", evidence: "7 of 7 critical checks passed · High confidence", recommendation: "VALIDATED WITH CONDITIONS" };
+  if (state.validationStatus === "rerunning") return { stage: "Targeted Rerun", owner: "Validation Specialist", ownerId: "agent-07", task: `Rerun ${validationChecks.find((check) => check.id === ["null", "aggregate", "representative"][state.rerunStep])?.name}`, blocker: "None", next: "Complete impacted checks", evidence: `${state.rerunStep} of 3 impacted checks rerun`, recommendation: "CORRECTION UNDER VALIDATION" };
+  if (state.validationStatus === "correction-applied") return { stage: "Correction Applied", owner: "Validation Specialist", ownerId: "agent-07", task: "Correction v2 and regression test attached", blocker: "None", next: "Rerun Impacted Validation", evidence: "Mission Commander approval attached", recommendation: "TARGETED RERUN REQUIRED" };
+  if (["correction-proposed", "evidence-requested", "correction-rejected"].includes(state.validationStatus)) return { stage: "Correction Proposed", owner: state.validationStatus === "evidence-requested" ? "Modernization Engineer" : "Mission Commander", ownerId: state.validationStatus === "evidence-requested" ? "agent-06" : null, task: state.validationStatus === "evidence-requested" ? "Provide targeted correction evidence" : "Review governed correction proposal", blocker: "Mission Commander approval required", next: state.validationStatus === "evidence-requested" ? "Return to Correction Gate" : "Approve Correction and Rerun", evidence: "Failed validation evidence + Codex proposal", recommendation: "CORRECTION NOT APPLIED" };
+  if (state.validationStatus === "exception") return { stage: "Validation Exception", owner: "Validation Specialist", ownerId: "agent-07", task: "Investigate Aggregate Equivalence failure", blocker: "Quarterly renewal aggregate differs by 1.8%", next: "Investigate Failure", evidence: "6 passes · 1 high-severity failure", recommendation: "PACKAGE NOT TRUSTED" };
+  if (state.validationStatus === "running") return { stage: "Validation In Progress", owner: "Validation Specialist", ownerId: "agent-07", task: `Execute ${validationChecks[state.validationStep]?.name}`, blocker: "None", next: validationChecks[state.validationStep + 1]?.name || "Publish validation result", evidence: `${state.validationRun.executedChecks.length} of 7 checks executed`, recommendation: "INDEPENDENT VALIDATION RUNNING" };
+  if (state.validationStatus === "contract-review") return { stage: "Validation In Progress", owner: "Validation Specialist", ownerId: "agent-07", task: "Review Validation Contract", blocker: "None", next: "Run Independent Validation", evidence: "Validation Contract attached", recommendation: "PACKAGE NOT YET VALIDATED" };
   if (state.engineeringStatus === "validation-ready") return { stage: "Validation Ready", owner: "Validation Specialist", ownerId: "agent-07", task: "Migration Starter Package ready", blocker: "Governance prerequisite before cutover", next: "Run Independent Validation", evidence: `${state.generatedArtifactIds.size} generated artifacts + Engineering Contract`, recommendation: "MIGRATION STARTER PACKAGE" };
   if (state.engineeringStatus === "package-generated") return { stage: "Engineering Package Generated", owner: "Modernization Engineer", ownerId: "agent-06", task: "Assemble validation handoff", blocker: "Governance prerequisite before cutover", next: "Assemble Migration Starter Package", evidence: `${state.generatedArtifactIds.size} generated artifacts`, recommendation: "PACKAGE GENERATED / NOT VALIDATED" };
   if (state.engineeringStatus === "generating") { const label = engineeringSequence[state.engineeringStep]; return { stage: "Engineering In Progress", owner: "Modernization Engineer", ownerId: "agent-06", task: label, blocker: "None", next: engineeringSequence[state.engineeringStep + 1] || "Assemble package", evidence: `${state.generatedArtifactIds.size} of 6 artifacts generated`, recommendation: "ENGINEERING PACKAGE IN PROGRESS" }; }
@@ -576,6 +621,7 @@ function renderMissionCase() {
   $("#mission-case-blocker").textContent = snapshot.blocker.toUpperCase();
   $("#mission-case-next").textContent = snapshot.next.toUpperCase();
   $("#mission-artifact-count").textContent = String(state.generatedArtifactIds.size);
+  $("#mission-validation-status").textContent = state.migrationPackage.validationStatus.toUpperCase();
   $("#mission-case-dock").classList.toggle("is-blocked", snapshot.blocker !== "None");
 }
 
@@ -591,11 +637,12 @@ function renderWorkObjects() {
   if (state.humanConstraintAttached) $("#workspace-work-objects").insertAdjacentHTML("beforeend", `<button class="work-object status-incoming" type="button" data-work-object="constraint"><span class="work-object-sequence">06</span><span><strong>Human Constraint</strong><small>Mission Commander</small></span><em>DR-CIC-001</em><b>ATTACHED</b></button>`);
   propagationWorkObjects.filter((item) => state.propagationWorkObjectIds.has(item.id)).forEach((item, index) => $("#workspace-work-objects").insertAdjacentHTML("beforeend", `<button class="work-object status-complete" type="button" data-work-object="${item.id}"><span class="work-object-sequence">${String(index + 7).padStart(2, "0")}</span><span><strong>${item.title}</strong><small>${item.owner}</small></span><em>DR-CIC-001</em><b>ATTACHED</b></button>`));
   engineeringWorkObjects.filter((item) => state.engineeringWorkObjectIds.has(item.id)).forEach((item, index) => $("#workspace-work-objects").insertAdjacentHTML("beforeend", `<button class="work-object status-complete" type="button" data-work-object="${item.id}"><span class="work-object-sequence">${String(index + 12).padStart(2, "0")}</span><span><strong>${item.title}</strong><small>${item.id === "engineering-contract" ? "Mission Commander" : "Modernization Engineer"}</small></span><em>DR-CIC-001</em><b>ATTACHED</b></button>`));
+  validationWorkObjects.filter((item) => state.validationWorkObjectIds.has(item.id)).forEach((item, index) => $("#workspace-work-objects").insertAdjacentHTML("beforeend", `<button class="work-object status-complete" type="button" data-work-object="${item.id}"><span class="work-object-sequence">${String(index + 21).padStart(2, "0")}</span><span><strong>${item.title}</strong><small>${item.id.includes("correction") ? "Mission Commander" : "Validation Specialist"}</small></span><em>DR-CIC-001</em><b>ATTACHED</b></button>`));
 }
 
 function renderWorkQueue() {
   const statuses = ["Incoming", "In Review", "Waiting", "Blocked", "Complete"];
-  const activeQueue = state.engineeringStatus === "validation-ready" ? "Complete" : state.engineeringStatus === "package-generated" ? "Waiting" : state.engineeringStatus === "generating" ? "In Review" : state.engineeringStatus === "contract-review" ? "Incoming" : state.propagationStatus === "approved" ? "Complete" : state.propagationStatus === "complete" ? "Waiting" : state.propagationStatus === "running" ? "In Review" : state.decisionStatus === "ready-replanning" ? "Incoming" : state.decisionStatus === "waiting-evidence" ? "Waiting" : state.workspaceStatus === "blocked" ? "Blocked" : state.workspaceStatus === "paused" ? "Waiting" : state.workspaceStatus === "running" ? "In Review" : "Incoming";
+  const activeQueue = state.validationStatus === "complete" ? "Complete" : state.validationStatus === "exception" ? "Blocked" : ["correction-proposed", "evidence-requested", "correction-rejected"].includes(state.validationStatus) ? "Waiting" : ["running", "rerunning"].includes(state.validationStatus) ? "In Review" : ["contract-review", "correction-applied"].includes(state.validationStatus) ? "Incoming" : state.engineeringStatus === "validation-ready" ? "Complete" : state.engineeringStatus === "package-generated" ? "Waiting" : state.engineeringStatus === "generating" ? "In Review" : state.engineeringStatus === "contract-review" ? "Incoming" : state.propagationStatus === "approved" ? "Complete" : state.propagationStatus === "complete" ? "Waiting" : state.propagationStatus === "running" ? "In Review" : state.decisionStatus === "ready-replanning" ? "Incoming" : state.decisionStatus === "waiting-evidence" ? "Waiting" : state.workspaceStatus === "blocked" ? "Blocked" : state.workspaceStatus === "paused" ? "Waiting" : state.workspaceStatus === "running" ? "In Review" : "Incoming";
   $("#workspace-queue").innerHTML = statuses.map((status) => {
     const items = workspaceWorkObjects.filter((_, index) => workObjectStatus(index) === status);
     const caseHere = activeQueue === status;
@@ -618,7 +665,7 @@ function renderWorkspaceState() {
   $("#case-progress-marker").classList.toggle("is-moving", state.workspaceTransition);
   $("#case-progress-marker").classList.toggle("is-blocked", decisionBlocked);
   $("#case-progress-label").textContent = state.workspaceStage >= 0 ? snapshot.stage.toUpperCase() : state.assessmentReady ? "READY FOR EVIDENCE" : "AWAITING START";
-  $("#workspace-status-line").textContent = state.engineeringStatus === "validation-ready" ? "Validation Ready · six generated artifacts handed to the Validation Specialist." : state.engineeringStatus === "package-generated" ? "Engineering Package Generated · assembling validation handoff." : state.engineeringStatus === "generating" ? `Modernization Engineer · ${snapshot.task}.` : state.engineeringStatus === "contract-review" ? "Engineering In Progress · inspect the governed contract before generation." : state.propagationStatus === "approved" ? "Engineering Ready · Modernization Engineer owns the next action." : state.propagationStatus === "complete" ? "Revised Plan Ready · waiting for Mission Commander approval." : state.propagationStatus === "running" ? `${snapshot.owner} · ${snapshot.task} because the Human Constraint changed the plan.` : state.decisionStatus === "ready-replanning" ? "Ready for Replanning · Human Constraint attached · Wave Planning owns the next action." : state.decisionStatus === "waiting-evidence" ? "Waiting · Portfolio Intelligence owns four targeted evidence requests." : state.decisionStatus === "unresolved" ? "Decision Unresolved · Human Decision Required." : state.workspaceStatus === "blocked" ? "Decision Pending · Waiting for Mission Commander." : state.workspaceStatus === "paused" ? `Paused after the current transition · ${snapshot.owner} retains ownership.` : state.workspaceStatus === "running" ? `${snapshot.owner} · ${snapshot.task}` : state.assessmentReady ? "Assessment Ready · start the visible specialist workflow." : "Form the capability in Mission Control to activate the workspace.";
+  $("#workspace-status-line").textContent = state.validationStatus === "complete" ? "Validation Complete · package validated with conditions · Executive Advisor owns the next action." : state.validationStatus === "exception" ? "Validation Exception · Aggregate Equivalence failed by 1.8%." : state.validationStatus === "correction-applied" ? "Correction Applied · only three impacted checks require rerun." : state.validationStatus === "rerunning" ? `Targeted Rerun · ${snapshot.task}.` : ["correction-proposed", "evidence-requested", "correction-rejected"].includes(state.validationStatus) ? "Correction Proposed · Mission Commander approval required before code changes." : state.validationStatus === "running" ? `Independent validation · ${snapshot.task}.` : state.validationStatus === "contract-review" ? "Validation In Progress · inspect the contract before running checks." : state.engineeringStatus === "validation-ready" ? "Validation Ready · six generated artifacts handed to the Validation Specialist." : state.engineeringStatus === "package-generated" ? "Engineering Package Generated · assembling validation handoff." : state.engineeringStatus === "generating" ? `Modernization Engineer · ${snapshot.task}.` : state.engineeringStatus === "contract-review" ? "Engineering In Progress · inspect the governed contract before generation." : state.propagationStatus === "approved" ? "Engineering Ready · Modernization Engineer owns the next action." : state.propagationStatus === "complete" ? "Revised Plan Ready · waiting for Mission Commander approval." : state.propagationStatus === "running" ? `${snapshot.owner} · ${snapshot.task} because the Human Constraint changed the plan.` : state.decisionStatus === "ready-replanning" ? "Ready for Replanning · Human Constraint attached · Wave Planning owns the next action." : state.decisionStatus === "waiting-evidence" ? "Waiting · Portfolio Intelligence owns four targeted evidence requests." : state.decisionStatus === "unresolved" ? "Decision Unresolved · Human Decision Required." : state.workspaceStatus === "blocked" ? "Decision Pending · Waiting for Mission Commander." : state.workspaceStatus === "paused" ? `Paused after the current transition · ${snapshot.owner} retains ownership.` : state.workspaceStatus === "running" ? `${snapshot.owner} · ${snapshot.task}` : state.assessmentReady ? "Assessment Ready · start the visible specialist workflow." : "Form the capability in Mission Control to activate the workspace.";
   $("#start-workspace").disabled = !state.assessmentReady || state.hqTransition !== "complete" || state.workspaceStatus !== "idle";
   $("#pause-workspace").disabled = state.workspaceStatus !== "running" || state.workspacePauseRequested;
   $("#resume-workspace").disabled = state.workspaceStatus !== "paused";
@@ -629,6 +676,7 @@ function renderWorkspaceState() {
   renderDecisionRoom();
   renderPropagationWorkspace();
   renderEngineeringWorkspace();
+  renderValidationWorkspace();
 }
 
 function positionDetail(key) {
@@ -883,7 +931,7 @@ function renderEngineeringQueue() {
 function renderEngineeringArtifacts() {
   const generated = engineeringArtifacts.filter((artifact) => state.generatedArtifactIds.has(artifact.id));
   $("#artifact-count").textContent = String(generated.length);
-  $("#artifact-list").innerHTML = generated.length ? generated.map((artifact) => `<button class="artifact-card${state.selectedArtifactId === artifact.id ? " is-selected" : ""}" type="button" data-artifact-id="${artifact.id}"><span><small>${artifact.type.toUpperCase()}</small><em>GENERATED</em></span><strong>${artifact.filename}</strong><p>${artifact.purpose}</p><div><small>WHY IT EXISTS</small><span>${artifact.sourceDecision} · ${artifact.sourceConstraint}</span></div><b>VALIDATION / ${artifact.validationStatus.toUpperCase()} · INSPECT ARTIFACT</b></button>`).join("") : `<div class="engineering-empty"><strong>NO ARTIFACTS GENERATED</strong><small>The Engineering Contract is visible; generation still requires explicit authorization.</small></div>`;
+  $("#artifact-list").innerHTML = generated.length ? generated.map((artifact) => `<button class="artifact-card${state.selectedArtifactId === artifact.id ? " is-selected" : ""}" type="button" data-artifact-id="${artifact.id}"><span><small>${artifact.type.toUpperCase()}</small><em>GENERATED</em></span><strong>${artifact.filename}${artifact.id === "converted-sql" && state.correctedArtifactVersion === "v2" ? " · v2" : ""}</strong><p>${artifact.purpose}</p><div><small>WHY IT EXISTS</small><span>${artifact.sourceDecision} · ${artifact.sourceConstraint}</span></div><b>VALIDATION / ${artifact.id === "converted-sql" && state.correctedArtifactVersion === "v2" ? "CORRECTED" : artifact.validationStatus.toUpperCase()} · INSPECT ARTIFACT</b></button>`).join("") : `<div class="engineering-empty"><strong>NO ARTIFACTS GENERATED</strong><small>The Engineering Contract is visible; generation still requires explicit authorization.</small></div>`;
 }
 
 function renderEngineeringObjects() {
@@ -1013,8 +1061,193 @@ function finalizeMigrationPackage() {
   renderHqState();
 }
 
+function renderValidationContract() {
+  const fields = [["CASE ID", validationContract.caseId], ["PACKAGE", validationContract.packageId], ["SOURCE", validationContract.sourcePlatform], ["TARGET", validationContract.targetPlatform], ["ARTIFACTS", "6"], ["VALIDATION EXPECTATIONS", engineeringContract.validationExpectations.join(" · ")], ["HUMAN CONSTRAINT", validationContract.constraints[0]], ["REQUIRED CONTROL", validationContract.constraints[1]], ["GOVERNANCE PREREQUISITE", validationContract.governancePrerequisites[0]], ["VALIDATION AUTHORITY", validationContract.validationAuthority]];
+  $("#validation-contract-fields").innerHTML = fields.map(([label, value]) => `<span><small>${label}</small><strong>${value}</strong></span>`).join("");
+}
+
+function renderValidationChecks() {
+  $("#validation-check-list").innerHTML = validationChecks.map((check) => { const status = state.validationCheckStatuses.get(check.id) || "Pending"; return `<button class="validation-check status-${status.toLowerCase().replaceAll(" ", "-")}" type="button" data-validation-check="${check.id}"><span><i>${status === "Pass" ? "✓" : status === "Fail" ? "!" : "·"}</i><small>${check.severity.toUpperCase()}</small></span><strong>${check.name}</strong><p>${check.artifact}</p><em>${status.toUpperCase()}</em></button>`; }).join("");
+}
+
+function renderValidationObjects() {
+  const objects = validationWorkObjects.filter((item) => state.validationWorkObjectIds.has(item.id));
+  $("#validation-work-objects").innerHTML = objects.map((item, index) => `<button type="button" data-validation-object="${item.id}"><span>${String(index + 1).padStart(2, "0")}</span><div><strong>${item.title}</strong><small>DR-CIC-001 · ${index + 1}</small></div><em>ATTACHED</em></button>`).join("");
+}
+
+function renderValidationReport() {
+  if (!state.validationReport) { $("#validation-report-title").textContent = "PENDING"; $("#validation-report-fields").innerHTML = `<p>Complete the independent validation and governed correction flow to publish the report.</p>`; return; }
+  const report = state.validationReport;
+  $("#validation-report-title").textContent = "VR-DR-CIC-001 / FINAL";
+  const fields = [["CASE ID", report.caseId], ["PACKAGE", report.packageId], ["CHECKS EXECUTED", "7"], ["INITIAL PASSES", "6"], ["INITIAL FAILURES", "1"], ["CORRECTION APPLIED", "Yes"], ["IMPACTED CHECKS RERUN", "3"], ["FINAL CRITICAL CHECKS", "7 of 7 passed"], ["PACKAGE STATUS", report.finalStatus], ["REMAINING CONDITION", report.remainingConditions[0]], ["CONFIDENCE", report.confidence], ["NEXT ACTION", report.nextAction]];
+  $("#validation-report-fields").innerHTML = fields.map(([label, value]) => `<span><small>${label}</small><strong>${value}</strong></span>`).join("");
+}
+
+function renderCorrectionProposal() {
+  $("#correction-content").innerHTML = `<div class="correction-summary"><span><small>AFFECTED ARTIFACT</small><strong>customer_metrics_converted.sql · v1 → v2</strong></span><span><small>ADDED TEST</small><strong>Quarterly renewal null-handling regression</strong></span><span><small>IMPACTED CHECKS</small><strong>Null Behaviour · Aggregate · Representative Query</strong></span><span><small>UNCHANGED ARTIFACTS</small><strong>5 of 6 preserved</strong></span></div><div class="correction-sql"><div><small>ORIGINAL BIGQUERY SQL / V1</small><pre><code>SUM(CASE WHEN renewal_value IS NULL\n  THEN 0 ELSE renewal_value END)</code></pre></div><i>→</i><div><small>CORRECTED BIGQUERY SQL / V2</small><pre><code>SUM(IFNULL(CASE WHEN is_renewal\n  THEN renewal_value END, 0))</code></pre></div></div><p>Change explanation: normalize nulls inside the nested CASE expression before aggregation. Lineage: VC-E04 → Aggregate failure → CP-DR-CIC-001.</p>`;
+}
+
+function renderValidationWorkspace() {
+  const workspace = $("#validation-workspace");
+  workspace.hidden = !state.validationEntered;
+  if (!state.validationEntered) return;
+  const snapshot = currentCaseSnapshot();
+  renderValidationContract();
+  renderValidationChecks();
+  renderValidationObjects();
+  renderValidationReport();
+  $("#validation-status").textContent = snapshot.stage.toUpperCase();
+  $("#validation-owner").textContent = snapshot.owner.toUpperCase();
+  $("#run-validation").hidden = state.validationStatus !== "contract-review";
+  $("#validation-specialist-state").textContent = state.validationStatus === "contract-review" ? "CONTRACT REVIEW" : state.validationStatus === "running" ? "EXECUTING CHECKS" : state.validationStatus === "exception" ? "INVESTIGATING EXCEPTION" : state.validationStatus === "rerunning" ? "TARGETED RERUN" : state.validationStatus === "complete" ? "VALIDATION COMPLETE" : "GOVERNED CORRECTION";
+  $("#validation-result-state").textContent = state.validationStatus === "complete" ? "VALIDATED WITH CONDITIONS" : state.validationStatus === "exception" ? "VALIDATION EXCEPTION" : state.validationStatus === "running" ? "IN PROGRESS" : state.validationStatus === "rerunning" ? "TARGETED RERUN" : state.validationStatus === "contract-review" ? "NOT RUN" : "CORRECTION CONTROL";
+  $("#validation-result-count").textContent = state.validationStatus === "complete" ? "7 / 7 PASSED" : `${state.validationRun.executedChecks.length} / 7 CHECKS`;
+  $("#validation-failure").hidden = !["exception", "correction-proposed", "evidence-requested", "correction-rejected"].includes(state.validationStatus);
+  $("#correction-proposal").hidden = !["correction-proposed", "evidence-requested", "correction-rejected"].includes(state.validationStatus);
+  if (!$("#correction-proposal").hidden) renderCorrectionProposal();
+  $("#targeted-rerun").hidden = state.validationStatus !== "correction-applied";
+  $("#executive-handoff").hidden = state.validationStatus !== "complete";
+  workspace.classList.toggle("is-exception", ["exception", "correction-proposed", "evidence-requested", "correction-rejected"].includes(state.validationStatus));
+  const inspectable = state.validationRun.executedChecks.length > 0;
+  $$("[data-validation-action]").forEach((button) => { const action = button.dataset.validationAction; button.disabled = ["contract", "engineering"].includes(action) ? false : action === "report" ? state.validationStatus !== "complete" : !inspectable; });
+}
+
+function openValidationWorkspace() {
+  if (state.engineeringStatus !== "validation-ready" || state.validationStatus !== "idle") return;
+  state.validationEntered = true;
+  state.validationStatus = "contract-review";
+  state.validationWorkObjectIds.add("validation-contract-object");
+  state.migrationPackage.validationStatus = "Contract ready";
+  state.agentStates.set("agent-07", "Contract Review");
+  const lab = $(".zone-validation");
+  lab.classList.remove("is-locked"); lab.classList.add("is-open"); $(".zone-lock", lab).hidden = true;
+  $("#validation-workspace").classList.remove("is-entering"); void $("#validation-workspace").offsetWidth; $("#validation-workspace").classList.add("is-entering");
+  renderHqState();
+  $("#validation-workspace").scrollIntoView({ behavior: "smooth", block: "start" });
+}
+
+function startIndependentValidation() {
+  if (state.validationStatus !== "contract-review") return;
+  state.validationStatus = "running";
+  state.validationStep = 0;
+  state.validationWorkObjectIds.add("validation-run-object");
+  state.validationRun.status = "Running"; state.validationRun.startedAt = "Sequence 01";
+  state.migrationPackage.validationStatus = "In Progress";
+  state.agentStates.set("agent-07", "Validating");
+  runValidationStep();
+}
+
+function runValidationStep() {
+  const sequence = $("#validation-check-list");
+  state.validationCheckStatuses.set(validationChecks[state.validationStep].id, "Running");
+  sequence.dataset.validationStep = String(state.validationStep);
+  sequence.classList.remove("is-validating"); void sequence.offsetWidth; sequence.classList.add("is-validating");
+  renderHqState();
+}
+
+function completeValidationStep() {
+  if (state.validationStatus !== "running") return;
+  const check = validationChecks[state.validationStep];
+  state.validationCheckStatuses.set(check.id, check.initialStatus);
+  state.validationRun.executedChecks.push(check.id);
+  if (check.initialStatus === "Pass") state.validationRun.passedChecks.push(check.id); else { state.validationRun.failedChecks.push(check.id); state.validationRun.findings.push("Quarterly customer-renewal aggregate differs by 1.8%."); }
+  if (state.validationStep < validationChecks.length - 1) { state.validationStep += 1; runValidationStep(); return; }
+  $("#validation-check-list").classList.remove("is-validating");
+  state.validationStatus = "exception";
+  state.validationRun.status = "Exception"; state.validationRun.completedAt = "Sequence 07";
+  state.validationWorkObjectIds.add("validation-finding-object");
+  state.migrationPackage.validationStatus = "Validation Exception";
+  state.agentStates.set("agent-07", "Exception Found");
+  renderHqState();
+}
+
+function inspectValidationCheck(id) {
+  const check = validationChecks.find((item) => item.id === id); if (!check) return;
+  const status = state.validationCheckStatuses.get(id) || "Pending";
+  $("#validation-inspector").innerHTML = `<p class="eyebrow">VALIDATION CHECK / ${status.toUpperCase()}</p><h3>${check.name}</h3><div class="check-detail"><span><small>OWNER</small><strong>Validation Specialist</strong></span><span><small>ARTIFACT</small><strong>${check.artifact}</strong></span><span><small>EXPECTED</small><strong>${check.expected}</strong></span><span><small>ACTUAL</small><strong>${check.initialActual}</strong></span><span><small>EVIDENCE</small><strong>${check.evidence}</strong></span><span><small>SEVERITY</small><strong>${check.severity}</strong></span><span><small>NEXT ACTION</small><strong>${check.nextAction}</strong></span></div>`;
+}
+
+function investigateFailure() {
+  if (state.validationStatus !== "exception") return;
+  state.validationStatus = "correction-proposed";
+  state.validationWorkObjectIds.add("failure-investigation-object");
+  state.validationWorkObjectIds.add("correction-proposal-object");
+  state.agentStates.set("agent-06", "Correction Proposed");
+  $("#validation-inspector").innerHTML = `<p class="eyebrow">FAILURE INVESTIGATION / VC-E04</p><h3>Quarterly customer-renewal aggregate differs by 1.8%</h3><div class="check-detail"><span><small>EXPECTED</small><strong>Match within 0.1%</strong></span><span><small>ACTUAL</small><strong>1.8% variance</strong></span><span><small>AFFECTED METRIC</small><strong>Quarterly customer renewal rate</strong></span><span><small>AFFECTED ARTIFACT</small><strong>customer_metrics_converted.sql</strong></span><span><small>ROOT CAUSE</small><strong>Oracle null-handling in a nested CASE expression was translated incorrectly.</strong></span><span><small>RISK</small><strong>Executive renewal reporting may be materially inconsistent.</strong></span><span><small>RECOMMENDED ACTION</small><strong>Correct SQL and add a null-handling regression test.</strong></span></div>`;
+  renderHqState();
+}
+
+function handleCorrectionDecision(decision) {
+  if (!["correction-proposed", "evidence-requested", "correction-rejected"].includes(state.validationStatus)) return;
+  if (decision === "artifact") { $("#engineering-workspace").scrollIntoView({ behavior: "smooth", block: "start" }); artifactInspector("converted-sql"); return; }
+  if (decision === "reject") { state.validationStatus = "correction-rejected"; state.correctionProposal.approvalStatus = "Rejected"; $("#correction-decision-status").textContent = "Correction rejected. The package remains at Validation Exception; no artifact changed."; renderHqState(); return; }
+  if (decision === "evidence") { state.validationStatus = "evidence-requested"; state.correctionProposal.approvalStatus = "More evidence requested"; $("#correction-decision-status").innerHTML = `Targeted evidence requested: nested null samples, aggregate trace, and regression-test expectation. <button type="button" id="return-correction-gate">Return to Correction Gate</button>`; renderHqState(); return; }
+  if (decision === "approve") {
+    state.correctionProposal.approvalStatus = "Approved by Mission Commander";
+    state.correctedArtifactVersion = "v2"; state.regressionTestAttached = true;
+    state.validationWorkObjectIds.add("correction-approval-object");
+    state.validationStatus = "correction-applied";
+    state.migrationPackage.validationStatus = "Correction Applied";
+    state.agentStates.set("agent-06", "Correction Applied"); state.agentStates.set("agent-07", "Rerun Ready");
+    renderHqState();
+  }
+}
+
+function startTargetedRerun() {
+  if (state.validationStatus !== "correction-applied") return;
+  state.validationStatus = "rerunning"; state.rerunStep = 0;
+  state.validationWorkObjectIds.add("targeted-rerun-object");
+  state.agentStates.set("agent-07", "Targeted Rerun");
+  runTargetedRerunStep();
+}
+
+function runTargetedRerunStep() {
+  const ids = ["null", "aggregate", "representative"];
+  state.validationCheckStatuses.set(ids[state.rerunStep], "Rerunning");
+  const sequence = $("#validation-check-list"); sequence.dataset.rerunStep = String(state.rerunStep); sequence.classList.remove("is-rerunning"); void sequence.offsetWidth; sequence.classList.add("is-rerunning");
+  renderHqState();
+}
+
+function completeTargetedRerunStep() {
+  if (state.validationStatus !== "rerunning") return;
+  const ids = ["null", "aggregate", "representative"];
+  state.validationCheckStatuses.set(ids[state.rerunStep], "Pass");
+  if (state.rerunStep < 2) { state.rerunStep += 1; runTargetedRerunStep(); return; }
+  $("#validation-check-list").classList.remove("is-rerunning");
+  state.validationStatus = "complete";
+  state.validationReport = createValidationReport();
+  state.validationWorkObjectIds.add("validation-report-object");
+  state.migrationPackage.validationStatus = "Validated with Conditions";
+  state.validationRun.status = "Complete";
+  state.agentStates.set("agent-07", "Validation Complete"); state.agentStates.set("agent-08", "Roadmap Ready");
+  $("#validation-inspector").innerHTML = `<p class="eyebrow">TARGETED RERUN / COMPLETE</p><h3>All impacted checks pass</h3><p>Aggregate variance: <strong>1.8% → 0.0%</strong>. Unrelated checks and five unchanged artifacts were preserved.</p>`;
+  renderHqState();
+}
+
+function validationActionContent(action) {
+  const contents = {
+    contract: `<p class="eyebrow">VALIDATION CONTRACT / VC-DR-CIC-001</p><h3>Independent authority and explicit thresholds</h3><p>Seven checks, aggregate and row-count thresholds of 0.1%, six-month report freeze, six-week dual run, and Mission Commander correction approval.</p>`,
+    failed: `<p class="eyebrow">FAILED ARTIFACT / CUSTOMER_METRICS_CONVERTED.SQL</p><h3>Aggregate Equivalence failed</h3><p>The generated v1 SQL remains inspectable. It is linked to VC-E04 and has not been replaced without approval.</p>`,
+    root: `<p class="eyebrow">ROOT CAUSE</p><h3>Oracle null-handling semantic drift</h3><p>Null normalization was placed outside the translated nested CASE expression, changing the quarterly aggregate by 1.8%.</p>`,
+    impact: `<p class="eyebrow">BUSINESS IMPACT / HIGH</p><h3>Executive renewal metric may be incorrect</h3><p>A material inconsistency could reach executive customer-renewal reporting if the package proceeded without correction.</p>`,
+    proposal: `<p class="eyebrow">CORRECTION PROPOSAL / CP-DR-CIC-001</p><h3>One artifact replacement; one regression test</h3><p>Codex proposes customer_metrics_converted.sql v2. Five other artifacts remain unchanged. Mission Commander approval is pending.</p>`,
+    sql: `<div class="correction-sql"><div><small>ORIGINAL / V1</small><pre><code>SUM(CASE WHEN renewal_value IS NULL\n THEN 0 ELSE renewal_value END)</code></pre></div><i>→</i><div><small>CORRECTED / V2</small><pre><code>SUM(IFNULL(CASE WHEN is_renewal\n THEN renewal_value END, 0))</code></pre></div></div>`,
+    regression: `<p class="eyebrow">NEW REGRESSION TEST</p><h3>Quarterly renewal nested-null condition</h3><pre><code>def test_quarterly_renewal_nested_nulls():\n    assert aggregate_variance == 0.0</code></pre><p>Attached only after Mission Commander approval.</p>`,
+    rerun: `<p class="eyebrow">TARGETED RERUN</p><h3>Three impacted checks only</h3><p>Null-Behaviour Equivalence · Aggregate Equivalence · Representative-Query Comparison. Four unrelated passes are preserved.</p>`,
+    report: state.validationReport ? `<p class="eyebrow">FINAL VALIDATION REPORT</p><h3>Validated with Conditions · High confidence</h3><p>7 of 7 critical checks pass after one governed correction. Remaining condition: ownership and change authority for twelve reports before cutover.</p>` : ""
+  }; return contents[action];
+}
+
+function handleValidationAction(action) {
+  if (action === "engineering") { $("#engineering-workspace").scrollIntoView({ behavior: "smooth", block: "start" }); return; }
+  const content = validationActionContent(action); if (content) $("#validation-inspector").innerHTML = content;
+  $$("[data-validation-action]").forEach((button) => button.classList.toggle("is-selected", button.dataset.validationAction === action));
+}
+
 function hqAgentMessage(id) {
   const snapshot = currentCaseSnapshot();
+  if (["contract-review", "running", "exception", "correction-applied", "rerunning"].includes(state.validationStatus) && id === "agent-07") return `${snapshot.task}. Independent results remain attached to VC-DR-CIC-001.`;
+  if (["correction-proposed", "evidence-requested", "correction-rejected"].includes(state.validationStatus) && id === "agent-06") return "Correction proposal is evidence-linked and awaits Mission Commander authority.";
   if (["contract-review", "generating", "package-generated"].includes(state.engineeringStatus) && id === "agent-06") return `${snapshot.task}. All outputs remain attached to EC-DR-CIC-001.`;
   if (state.engineeringStatus === "validation-ready" && id === "agent-07") return "Migration Starter Package received. Independent validation begins in Version 0.8.";
   if (state.propagationStatus === "running" && state.agentStates.get(id) === "Updating") return `Attaching the ${propagationNodes[state.propagationStep].label} consequence to DR-CIC-001.`;
@@ -1048,6 +1281,7 @@ function renderHqState() {
   $("#hq-active-count").textContent = String(activeCount);
   $("#hq-next-action").textContent = hqNextAction();
   $("#hq-artifact-count").textContent = `${state.generatedArtifactIds.size} / 6`;
+  $("#hq-validation-status").textContent = state.migrationPackage.validationStatus.toUpperCase();
   $("#center-active-case").disabled = !state.capabilityState;
   const caseState = state.workspaceStage >= 0 ? snapshot.stage.toUpperCase() : state.hqCaseLocation === "decision-room" ? "IN SHARED DECISION ROOM" : state.assessmentReady ? "ASSESSMENT READY" : state.capabilityState ? state.capabilityState.toUpperCase() : "AWAITING ASSESSMENT";
   $("#hq-case-state").textContent = caseState;
@@ -1061,7 +1295,7 @@ function renderHqState() {
   $$("[data-hq-agent]").forEach((persona) => {
     const id = persona.dataset.hqAgent;
     const specialist = hqSpecialists[id];
-    const personaState = specialist.active || (id === "agent-07" && state.engineeringStatus === "validation-ready") ? (state.agentStates.get(id) || "Idle") : "Locked";
+    const personaState = specialist.active || (id === "agent-07" && (state.engineeringStatus === "validation-ready" || state.validationEntered)) ? (state.agentStates.get(id) || "Idle") : "Locked";
     $("[data-hq-state]", persona).textContent = personaState.toUpperCase();
     $("[data-hq-message]", persona).textContent = hqAgentMessage(id);
     persona.classList.toggle("is-collaborating", state.workspaceStatus === "running" && snapshot.ownerId === id);
@@ -1076,6 +1310,10 @@ function renderHqState() {
   codexZone.classList.toggle("is-locked", !state.engineeringEntered);
   codexZone.classList.toggle("is-open", state.engineeringEntered);
   $(".zone-lock", codexZone).hidden = state.engineeringEntered;
+  const validationZone = $(".zone-validation");
+  validationZone.classList.toggle("is-locked", !state.validationEntered);
+  validationZone.classList.toggle("is-open", state.validationEntered);
+  $(".zone-lock", validationZone).hidden = state.validationEntered;
   renderWorkspaceState();
   if (state.selectedHqAgent) renderHqAgentPanel(state.selectedHqAgent);
   else if (state.selectedWorkObjectId) renderWorkObjectPanel(state.selectedWorkObjectId);
@@ -1161,6 +1399,12 @@ function renderWorkObjectPanel(id) {
 }
 
 function selectWorkObject(id) {
+  const validationObject = validationWorkObjects.find((item) => item.id === id && state.validationWorkObjectIds.has(item.id));
+  if (validationObject) {
+    state.selectedHqAgent = null; state.selectedWorkObjectId = id;
+    $("#hq-context-panel").innerHTML = `<div class="hq-panel-content work-detail"><p class="eyebrow">VALIDATION WORK OBJECT / DR-CIC-001</p><div class="work-detail-title"><span>✓</span><div><h2>${validationObject.title}</h2><p>Validation Specialist</p></div></div><div class="hq-panel-state"><span><small>STATUS</small><strong>ATTACHED</strong></span><span><small>CONTRACT</small><strong>VC-DR-CIC-001</strong></span></div><dl><div><dt>TRACEABILITY</dt><dd>Migration Starter Package → Validation evidence → ${validationObject.title}.</dd></div><div><dt>GOVERNANCE CONDITION</dt><dd>Report ownership and change authority remain required before cutover.</dd></div></dl></div>`;
+    renderWorkObjects(); return;
+  }
   const engineeringObject = engineeringWorkObjects.find((item) => item.id === id && state.engineeringWorkObjectIds.has(item.id));
   if (engineeringObject) {
     state.selectedHqAgent = null;
@@ -1361,6 +1605,17 @@ function resetHqState() {
   state.engineeringWorkObjectIds = new Set();
   state.selectedArtifactId = null;
   state.migrationPackage = createMigrationPackage();
+  state.validationEntered = false;
+  state.validationStatus = "idle";
+  state.validationStep = -1;
+  state.validationCheckStatuses = new Map();
+  state.validationWorkObjectIds = new Set();
+  state.validationRun = createValidationRun();
+  state.correctionProposal = createCorrectionProposal();
+  state.correctedArtifactVersion = "v1";
+  state.regressionTestAttached = false;
+  state.rerunStep = -1;
+  state.validationReport = null;
   const floor = $("#hq-floor");
   floor.classList.remove("is-handing-off", "is-handoff-complete", "is-collaboration-ready", "is-workspace-transition");
   floor.removeAttribute("data-workspace-step");
@@ -1402,6 +1657,19 @@ function resetHqState() {
   $("#validation-handoff").hidden = true;
   $("#engineering-inspector").innerHTML = `<p class="eyebrow">ENGINEERING INTENT / GOVERNED INPUT</p><h3>Inspect the contract before generation</h3><p>Artifacts are not generated until the Mission Commander explicitly authorizes the Migration Starter Package.</p>`;
   $$("[data-engineering-action]").forEach((button) => button.classList.remove("is-selected"));
+  $("#validation-workspace").hidden = true;
+  $("#validation-workspace").classList.remove("is-entering", "is-exception");
+  $("#validation-check-list").classList.remove("is-validating", "is-rerunning");
+  $("#validation-check-list").innerHTML = "";
+  $("#validation-contract-fields").innerHTML = "";
+  $("#validation-work-objects").innerHTML = "";
+  $("#validation-failure").hidden = true;
+  $("#correction-proposal").hidden = true;
+  $("#targeted-rerun").hidden = true;
+  $("#executive-handoff").hidden = true;
+  $("#validation-inspector").innerHTML = `<p class="eyebrow">INDEPENDENT QUALITY GATE / AWAITING AUTHORIZATION</p><h3>Validation has not started</h3><p>Inspect the Validation Contract, then explicitly run the seven deterministic checks.</p>`;
+  $("#correction-decision-status").innerHTML = "";
+  $$("[data-validation-action]").forEach((button) => button.classList.remove("is-selected"));
 }
 
 function resetDemo() {
@@ -1467,7 +1735,15 @@ function init() {
   $("#artifact-list").addEventListener("click", (event) => { const artifact = event.target.closest("[data-artifact-id]"); if (artifact) artifactInspector(artifact.dataset.artifactId); });
   $("#engineering-work-objects").addEventListener("click", (event) => { const object = event.target.closest("[data-engineering-object]"); if (object) selectWorkObject(object.dataset.engineeringObject); });
   $("#engineering-actions").addEventListener("click", (event) => { const action = event.target.closest("[data-engineering-action]"); if (action) handleEngineeringAction(action.dataset.engineeringAction); });
-  $("#continue-validation").addEventListener("click", () => { $("#validation-boundary").textContent = "Validation Workspace is the Version 0.8 boundary; validation has not run."; });
+  $("#continue-validation").addEventListener("click", openValidationWorkspace);
+  $("#run-validation").addEventListener("click", startIndependentValidation);
+  $("#validation-check-list").addEventListener("click", (event) => { const check = event.target.closest("[data-validation-check]"); if (check) inspectValidationCheck(check.dataset.validationCheck); });
+  $("#investigate-failure").addEventListener("click", investigateFailure);
+  $("#correction-proposal").addEventListener("click", (event) => { const decision = event.target.closest("[data-correction-decision]"); if (decision) handleCorrectionDecision(decision.dataset.correctionDecision); if (event.target.closest("#return-correction-gate")) { state.validationStatus = "correction-proposed"; state.correctionProposal.approvalStatus = "Pending"; $("#correction-decision-status").textContent = "Returned to the governed correction gate."; renderHqState(); } });
+  $("#rerun-impacted").addEventListener("click", startTargetedRerun);
+  $("#validation-work-objects").addEventListener("click", (event) => { const object = event.target.closest("[data-validation-object]"); if (object) selectWorkObject(object.dataset.validationObject); });
+  $("#validation-actions").addEventListener("click", (event) => { const action = event.target.closest("[data-validation-action]"); if (action) handleValidationAction(action.dataset.validationAction); });
+  $("#continue-executive").addEventListener("click", () => { $("#executive-boundary").textContent = "Executive Workspace is the Version 0.9 boundary; no roadmap has been generated."; });
   $("#reset-demo").addEventListener("click", resetDemo);
   $$('[data-hq-agent]').forEach((persona) => persona.addEventListener("click", () => selectHqAgent(persona.dataset.hqAgent)));
   $("#hq-context-panel").addEventListener("click", (event) => {
@@ -1509,6 +1785,10 @@ function init() {
   });
   $("#engineering-sequence").addEventListener("animationend", (event) => {
     if (event.target === event.currentTarget && event.animationName === "engineering-generation-step") completeEngineeringStep();
+  });
+  $("#validation-check-list").addEventListener("animationend", (event) => {
+    if (event.target === event.currentTarget && event.animationName === "validation-check-step") completeValidationStep();
+    if (event.target === event.currentTarget && event.animationName === "validation-rerun-step") completeTargetedRerunStep();
   });
   const initialHash = location.hash.slice(1);
   navigate(["portfolio", "decision", "factory"].includes(initialHash) ? initialHash : "portfolio", false);
