@@ -1,4 +1,4 @@
-# Modernization AI Lab — Mission Control 0.6
+# Modernization AI Lab — Mission Control 0.7
 
 Mission Control is a standalone visual and interaction prototype for exploring
 the Modernization AI Lab as three connected environments:
@@ -7,10 +7,10 @@ the Modernization AI Lab as three connected environments:
 2. Agent Decision Room
 3. Codex Modernization Factory
 
-Version 0.6 preserves the complete Mission Control, Modernization HQ, Living
-Workspace, and Shared Decision Room journeys. It extends the shared Customer
-Intelligence Capability case with visible decision propagation attached to
-`DR-CIC-001`.
+Version 0.7 preserves the complete Mission Control, Modernization HQ, Living
+Workspace, Shared Decision Room, and visible propagation journeys. It extends
+the shared Customer Intelligence Capability case with a governed Engineering
+Workspace attached to `DR-CIC-001`.
 
 After Assessment Ready, the user can start a deterministic specialist sequence:
 Portfolio Intelligence hands off evidence, Architecture attaches its review,
@@ -29,7 +29,16 @@ in a deterministic cause-and-effect sequence. Five revised work objects appear
 progressively. Only the Customer Service Portal changes waves, while the
 Customer Analytics Warehouse remains in Wave 1 and Finance Warehouse receives
 a protected boundary. After revised-plan approval, the case ends at Engineering
-Ready; Version 0.6 does not generate engineering artifacts.
+Ready.
+
+The Engineering Workspace first exposes a provider-neutral Engineering
+Contract containing the approved Oracle-to-BigQuery strategy, Human Constraint,
+protected dependency, controls, validation expectations, and governance action.
+Generation starts only after an explicit click. Six mocked artifacts then
+appear progressively with purpose, lineage, dependencies, governance condition,
+validation status, preview, and next action. A separate package-assembly action
+moves the case to Validation Ready with the Validation Specialist as owner.
+Version 0.7 does not execute validation.
 
 No recurring timer, continuous loop, backend, or live model call is used.
 

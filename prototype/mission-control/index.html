@@ -6,8 +6,8 @@
     <meta name="description" content="Standalone Modernization AI Lab mission-control prototype.">
     <title>Modernization AI Lab — Mission Control</title>
     <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='4' fill='%230b1720'/%3E%3Cpath d='M7 23V15h4v8m3 0V10h4v13m3 0V6h4v17' stroke='%234bd6c2' stroke-width='2'/%3E%3C/svg%3E">
-    <link rel="stylesheet" href="styles.css?v=0.6">
-    <script src="script.js?v=0.6" defer></script>
+    <link rel="stylesheet" href="styles.css?v=0.7">
+    <script src="script.js?v=0.7" defer></script>
   </head>
   <body>
     <svg class="icon-library" aria-hidden="true">
@@ -22,7 +22,7 @@
       <header class="topbar">
         <a class="brand" href="#portfolio" data-view-link="portfolio" aria-label="Mission Control home">
           <span class="brand-mark" aria-hidden="true"><span></span><span></span><span></span></span>
-          <span><strong>MODERNIZATION AI LAB</strong><small>CONNECTED EXPERIENCES / V0.6</small></span>
+          <span><strong>MODERNIZATION AI LAB</strong><small>CONNECTED EXPERIENCES / V0.7</small></span>
         </a>
         <div class="experience-switch" role="group" aria-label="Experience switch">
           <button class="is-active" type="button" data-experience-switch="mission-control" aria-pressed="true">Mission Control</button>
@@ -62,6 +62,7 @@
           <div><small>CURRENT OWNER</small><strong id="mission-case-owner">PORTFOLIO INTELLIGENCE</strong></div>
           <div><small>BLOCKER</small><strong id="mission-case-blocker">NONE</strong></div>
           <div><small>NEXT</small><strong id="mission-case-next">BEGIN DISCOVERY</strong></div>
+          <div><small>GENERATED ARTIFACTS</small><strong id="mission-artifact-count">0</strong></div>
           <button type="button" data-case-action="inspect">Inspect Case</button>
           <button type="button" data-case-action="hq">Switch to Modernization HQ</button>
         </section>
@@ -239,12 +240,13 @@
 
       <section class="hq-experience" id="hq-experience" data-experience-panel="hq" aria-labelledby="hq-title" hidden>
         <header class="hq-header">
-          <div><p class="eyebrow">VERSION 0.6 / VISIBLE DECISION PROPAGATION</p><h1 id="hq-title">Modernization HQ</h1><p>Watch one governed human decision visibly revise strategy, architecture, risk, sequencing, and controls.</p></div>
+          <div><p class="eyebrow">VERSION 0.7 / ENGINEERING WORKSPACE</p><h1 id="hq-title">Modernization HQ</h1><p>Watch an approved modernization decision become a governed, validation-ready engineering package.</p></div>
           <div class="hq-stage-strip" aria-label="Current HQ workflow context">
             <span><small>WORKFLOW STAGE</small><strong id="hq-workflow-stage">PORTFOLIO UNVERIFIED</strong></span>
             <span><small>SELECTED CAPABILITY</small><strong id="hq-selected-capability">AWAITING FORMATION</strong></span>
             <span><small>ACTIVE SPECIALISTS</small><strong id="hq-active-count">0</strong></span>
             <span><small>NEXT ACTION</small><strong id="hq-next-action">BEGIN DISCOVERY IN MISSION CONTROL</strong></span>
+            <span><small>GENERATED ARTIFACTS</small><strong id="hq-artifact-count">0 / 6</strong></span>
           </div>
         </header>
 
@@ -323,6 +325,28 @@
           <section class="engineering-handoff" id="engineering-handoff" hidden aria-live="polite"><div><p class="eyebrow">CASE / ENGINEERING READY</p><h3>Modernization Engineer now owns DR-CIC-001</h3><p>Next action: Generate Migration Starter Package.</p></div><button class="primary-action" id="continue-engineering" type="button">Continue to Engineering Workspace</button><small id="engineering-boundary">Version 0.7 will activate engineering generation.</small></section>
         </section>
 
+        <section class="engineering-workspace" id="engineering-workspace" hidden aria-labelledby="engineering-workspace-title">
+          <header class="engineering-header">
+            <div><p class="eyebrow">CODEX ENGINEERING LAB / DR-CIC-001</p><h2 id="engineering-workspace-title">Oracle-to-BigQuery Engineering Workspace</h2><p>Modernization Engineer <span>Powered by Codex</span> · governed inputs before generated artifacts.</p></div>
+            <div class="engineering-command"><small>CASE STATUS</small><strong id="engineering-status">ENGINEERING IN PROGRESS</strong><span id="engineering-owner">MODERNIZATION ENGINEER</span><button class="primary-action" id="generate-package" type="button">Generate Migration Starter Package</button></div>
+          </header>
+
+          <section class="engineering-contract" id="engineering-contract" aria-labelledby="engineering-contract-title"><div class="workspace-section-heading"><span>PERSISTENT ENGINEERING CONTRACT</span><strong id="engineering-contract-title">EC-DR-CIC-001</strong></div><div id="engineering-contract-fields"></div><div class="contract-trace">Human Constraint → Revised Architecture → Revised Wave Plan → Risk-Control Plan → Approved Revised Plan</div></section>
+
+          <div class="engineering-sequence" id="engineering-sequence" data-engineering-step="-1"><div class="engineering-sequence-status"><small>VISIBLE GENERATION SEQUENCE</small><strong id="engineering-sequence-label">AWAITING EXPLICIT GENERATION</strong></div><div id="engineering-sequence-steps"></div></div>
+
+          <section class="engineering-queue" aria-labelledby="engineering-queue-title"><div class="workspace-section-heading"><span>ENGINEERING QUEUE</span><strong id="engineering-queue-title">MIGRATION STARTER PACKAGE</strong></div><div id="engineering-queue-lanes"></div><p>Governance prerequisite before cutover: resolve ownership and change authority for twelve dependent finance reports.</p></section>
+
+          <div class="engineering-grid">
+            <section class="artifact-board" aria-labelledby="artifact-board-title"><div class="workspace-section-heading"><span>GENERATED ARTIFACTS</span><strong id="artifact-board-title"><span id="artifact-count">0</span> / 6</strong></div><div id="artifact-list"></div></section>
+            <section class="engineering-objects" aria-labelledby="engineering-objects-title"><div class="workspace-section-heading"><span>ENGINEERING WORK OBJECTS</span><strong id="engineering-objects-title">ATTACHED TO DR-CIC-001</strong></div><div id="engineering-work-objects"></div></section>
+          </div>
+
+          <div class="engineering-actions" id="engineering-actions" aria-label="Engineering workspace actions"><button type="button" data-engineering-action="contract">Inspect Engineering Contract</button><button type="button" data-engineering-action="lineage">Show Artifact Lineage</button><button type="button" data-engineering-action="decision">Show Source Decision</button><button type="button" data-engineering-action="constraint">Show Applied Constraint</button><button type="button" data-engineering-action="dependencies">Show Dependencies</button><button type="button" data-engineering-action="sql">Compare Oracle and BigQuery SQL</button><button type="button" data-engineering-action="validation">Review Validation Coverage</button><button type="button" data-engineering-action="governance">Review Governance Prerequisite</button><button type="button" data-engineering-action="assemble">Assemble Package</button><button type="button" data-engineering-action="revised">Return to Revised Plan</button><button type="button" data-case-action="mission">Return to Mission Control</button></div>
+          <section class="engineering-inspector" id="engineering-inspector" aria-live="polite"><p class="eyebrow">ENGINEERING INTENT / GOVERNED INPUT</p><h3>Inspect the contract before generation</h3><p>Artifacts are not generated until the Mission Commander explicitly authorizes the Migration Starter Package.</p></section>
+          <section class="validation-handoff" id="validation-handoff" hidden aria-live="polite"><div><p class="eyebrow">MIGRATION STARTER PACKAGE / VALIDATION READY</p><h3>Six generated artifacts are ready for independent validation</h3><p>Validation Specialist owns DR-CIC-001. Next action: Run Independent Validation.</p><small>Governance prerequisite remains open before cutover.</small></div><button class="primary-action" id="continue-validation" type="button">Continue to Validation Workspace</button><span id="validation-boundary">Version 0.8 activates independent validation.</span></section>
+        </section>
+
         <div class="hq-layout">
           <div class="hq-floor" id="hq-floor" aria-label="Modernization HQ floor plan">
             <section class="hq-zone zone-portfolio is-open" data-zone="portfolio" aria-labelledby="zone-portfolio-title">
@@ -363,7 +387,7 @@
               <button class="hq-persona wave-persona" type="button" data-hq-agent="agent-05" aria-pressed="false"><span class="persona-figure wave-figure" aria-hidden="true"><i></i><b></b></span><span class="persona-copy"><strong>Wave Planning Specialist</strong><small>Future sequencing lead</small><em data-hq-state>IDLE</em><span data-hq-message>Waiting for the planning stage.</span></span></button>
             </section>
 
-            <section class="hq-zone zone-codex is-locked" data-zone="codex" aria-labelledby="zone-codex-title"><div class="zone-lock">FUTURE STAGE</div><div class="zone-heading"><span>06 / LOCKED LAB</span><h2 id="zone-codex-title">Codex Engineering Lab</h2><small>Migration asset generation</small></div><button class="hq-persona" type="button" data-hq-agent="agent-06" aria-pressed="false"><span class="persona-figure codex-figure" aria-hidden="true"><i></i><b></b></span><span class="persona-copy"><strong>Codex Modernization Engineer</strong><small>Migration engineering</small><em data-hq-state>LOCKED</em><span data-hq-message>Available in a future stage.</span></span></button></section>
+            <section class="hq-zone zone-codex is-locked" data-zone="codex" aria-labelledby="zone-codex-title"><div class="zone-lock">FUTURE STAGE</div><div class="zone-heading"><span>06 / ENGINEERING LAB</span><h2 id="zone-codex-title">Codex Engineering Lab</h2><small>Migration asset generation</small></div><button class="hq-persona" type="button" data-hq-agent="agent-06" aria-pressed="false"><span class="persona-figure codex-figure" aria-hidden="true"><i></i><b></b></span><span class="persona-copy"><strong>Modernization Engineer</strong><small>Powered by Codex</small><em data-hq-state>LOCKED</em><span data-hq-message>Available after revised-plan approval.</span></span></button></section>
             <section class="hq-zone zone-validation is-locked" data-zone="validation" aria-labelledby="zone-validation-title"><div class="zone-lock">FUTURE STAGE</div><div class="zone-heading"><span>07 / LOCKED LAB</span><h2 id="zone-validation-title">Validation Lab</h2><small>Controls and reconciliation</small></div><button class="hq-persona" type="button" data-hq-agent="agent-07" aria-pressed="false"><span class="persona-figure validation-figure" aria-hidden="true"><i></i><b></b></span><span class="persona-copy"><strong>Validation Specialist</strong><small>Quality and controls</small><em data-hq-state>LOCKED</em><span data-hq-message>Available in a future stage.</span></span></button></section>
             <section class="hq-zone zone-executive is-locked" data-zone="executive" aria-labelledby="zone-executive-title"><div class="zone-lock">FUTURE STAGE</div><div class="zone-heading"><span>08 / LOCKED ROOM</span><h2 id="zone-executive-title">Executive Briefing Room</h2><small>Roadmap and executive narrative</small></div><button class="hq-persona" type="button" data-hq-agent="agent-08" aria-pressed="false"><span class="persona-figure executive-figure" aria-hidden="true"><i></i><b></b></span><span class="persona-copy"><strong>Executive Advisor</strong><small>Executive decision support</small><em data-hq-state>LOCKED</em><span data-hq-message>Available in a future stage.</span></span></button></section>
           </div>

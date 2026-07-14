@@ -19,7 +19,7 @@ const agents = [
   { id: "agent-03", name: "Business Value Agent", code: "BV", role: "Outcome framing", angle: 0, mandate: ["Connect products to business outcomes", "Explain Python-calculated value signals", "Identify value-realization dependencies"], evidence: "Business profile and calculated scores", boundary: "Does not invent financial benefits" },
   { id: "agent-04", name: "Risk & Governance Agent", code: "RG", role: "Control assurance", angle: 45, mandate: ["Classify risk and control needs", "Identify approval checkpoints", "Preserve human accountability"], evidence: "Risk, criticality, and policy signals", boundary: "High-risk decisions require approval" },
   { id: "agent-05", name: "Wave Planning Agent", code: "WP", role: "Sequence design", angle: 90, mandate: ["Sequence modernization waves", "Balance value, complexity, and risk", "Replan when constraints change"], evidence: "Priorities, dependencies, constraints", boundary: "Uses deterministic score inputs" },
-  { id: "agent-06", name: "Codex Migration Engineer", code: "CM", role: "Asset conversion", angle: 135, mandate: ["Convert source implementation assets", "Generate target starter artifacts", "Record assumptions and review items"], evidence: "SQL, ETL, mappings, metadata", boundary: "Flags ambiguous conversions" },
+  { id: "agent-06", name: "Modernization Engineer", code: "ME", role: "Powered by Codex", angle: 135, mandate: ["Convert governed engineering intent", "Generate target starter artifacts", "Record lineage and review items"], evidence: "Contract, SQL, mappings, metadata", boundary: "Flags ambiguous conversions" },
   { id: "agent-07", name: "Validation Agent", code: "VA", role: "Quality controls", angle: 180, mandate: ["Run structural and behavioral checks", "Reconcile expected control totals", "Publish exceptions and evidence"], evidence: "Source and target validation results", boundary: "Cannot waive failed controls" },
   { id: "agent-08", name: "Executive Advisor", code: "EX", role: "Decision narrative", angle: 225, mandate: ["Synthesize decision-ready findings", "Explain tradeoffs and confidence", "Prepare executive handoffs"], evidence: "All governed specialist outputs", boundary: "Explains scores; never creates them" }
 ];
@@ -39,7 +39,7 @@ const hqSpecialists = {
   "agent-03": { title: "Business Strategist", role: "Value and outcome lead", zone: "Business Strategy Studio", active: true, evidence: "Customer Service Portal has high business importance and Product Telemetry has high future strategic value.", responsibility: "I connect the combined initiative to customer outcomes and measurable enterprise value.", concern: "Separating the three products would fragment value realization across multiple delivery tracks.", perspective: "I favor one initiative because the business outcome spans all three products." },
   "agent-04": { title: "Risk & Governance Specialist", role: "Control and approval lead", zone: "Risk & Governance Center", active: true, evidence: "Evidence coverage is complete for the three capability products; Finance ownership remains conflicted.", responsibility: "I preserve accountable decisions, surface unresolved controls, and define human approval boundaries.", concern: "The reporting dependency must remain explicit in every downstream decision record.", perspective: "I allow assessment to proceed while keeping the ownership conflict as a governed exception." },
   "agent-05": { title: "Wave Planning Specialist", role: "Constraint propagation owner", zone: "Shared Decision Room", active: true, evidence: "The six-month finance-report freeze is attached to DR-CIC-001.", responsibility: "I propagate governed constraints through strategy, timeline, cost, risk, and wave sequencing.", concern: "The portal must follow the warehouse without moving unaffected products.", perspective: "I revise only plan elements causally affected by the Human Constraint." },
-  "agent-06": { title: "Codex Modernization Engineer", role: "Migration engineering", zone: "Codex Engineering Lab", active: false },
+  "agent-06": { title: "Modernization Engineer", role: "Powered by Codex", zone: "Codex Engineering Lab", active: true, evidence: "The Engineering Contract contains the approved strategy, protected dependency, controls, and validation expectations.", responsibility: "I turn governed engineering intent into inspectable migration artifacts.", concern: "Report ownership must be confirmed before cutover, but it does not block package generation.", perspective: "Every generated file must explain why it exists and what must validate it." },
   "agent-07": { title: "Validation Specialist", role: "Quality and controls", zone: "Validation Lab", active: false },
   "agent-08": { title: "Executive Advisor", role: "Constraint impact explanation", zone: "Executive Briefing Room", active: true, evidence: "The revised plan records a three-month extension, eleven-percent cost increase, and thirty-four-percent risk reduction.", responsibility: "I explain visible decision consequences and preserve traceability to DR-CIC-001.", concern: "Ownership validation remains open after the protected boundary is created.", perspective: "The revised plan trades time and cost for lower disruption and explicit governance." }
 };
@@ -79,6 +79,33 @@ const propagationWorkObjects = [
   { id: "impact-summary", title: "Constraint Impact Summary", owner: "Executive Advisor", releaseAt: 7, finding: "Seven-month staged plan, eleven-percent cost increase, and thirty-four-percent risk reduction." }
 ];
 
+const engineeringContract = {
+  id: "EC-DR-CIC-001", caseId: "DR-CIC-001", approvedStrategy: "Staged replatforming", sourcePlatform: "Oracle Customer Analytics Warehouse", targetPlatform: "Google BigQuery",
+  migrationStages: ["Stage 1 · Compatibility layer and six-week dual run", "Stage 2 · BigQuery migration after finance-report decoupling"],
+  humanConstraints: ["Finance reports must remain unchanged for six months"], protectedDependencies: ["Finance Warehouse", "Twelve dependent finance reports"],
+  engineeringControls: ["Compatibility views", "Report-preservation tests", "Dual-run reconciliation", "Executive-metric regression tests", "Ownership and change-authority confirmation before cutover"],
+  validationExpectations: ["Schema compatibility", "Row-count reconciliation", "Null-behaviour equivalence", "Aggregate equivalence", "Date-logic equivalence", "Finance-report preservation", "Representative-query comparison"],
+  governanceActions: ["Resolve ownership and change authority for twelve reports"], sourceEvidence: ["Human Constraint", "Revised Architecture", "Revised Wave Plan", "Risk-Control Plan", "Approved Revised Plan"], approvalReference: "Mission Commander approval / DR-CIC-001 / V0.6"
+};
+
+const engineeringArtifacts = [
+  { id: "target-schema", filename: "target_schema.sql", type: "BigQuery DDL", owner: "Modernization Engineer", purpose: "Create the target BigQuery schema.", sourceDecision: "Approved target architecture", sourceConstraint: "Preserve finance-report contracts", sourceEvidence: "Revised Architecture", dependencies: "Engineering Contract", governanceCondition: "Ownership confirmation before cutover", validationStatus: "Not run", nextAction: "Validate schema compatibility", preview: `<pre><code>CREATE TABLE customer_analytics.customer_metrics (\n  customer_id STRING NOT NULL,\n  metric_date DATE,\n  service_cases INT64,\n  revenue NUMERIC\n)\nPARTITION BY metric_date\nCLUSTER BY customer_id;</code></pre><p>Partitioned by metric date and clustered by customer identifier.</p>` },
+  { id: "source-mapping", filename: "source_target_mapping.csv", type: "Field mapping", owner: "Modernization Engineer", purpose: "Map Oracle fields to BigQuery targets and transformations.", sourceDecision: "Approved staged migration strategy", sourceConstraint: "Finance semantics remain unchanged", sourceEvidence: "Oracle source metadata", dependencies: "target_schema.sql", governanceCondition: "Mapping changes require governed approval", validationStatus: "Not run", nextAction: "Review mapping compatibility", preview: `<div class="preview-table"><span>ORACLE FIELD</span><span>BIGQUERY FIELD</span><span>RULE</span><span>STATUS</span><span>CUSTOMER_ID</span><span>customer_id</span><span>TO_CHAR</span><span>Compatible</span><span>METRIC_DT</span><span>metric_date</span><span>DATE()</span><span>Review</span></div>` },
+  { id: "converted-sql", filename: "customer_metrics_converted.sql", type: "Converted SQL", owner: "Modernization Engineer", purpose: "Translate representative Oracle customer metrics to BigQuery SQL.", sourceDecision: "Compatibility-first migration", sourceConstraint: "Preserve metric results for six months", sourceEvidence: "Representative Oracle SQL", dependencies: "target_schema.sql · source_target_mapping.csv", governanceCondition: "Finance metric behavior cannot change", validationStatus: "Not run", nextAction: "Compare representative query results", preview: `<div class="sql-compare"><div><small>ORACLE / BEFORE</small><pre><code>SELECT NVL(SUM(amount),0)\nFROM customer_metrics\nWHERE TRUNC(metric_dt)=:run_dt;</code></pre></div><div><small>BIGQUERY / AFTER</small><pre><code>SELECT IFNULL(SUM(amount),0)\nFROM customer_metrics\nWHERE DATE(metric_date)=@run_date;</code></pre></div></div><p>Null-handling equivalence requires independent validation.</p>` },
+  { id: "reconciliation-tests", filename: "reconciliation_tests.py", type: "Pytest controls", owner: "Modernization Engineer", purpose: "Validate source-versus-target structures and representative metrics.", sourceDecision: "Six-week dual-run control", sourceConstraint: "Finance reports must remain unchanged", sourceEvidence: "Validation thresholds and risk controls", dependencies: "All SQL and mapping artifacts", governanceCondition: "Failures block cutover readiness", validationStatus: "Not run", nextAction: "Run independent validation", preview: `<pre><code>def test_schema_compatibility(): ...\ndef test_row_count_reconciliation(): ...\ndef test_aggregate_equivalence(): ...\ndef test_null_behaviour(): ...</code></pre>` },
+  { id: "dual-run-plan", filename: "dual_run_plan.md", type: "Operating plan", owner: "Modernization Engineer", purpose: "Define the six-week parallel operating period.", sourceDecision: "Approved staged replatform", sourceConstraint: "Six-month finance-report freeze", sourceEvidence: "Risk-Control Plan", dependencies: "reconciliation_tests.py", governanceCondition: "Daily exceptions require escalation", validationStatus: "Not run", nextAction: "Approve dual-run exit criteria", preview: `<ol><li>Weeks 1–2: baseline and daily reconciliation</li><li>Weeks 3–4: issue remediation and metric review</li><li>Weeks 5–6: stability evidence and exit decision</li></ol><p>Escalate any finance-report variance; exit only after agreed thresholds pass.</p>` },
+  { id: "cutover-checklist", filename: "cutover_checklist.md", type: "Governance checklist", owner: "Modernization Engineer", purpose: "Define cutover prerequisites, approvals, rollback, and ownership confirmation.", sourceDecision: "Approved revised plan", sourceConstraint: "Protected Finance Warehouse boundary", sourceEvidence: "Remaining governance actions", dependencies: "All five prior artifacts", governanceCondition: "Ownership and change authority required", validationStatus: "Not run", nextAction: "Complete final validation gate", preview: `<ul><li>Confirm report ownership and change authority</li><li>Obtain finance-report preservation approval</li><li>Verify rollback readiness</li><li>Pass final independent validation gate</li></ul>` }
+];
+
+const engineeringSequence = ["Contract Received", "Engineering Plan Created", "Target Schema Generated", "Mapping Generated", "Converted SQL Generated", "Tests Generated", "Dual-Run Plan Generated", "Cutover Checklist Generated", "Package Assembled", "Validation Handoff Ready"];
+const engineeringWorkObjects = [
+  { id: "engineering-contract", title: "Engineering Contract", releaseAt: -1 }, { id: "engineering-plan", title: "Engineering Plan", releaseAt: 1 }, { id: "target-schema-object", title: "Target Schema", releaseAt: 2 }, { id: "mapping-object", title: "Source-to-Target Mapping", releaseAt: 3 }, { id: "converted-sql-object", title: "Converted SQL", releaseAt: 4 }, { id: "test-suite-object", title: "Reconciliation Test Suite", releaseAt: 5 }, { id: "dual-run-object", title: "Dual-Run Plan", releaseAt: 6 }, { id: "cutover-object", title: "Cutover Checklist", releaseAt: 7 }, { id: "package-object", title: "Migration Starter Package", releaseAt: 8 }
+];
+
+function createMigrationPackage() {
+  return { caseId: "DR-CIC-001", contractId: "EC-DR-CIC-001", generatedArtifacts: [], artifactDependencies: {}, lineageReferences: ["DR-CIC-001", "Human Constraint", "Approved Revised Plan"], generationStatus: "Not started", validationStatus: "Not run", governancePrerequisites: ["Resolve ownership and change authority for twelve dependent reports before cutover"], nextAction: "Generate Migration Starter Package" };
+}
+
 const state = {
   view: "portfolio",
   productId: null,
@@ -110,6 +137,13 @@ const state = {
   propagationStep: -1,
   propagatedNodeIds: new Set(),
   propagationWorkObjectIds: new Set(),
+  engineeringEntered: false,
+  engineeringStatus: "idle",
+  engineeringStep: -1,
+  generatedArtifactIds: new Set(),
+  engineeringWorkObjectIds: new Set(),
+  selectedArtifactId: null,
+  migrationPackage: createMigrationPackage(),
   productStates: new Map(),
   agentStates: new Map()
 };
@@ -477,6 +511,10 @@ function assessAsInitiative() {
 }
 
 function hqNextAction() {
+  if (state.engineeringStatus === "validation-ready") return "RUN INDEPENDENT VALIDATION";
+  if (state.engineeringStatus === "package-generated") return "ASSEMBLE MIGRATION PACKAGE";
+  if (state.engineeringStatus === "generating") return "GENERATING MIGRATION STARTER PACKAGE";
+  if (state.engineeringStatus === "contract-review") return "GENERATE MIGRATION STARTER PACKAGE";
   if (state.propagationStatus === "approved") return "GENERATE MIGRATION STARTER PACKAGE";
   if (state.propagationStatus === "complete") return "APPROVE REVISED PLAN";
   if (state.propagationStatus === "running") return "PROPAGATING HUMAN CONSTRAINT";
@@ -497,6 +535,10 @@ function hqNextAction() {
 }
 
 function currentCaseSnapshot() {
+  if (state.engineeringStatus === "validation-ready") return { stage: "Validation Ready", owner: "Validation Specialist", ownerId: "agent-07", task: "Migration Starter Package ready", blocker: "Governance prerequisite before cutover", next: "Run Independent Validation", evidence: `${state.generatedArtifactIds.size} generated artifacts + Engineering Contract`, recommendation: "MIGRATION STARTER PACKAGE" };
+  if (state.engineeringStatus === "package-generated") return { stage: "Engineering Package Generated", owner: "Modernization Engineer", ownerId: "agent-06", task: "Assemble validation handoff", blocker: "Governance prerequisite before cutover", next: "Assemble Migration Starter Package", evidence: `${state.generatedArtifactIds.size} generated artifacts`, recommendation: "PACKAGE GENERATED / NOT VALIDATED" };
+  if (state.engineeringStatus === "generating") { const label = engineeringSequence[state.engineeringStep]; return { stage: "Engineering In Progress", owner: "Modernization Engineer", ownerId: "agent-06", task: label, blocker: "None", next: engineeringSequence[state.engineeringStep + 1] || "Assemble package", evidence: `${state.generatedArtifactIds.size} of 6 artifacts generated`, recommendation: "ENGINEERING PACKAGE IN PROGRESS" }; }
+  if (state.engineeringStatus === "contract-review") return { stage: "Engineering In Progress", owner: "Modernization Engineer", ownerId: "agent-06", task: "Review Engineering Contract", blocker: "None", next: "Generate Migration Starter Package", evidence: "Engineering Contract attached", recommendation: "GOVERNED ENGINEERING INTENT" };
   if (state.propagationStatus === "approved") return { stage: "Engineering Ready", owner: "Modernization Engineer", ownerId: "agent-06", task: "Approved revised plan attached", blocker: "None", next: "Generate Migration Starter Package", evidence: "5 revised work objects + Human Constraint", recommendation: "STAGED REPLATFORM APPROVED" };
   if (state.propagationStatus === "complete") return { stage: "Revised Plan Ready", owner: "Mission Commander", ownerId: null, task: "Review propagated plan", blocker: "Revised plan requires human approval", next: "Approve Revised Plan", evidence: "8 propagated impacts + 5 work objects", recommendation: "STAGED REPLATFORM / APPROVAL PENDING" };
   if (state.propagationStatus === "running") { const node = propagationNodes[state.propagationStep]; return { stage: "Decision Propagating", owner: "Wave Planning Specialist", ownerId: "agent-05", task: `Coordinate ${node.label} update with ${node.owner}`, blocker: "None", next: `Propagate to ${propagationNodes[state.propagationStep + 1]?.label || "revised-plan approval"}`, evidence: `${state.propagatedNodeIds.size} of 8 impacts attached`, recommendation: "STAGED REPLATFORM / REVISING" }; }
@@ -533,6 +575,7 @@ function renderMissionCase() {
   $("#mission-case-owner").textContent = snapshot.owner.toUpperCase();
   $("#mission-case-blocker").textContent = snapshot.blocker.toUpperCase();
   $("#mission-case-next").textContent = snapshot.next.toUpperCase();
+  $("#mission-artifact-count").textContent = String(state.generatedArtifactIds.size);
   $("#mission-case-dock").classList.toggle("is-blocked", snapshot.blocker !== "None");
 }
 
@@ -547,11 +590,12 @@ function renderWorkObjects() {
   }).join("") : `<div class="work-object-empty"><strong>WORK OBJECTS NOT YET RELEASED</strong><small>Complete capability assessment to prepare the Evidence Package.</small></div>`;
   if (state.humanConstraintAttached) $("#workspace-work-objects").insertAdjacentHTML("beforeend", `<button class="work-object status-incoming" type="button" data-work-object="constraint"><span class="work-object-sequence">06</span><span><strong>Human Constraint</strong><small>Mission Commander</small></span><em>DR-CIC-001</em><b>ATTACHED</b></button>`);
   propagationWorkObjects.filter((item) => state.propagationWorkObjectIds.has(item.id)).forEach((item, index) => $("#workspace-work-objects").insertAdjacentHTML("beforeend", `<button class="work-object status-complete" type="button" data-work-object="${item.id}"><span class="work-object-sequence">${String(index + 7).padStart(2, "0")}</span><span><strong>${item.title}</strong><small>${item.owner}</small></span><em>DR-CIC-001</em><b>ATTACHED</b></button>`));
+  engineeringWorkObjects.filter((item) => state.engineeringWorkObjectIds.has(item.id)).forEach((item, index) => $("#workspace-work-objects").insertAdjacentHTML("beforeend", `<button class="work-object status-complete" type="button" data-work-object="${item.id}"><span class="work-object-sequence">${String(index + 12).padStart(2, "0")}</span><span><strong>${item.title}</strong><small>${item.id === "engineering-contract" ? "Mission Commander" : "Modernization Engineer"}</small></span><em>DR-CIC-001</em><b>ATTACHED</b></button>`));
 }
 
 function renderWorkQueue() {
   const statuses = ["Incoming", "In Review", "Waiting", "Blocked", "Complete"];
-  const activeQueue = state.propagationStatus === "approved" ? "Complete" : state.propagationStatus === "complete" ? "Waiting" : state.propagationStatus === "running" ? "In Review" : state.decisionStatus === "ready-replanning" ? "Incoming" : state.decisionStatus === "waiting-evidence" ? "Waiting" : state.workspaceStatus === "blocked" ? "Blocked" : state.workspaceStatus === "paused" ? "Waiting" : state.workspaceStatus === "running" ? "In Review" : "Incoming";
+  const activeQueue = state.engineeringStatus === "validation-ready" ? "Complete" : state.engineeringStatus === "package-generated" ? "Waiting" : state.engineeringStatus === "generating" ? "In Review" : state.engineeringStatus === "contract-review" ? "Incoming" : state.propagationStatus === "approved" ? "Complete" : state.propagationStatus === "complete" ? "Waiting" : state.propagationStatus === "running" ? "In Review" : state.decisionStatus === "ready-replanning" ? "Incoming" : state.decisionStatus === "waiting-evidence" ? "Waiting" : state.workspaceStatus === "blocked" ? "Blocked" : state.workspaceStatus === "paused" ? "Waiting" : state.workspaceStatus === "running" ? "In Review" : "Incoming";
   $("#workspace-queue").innerHTML = statuses.map((status) => {
     const items = workspaceWorkObjects.filter((_, index) => workObjectStatus(index) === status);
     const caseHere = activeQueue === status;
@@ -574,7 +618,7 @@ function renderWorkspaceState() {
   $("#case-progress-marker").classList.toggle("is-moving", state.workspaceTransition);
   $("#case-progress-marker").classList.toggle("is-blocked", decisionBlocked);
   $("#case-progress-label").textContent = state.workspaceStage >= 0 ? snapshot.stage.toUpperCase() : state.assessmentReady ? "READY FOR EVIDENCE" : "AWAITING START";
-  $("#workspace-status-line").textContent = state.propagationStatus === "approved" ? "Engineering Ready · Modernization Engineer owns the next action." : state.propagationStatus === "complete" ? "Revised Plan Ready · waiting for Mission Commander approval." : state.propagationStatus === "running" ? `${snapshot.owner} · ${snapshot.task} because the Human Constraint changed the plan.` : state.decisionStatus === "ready-replanning" ? "Ready for Replanning · Human Constraint attached · Wave Planning owns the next action." : state.decisionStatus === "waiting-evidence" ? "Waiting · Portfolio Intelligence owns four targeted evidence requests." : state.decisionStatus === "unresolved" ? "Decision Unresolved · Human Decision Required." : state.workspaceStatus === "blocked" ? "Decision Pending · Waiting for Mission Commander." : state.workspaceStatus === "paused" ? `Paused after the current transition · ${snapshot.owner} retains ownership.` : state.workspaceStatus === "running" ? `${snapshot.owner} · ${snapshot.task}` : state.assessmentReady ? "Assessment Ready · start the visible specialist workflow." : "Form the capability in Mission Control to activate the workspace.";
+  $("#workspace-status-line").textContent = state.engineeringStatus === "validation-ready" ? "Validation Ready · six generated artifacts handed to the Validation Specialist." : state.engineeringStatus === "package-generated" ? "Engineering Package Generated · assembling validation handoff." : state.engineeringStatus === "generating" ? `Modernization Engineer · ${snapshot.task}.` : state.engineeringStatus === "contract-review" ? "Engineering In Progress · inspect the governed contract before generation." : state.propagationStatus === "approved" ? "Engineering Ready · Modernization Engineer owns the next action." : state.propagationStatus === "complete" ? "Revised Plan Ready · waiting for Mission Commander approval." : state.propagationStatus === "running" ? `${snapshot.owner} · ${snapshot.task} because the Human Constraint changed the plan.` : state.decisionStatus === "ready-replanning" ? "Ready for Replanning · Human Constraint attached · Wave Planning owns the next action." : state.decisionStatus === "waiting-evidence" ? "Waiting · Portfolio Intelligence owns four targeted evidence requests." : state.decisionStatus === "unresolved" ? "Decision Unresolved · Human Decision Required." : state.workspaceStatus === "blocked" ? "Decision Pending · Waiting for Mission Commander." : state.workspaceStatus === "paused" ? `Paused after the current transition · ${snapshot.owner} retains ownership.` : state.workspaceStatus === "running" ? `${snapshot.owner} · ${snapshot.task}` : state.assessmentReady ? "Assessment Ready · start the visible specialist workflow." : "Form the capability in Mission Control to activate the workspace.";
   $("#start-workspace").disabled = !state.assessmentReady || state.hqTransition !== "complete" || state.workspaceStatus !== "idle";
   $("#pause-workspace").disabled = state.workspaceStatus !== "running" || state.workspacePauseRequested;
   $("#resume-workspace").disabled = state.workspaceStatus !== "paused";
@@ -584,6 +628,7 @@ function renderWorkspaceState() {
   renderMissionCase();
   renderDecisionRoom();
   renderPropagationWorkspace();
+  renderEngineeringWorkspace();
 }
 
 function positionDetail(key) {
@@ -823,8 +868,155 @@ function approveRevisedPlan() {
   renderHqState();
 }
 
+function renderEngineeringContract() {
+  const fields = [
+    ["CASE ID", engineeringContract.caseId], ["MODERNIZATION STRATEGY", engineeringContract.approvedStrategy], ["SOURCE PLATFORM", engineeringContract.sourcePlatform], ["TARGET PLATFORM", engineeringContract.targetPlatform], ["MIGRATION STAGES", engineeringContract.migrationStages.join(" · ")], ["HUMAN CONSTRAINT", engineeringContract.humanConstraints.join(" · ")], ["PROTECTED DEPENDENCY", engineeringContract.protectedDependencies.join(" · ")], ["REQUIRED CONTROLS", engineeringContract.engineeringControls.join(" · ")], ["VALIDATION EXPECTATIONS", engineeringContract.validationExpectations.join(" · ")], ["REMAINING GOVERNANCE ACTION", engineeringContract.governanceActions.join(" · ")], ["APPROVAL REFERENCE", engineeringContract.approvalReference]
+  ];
+  $("#engineering-contract-fields").innerHTML = fields.map(([label, value]) => `<span><small>${label}</small><strong>${value}</strong></span>`).join("");
+}
+
+function renderEngineeringQueue() {
+  const current = { "contract-review": "Incoming", generating: "Generating", "package-generated": "Review Required", "validation-ready": "Validation Ready" }[state.engineeringStatus] || "Incoming";
+  $("#engineering-queue-lanes").innerHTML = ["Incoming", "Generating", "Review Required", "Validation Ready", "Complete"].map((lane) => `<div class="engineering-queue-lane${current === lane ? " is-current" : ""}"><span><strong>${lane}</strong><small>${current === lane ? "1" : "0"}</small></span>${current === lane ? `<div class="engineering-package-chip"><i></i><span>Migration Starter Package<small>${state.generatedArtifactIds.size} / 6 artifacts</small></span></div>` : ""}</div>`).join("");
+}
+
+function renderEngineeringArtifacts() {
+  const generated = engineeringArtifacts.filter((artifact) => state.generatedArtifactIds.has(artifact.id));
+  $("#artifact-count").textContent = String(generated.length);
+  $("#artifact-list").innerHTML = generated.length ? generated.map((artifact) => `<button class="artifact-card${state.selectedArtifactId === artifact.id ? " is-selected" : ""}" type="button" data-artifact-id="${artifact.id}"><span><small>${artifact.type.toUpperCase()}</small><em>GENERATED</em></span><strong>${artifact.filename}</strong><p>${artifact.purpose}</p><div><small>WHY IT EXISTS</small><span>${artifact.sourceDecision} · ${artifact.sourceConstraint}</span></div><b>VALIDATION / ${artifact.validationStatus.toUpperCase()} · INSPECT ARTIFACT</b></button>`).join("") : `<div class="engineering-empty"><strong>NO ARTIFACTS GENERATED</strong><small>The Engineering Contract is visible; generation still requires explicit authorization.</small></div>`;
+}
+
+function renderEngineeringObjects() {
+  const objects = engineeringWorkObjects.filter((item) => state.engineeringWorkObjectIds.has(item.id));
+  $("#engineering-work-objects").innerHTML = objects.map((item, index) => `<button type="button" data-engineering-object="${item.id}"><span>${String(index + 1).padStart(2, "0")}</span><div><strong>${item.title}</strong><small>DR-CIC-001 · SEQUENCE ${index + 1}</small></div><em>ATTACHED</em></button>`).join("");
+}
+
+function renderEngineeringWorkspace() {
+  const workspace = $("#engineering-workspace");
+  workspace.hidden = !state.engineeringEntered;
+  if (!state.engineeringEntered) return;
+  renderEngineeringContract();
+  $("#engineering-status").textContent = currentCaseSnapshot().stage.toUpperCase();
+  $("#engineering-owner").textContent = currentCaseSnapshot().owner.toUpperCase();
+  $("#generate-package").hidden = state.engineeringStatus !== "contract-review";
+  const completeThrough = state.engineeringStatus === "validation-ready" ? 9 : state.engineeringStatus === "package-generated" ? 8 : state.engineeringStep - 1;
+  $("#engineering-sequence-steps").innerHTML = engineeringSequence.map((label, index) => `<span class="${index <= completeThrough ? "is-complete" : state.engineeringStatus === "generating" && index === state.engineeringStep ? "is-active" : ""}"><i>${String(index + 1).padStart(2, "0")}</i><strong>${label}</strong></span>`).join("");
+  $("#engineering-sequence-label").textContent = state.engineeringStatus === "contract-review" ? "CONTRACT READY / GENERATION NOT STARTED" : state.engineeringStatus === "generating" ? engineeringSequence[state.engineeringStep].toUpperCase() : state.engineeringStatus === "package-generated" ? "ENGINEERING PACKAGE GENERATED" : "VALIDATION HANDOFF READY";
+  renderEngineeringQueue();
+  renderEngineeringArtifacts();
+  renderEngineeringObjects();
+  $("#validation-handoff").hidden = state.engineeringStatus !== "validation-ready";
+  $$("[data-engineering-action]").forEach((button) => { const action = button.dataset.engineeringAction; button.disabled = action === "assemble" ? state.engineeringStatus !== "package-generated" : !["contract", "decision", "constraint", "governance", "revised"].includes(action) && state.generatedArtifactIds.size === 0; });
+}
+
+function openEngineeringWorkspace() {
+  if (state.propagationStatus !== "approved" || state.engineeringStatus !== "idle") return;
+  state.engineeringEntered = true;
+  state.engineeringStatus = "contract-review";
+  state.engineeringStep = -1;
+  state.engineeringWorkObjectIds.add("engineering-contract");
+  state.agentStates.set("agent-06", "Contract Review");
+  state.migrationPackage.generationStatus = "Contract ready";
+  const lab = $(".zone-codex");
+  lab.classList.remove("is-locked");
+  lab.classList.add("is-open");
+  $(".zone-lock", lab).hidden = true;
+  $("#engineering-workspace").classList.remove("is-entering");
+  void $("#engineering-workspace").offsetWidth;
+  $("#engineering-workspace").classList.add("is-entering");
+  renderHqState();
+  $("#engineering-workspace").scrollIntoView({ behavior: "smooth", block: "start" });
+}
+
+function startEngineeringGeneration() {
+  if (state.engineeringStatus !== "contract-review") return;
+  state.engineeringStatus = "generating";
+  state.engineeringStep = 0;
+  state.migrationPackage.generationStatus = "Generating";
+  state.agentStates.set("agent-06", "Generating");
+  runEngineeringStep();
+}
+
+function runEngineeringStep() {
+  const sequence = $("#engineering-sequence");
+  sequence.dataset.engineeringStep = String(state.engineeringStep);
+  sequence.classList.remove("is-generating");
+  void sequence.offsetWidth;
+  sequence.classList.add("is-generating");
+  renderHqState();
+}
+
+function completeEngineeringStep() {
+  if (state.engineeringStatus !== "generating") return;
+  if (state.engineeringStep === 1) state.engineeringWorkObjectIds.add("engineering-plan");
+  if (state.engineeringStep >= 2 && state.engineeringStep <= 7) {
+    const artifact = engineeringArtifacts[state.engineeringStep - 2];
+    state.generatedArtifactIds.add(artifact.id);
+    state.engineeringWorkObjectIds.add(engineeringWorkObjects[state.engineeringStep].id);
+    state.migrationPackage.generatedArtifacts.push(artifact.filename);
+    state.migrationPackage.artifactDependencies[artifact.filename] = artifact.dependencies;
+  }
+  if (state.engineeringStep === 8) {
+    state.engineeringWorkObjectIds.add("package-object");
+    state.migrationPackage.generationStatus = "Assembled";
+    state.migrationPackage.nextAction = "Prepare validation handoff";
+    state.engineeringStatus = "package-generated";
+    $("#engineering-sequence").classList.remove("is-generating");
+    state.agentStates.set("agent-06", "Package Generated");
+    renderHqState();
+    return;
+  }
+  state.engineeringStep += 1;
+  runEngineeringStep();
+}
+
+function artifactInspector(id) {
+  const artifact = engineeringArtifacts.find((item) => item.id === id && state.generatedArtifactIds.has(item.id));
+  if (!artifact) return;
+  state.selectedArtifactId = id;
+  renderEngineeringArtifacts();
+  $("#engineering-inspector").innerHTML = `<p class="eyebrow">ARTIFACT PREVIEW / ${artifact.type.toUpperCase()}</p><h3>${artifact.filename}</h3><div class="artifact-lineage"><span><small>OWNER</small><strong>${artifact.owner}</strong></span><span><small>PURPOSE</small><strong>${artifact.purpose}</strong></span><span><small>SOURCE DECISION</small><strong>${artifact.sourceDecision}</strong></span><span><small>APPLIED CONSTRAINT</small><strong>${artifact.sourceConstraint}</strong></span><span><small>SOURCE EVIDENCE</small><strong>${artifact.sourceEvidence}</strong></span><span><small>DEPENDENCIES</small><strong>${artifact.dependencies}</strong></span><span><small>GOVERNANCE CONDITION</small><strong>${artifact.governanceCondition}</strong></span><span><small>VALIDATION STATUS</small><strong>${artifact.validationStatus}</strong></span><span><small>NEXT ACTION</small><strong>${artifact.nextAction}</strong></span></div>${artifact.preview}`;
+}
+
+function engineeringActionContent(action) {
+  const selected = engineeringArtifacts.find((item) => item.id === state.selectedArtifactId) || engineeringArtifacts.find((item) => state.generatedArtifactIds.has(item.id));
+  const content = {
+    contract: `<p class="eyebrow">ENGINEERING CONTRACT / EC-DR-CIC-001</p><h3>Governed intent, not a vague migration prompt</h3><p>Codex receives the approved strategy, two migration stages, Human Constraint, protected dependency, five controls, seven validation expectations, and the open governance action.</p>`,
+    lineage: selected ? `<p class="eyebrow">ARTIFACT LINEAGE / ${selected.filename}</p><h3>Why this file exists</h3><p>${selected.sourceDecision} and ${selected.sourceConstraint} triggered this artifact. Evidence: ${selected.sourceEvidence}. Dependency: ${selected.dependencies}. Trace: DR-CIC-001 → EC-DR-CIC-001 → ${selected.filename}.</p>` : "",
+    decision: `<p class="eyebrow">SOURCE DECISION / DR-CIC-001</p><h3>Approved staged replatforming</h3><p>Oracle Customer Analytics Warehouse moves to Google BigQuery through a compatibility layer and six-week dual run before finance-report decoupling.</p>`,
+    constraint: `<p class="eyebrow">APPLIED HUMAN CONSTRAINT</p><h3>Finance reports must remain unchanged for six months</h3><p>This constraint causes compatibility views, preservation tests, dual-run reconciliation, regression controls, and governed cutover conditions.</p>`,
+    dependencies: `<p class="eyebrow">ARTIFACT DEPENDENCIES</p><h3>A structured package, not six unrelated files</h3><p>Schema → mapping → converted SQL → reconciliation tests → dual-run plan → cutover checklist. Each artifact consumes governed outputs from the prior engineering step.</p>`,
+    sql: engineeringArtifacts[2].preview,
+    validation: `<p class="eyebrow">VALIDATION COVERAGE / NOT RUN</p><h3>Seven independent checks required next</h3><p>${engineeringContract.validationExpectations.join(" · ")}. Generated artifacts are validation-ready, not validated.</p>`,
+    governance: `<p class="eyebrow">GOVERNANCE PREREQUISITE / BEFORE CUTOVER</p><h3>Resolve ownership and change authority for twelve reports</h3><p>This issue does not block package generation. It remains attached to DR-CIC-001 and will block final execution readiness later.</p>`
+  };
+  return content[action];
+}
+
+function handleEngineeringAction(action) {
+  if (action === "revised") { $("#propagation-workspace").scrollIntoView({ behavior: "smooth", block: "start" }); return; }
+  if (action === "assemble") { finalizeMigrationPackage(); return; }
+  const content = engineeringActionContent(action);
+  if (content) $("#engineering-inspector").innerHTML = content;
+  $$("[data-engineering-action]").forEach((button) => button.classList.toggle("is-selected", button.dataset.engineeringAction === action));
+}
+
+function finalizeMigrationPackage() {
+  if (state.engineeringStatus !== "package-generated" || state.generatedArtifactIds.size !== 6) return;
+  state.engineeringStep = 9;
+  state.engineeringStatus = "validation-ready";
+  state.migrationPackage.generationStatus = "Complete";
+  state.migrationPackage.validationStatus = "Ready";
+  state.migrationPackage.nextAction = "Run Independent Validation";
+  state.agentStates.set("agent-06", "Handoff Complete");
+  state.agentStates.set("agent-07", "Validation Ready");
+  renderHqState();
+}
+
 function hqAgentMessage(id) {
   const snapshot = currentCaseSnapshot();
+  if (["contract-review", "generating", "package-generated"].includes(state.engineeringStatus) && id === "agent-06") return `${snapshot.task}. All outputs remain attached to EC-DR-CIC-001.`;
+  if (state.engineeringStatus === "validation-ready" && id === "agent-07") return "Migration Starter Package received. Independent validation begins in Version 0.8.";
   if (state.propagationStatus === "running" && state.agentStates.get(id) === "Updating") return `Attaching the ${propagationNodes[state.propagationStep].label} consequence to DR-CIC-001.`;
   if (state.propagationStatus === "running" && snapshot.ownerId === id) return `Updating ${snapshot.task.replace("Update ", "")} because the Human Constraint changed the plan.`;
   if (state.propagationStatus === "complete" && id === "agent-05") return "Five revised work objects attached. Waiting for revised-plan approval.";
@@ -855,6 +1047,7 @@ function renderHqState() {
   const activeCount = ["agent-01", "agent-02", "agent-03", "agent-04", "agent-05", "agent-08"].filter((id) => ["Working", "Investigating", "Reasoning", "Propagating", "Updating"].includes(state.agentStates.get(id))).length;
   $("#hq-active-count").textContent = String(activeCount);
   $("#hq-next-action").textContent = hqNextAction();
+  $("#hq-artifact-count").textContent = `${state.generatedArtifactIds.size} / 6`;
   $("#center-active-case").disabled = !state.capabilityState;
   const caseState = state.workspaceStage >= 0 ? snapshot.stage.toUpperCase() : state.hqCaseLocation === "decision-room" ? "IN SHARED DECISION ROOM" : state.assessmentReady ? "ASSESSMENT READY" : state.capabilityState ? state.capabilityState.toUpperCase() : "AWAITING ASSESSMENT";
   $("#hq-case-state").textContent = caseState;
@@ -868,7 +1061,7 @@ function renderHqState() {
   $$("[data-hq-agent]").forEach((persona) => {
     const id = persona.dataset.hqAgent;
     const specialist = hqSpecialists[id];
-    const personaState = specialist.active || (id === "agent-06" && state.propagationStatus === "approved") ? (state.agentStates.get(id) || "Idle") : "Locked";
+    const personaState = specialist.active || (id === "agent-07" && state.engineeringStatus === "validation-ready") ? (state.agentStates.get(id) || "Idle") : "Locked";
     $("[data-hq-state]", persona).textContent = personaState.toUpperCase();
     $("[data-hq-message]", persona).textContent = hqAgentMessage(id);
     persona.classList.toggle("is-collaborating", state.workspaceStatus === "running" && snapshot.ownerId === id);
@@ -879,6 +1072,10 @@ function renderHqState() {
   executiveZone.classList.toggle("is-locked", !executiveEnabled);
   executiveZone.classList.toggle("is-open", executiveEnabled);
   $(".zone-lock", executiveZone).hidden = executiveEnabled;
+  const codexZone = $(".zone-codex");
+  codexZone.classList.toggle("is-locked", !state.engineeringEntered);
+  codexZone.classList.toggle("is-open", state.engineeringEntered);
+  $(".zone-lock", codexZone).hidden = state.engineeringEntered;
   renderWorkspaceState();
   if (state.selectedHqAgent) renderHqAgentPanel(state.selectedHqAgent);
   else if (state.selectedWorkObjectId) renderWorkObjectPanel(state.selectedWorkObjectId);
@@ -964,6 +1161,14 @@ function renderWorkObjectPanel(id) {
 }
 
 function selectWorkObject(id) {
+  const engineeringObject = engineeringWorkObjects.find((item) => item.id === id && state.engineeringWorkObjectIds.has(item.id));
+  if (engineeringObject) {
+    state.selectedHqAgent = null;
+    state.selectedWorkObjectId = id;
+    $("#hq-context-panel").innerHTML = `<div class="hq-panel-content work-detail"><p class="eyebrow">ENGINEERING WORK OBJECT / DR-CIC-001</p><div class="work-detail-title"><span>✓</span><div><h2>${engineeringObject.title}</h2><p>${engineeringObject.id === "engineering-contract" ? "Mission Commander" : "Modernization Engineer"}</p></div></div><div class="hq-panel-state"><span><small>STATUS</small><strong>ATTACHED</strong></span><span><small>CONTRACT</small><strong>EC-DR-CIC-001</strong></span></div><dl><div><dt>TRACEABILITY</dt><dd>Approved Revised Plan → Engineering Contract → ${engineeringObject.title}.</dd></div><div><dt>VALIDATION</dt><dd>${engineeringObject.id === "package-object" ? "Ready for independent validation." : "Not run."}</dd></div></dl></div>`;
+    renderWorkObjects();
+    return;
+  }
   const propagatedObject = propagationWorkObjects.find((item) => item.id === id && state.propagationWorkObjectIds.has(item.id));
   if (propagatedObject) {
     state.selectedHqAgent = null;
@@ -1149,6 +1354,13 @@ function resetHqState() {
   state.propagationStep = -1;
   state.propagatedNodeIds = new Set();
   state.propagationWorkObjectIds = new Set();
+  state.engineeringEntered = false;
+  state.engineeringStatus = "idle";
+  state.engineeringStep = -1;
+  state.generatedArtifactIds = new Set();
+  state.engineeringWorkObjectIds = new Set();
+  state.selectedArtifactId = null;
+  state.migrationPackage = createMigrationPackage();
   const floor = $("#hq-floor");
   floor.classList.remove("is-handing-off", "is-handoff-complete", "is-collaboration-ready", "is-workspace-transition");
   floor.removeAttribute("data-workspace-step");
@@ -1178,6 +1390,18 @@ function resetHqState() {
   $("#propagation-inspector").innerHTML = `<p class="eyebrow">CONSTRAINT IMPACT / AWAITING AUTHORIZATION</p><h3>Propagation has not started</h3><p>Select Propagate Constraint to watch cause and effect move through eight governed planning nodes.</p>`;
   $("#revised-plan-gate").hidden = true;
   $("#engineering-handoff").hidden = true;
+  $("#engineering-workspace").hidden = true;
+  $("#engineering-workspace").classList.remove("is-entering");
+  $("#engineering-sequence").classList.remove("is-generating");
+  $("#engineering-sequence").dataset.engineeringStep = "-1";
+  $("#engineering-contract-fields").innerHTML = "";
+  $("#engineering-sequence-steps").innerHTML = "";
+  $("#engineering-queue-lanes").innerHTML = "";
+  $("#artifact-list").innerHTML = "";
+  $("#engineering-work-objects").innerHTML = "";
+  $("#validation-handoff").hidden = true;
+  $("#engineering-inspector").innerHTML = `<p class="eyebrow">ENGINEERING INTENT / GOVERNED INPUT</p><h3>Inspect the contract before generation</h3><p>Artifacts are not generated until the Mission Commander explicitly authorizes the Migration Starter Package.</p>`;
+  $$("[data-engineering-action]").forEach((button) => button.classList.remove("is-selected"));
 }
 
 function resetDemo() {
@@ -1238,7 +1462,12 @@ function init() {
   $("#propagation-actions").addEventListener("click", (event) => { const action = event.target.closest("[data-propagation-action]"); if (action) handlePropagationAction(action.dataset.propagationAction); });
   $("#propagation-work-objects").addEventListener("click", (event) => { const object = event.target.closest("[data-propagation-object]"); if (object) inspectPropagationObject(object.dataset.propagationObject); });
   $("#approve-revised-plan").addEventListener("click", approveRevisedPlan);
-  $("#continue-engineering").addEventListener("click", () => { $("#engineering-boundary").textContent = "Engineering Workspace is the Version 0.7 boundary; no artifacts were generated."; });
+  $("#continue-engineering").addEventListener("click", openEngineeringWorkspace);
+  $("#generate-package").addEventListener("click", startEngineeringGeneration);
+  $("#artifact-list").addEventListener("click", (event) => { const artifact = event.target.closest("[data-artifact-id]"); if (artifact) artifactInspector(artifact.dataset.artifactId); });
+  $("#engineering-work-objects").addEventListener("click", (event) => { const object = event.target.closest("[data-engineering-object]"); if (object) selectWorkObject(object.dataset.engineeringObject); });
+  $("#engineering-actions").addEventListener("click", (event) => { const action = event.target.closest("[data-engineering-action]"); if (action) handleEngineeringAction(action.dataset.engineeringAction); });
+  $("#continue-validation").addEventListener("click", () => { $("#validation-boundary").textContent = "Validation Workspace is the Version 0.8 boundary; validation has not run."; });
   $("#reset-demo").addEventListener("click", resetDemo);
   $$('[data-hq-agent]').forEach((persona) => persona.addEventListener("click", () => selectHqAgent(persona.dataset.hqAgent)));
   $("#hq-context-panel").addEventListener("click", (event) => {
@@ -1277,6 +1506,9 @@ function init() {
   });
   $("#propagation-chain").addEventListener("animationend", (event) => {
     if (event.target === event.currentTarget && event.animationName === "constraint-propagation-step") completePropagationStep();
+  });
+  $("#engineering-sequence").addEventListener("animationend", (event) => {
+    if (event.target === event.currentTarget && event.animationName === "engineering-generation-step") completeEngineeringStep();
   });
   const initialHash = location.hash.slice(1);
   navigate(["portfolio", "decision", "factory"].includes(initialHash) ? initialHash : "portfolio", false);
