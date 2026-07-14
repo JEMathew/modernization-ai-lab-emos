@@ -1,80 +1,56 @@
-# Modernization AI Lab — Mission Control 0.9
+# Modernization AI Lab — Mission Control 1.0
 
-Mission Control is a standalone visual and interaction prototype for exploring
-the Modernization AI Lab as three connected environments:
+Turn a synthetic legacy portfolio into a traceable, human-approved modernization roadmap and implementation-ready migration starter package in under three minutes.
 
-1. Portfolio Command Center
-2. Agent Decision Room
-3. Codex Modernization Factory
+Mission Control is a standalone HTML, CSS, and JavaScript prototype created for OpenAI Build Week. It requires no installation, backend, external account, API key, or live model call.
 
-Version 0.9 preserves the complete Mission Control, Modernization HQ, Living
-Workspace, Shared Decision Room, propagation, and Engineering Workspace
-journeys, including the independent Validation Workspace. It extends
-`DR-CIC-001` with an evidence-linked Executive Workspace.
+## What this prototype demonstrates
 
-After Assessment Ready, the user can start a deterministic specialist sequence:
-Portfolio Intelligence hands off evidence, Architecture attaches its review,
-Business Strategy attaches value findings, and Risk & Governance pauses the
-case at Decision Pending. Pause and Resume preserve the exact stored stage and
-finish the current transition before stopping. At Decision Pending, three
-specialist positions attach to the case with evidence, assumptions, confidence,
-and consequences. The Mission Commander can compare them, inspect a governed
-challenge, reduce the conflict to one question, and choose any of three decision
-gate paths. The primary path creates a Human Constraint and reaches Ready for
-Replanning.
+- Portfolio discovery across ten synthetic applications and data platforms.
+- Formation of the Customer Intelligence Capability around shared consequence.
+- A Living Workspace where specialist ownership and work-object movement are visible.
+- Human resolution of conflicting specialist recommendations.
+- Deterministic propagation of one human constraint through strategy, architecture, cost, risk, sequencing, controls, and governance.
+- Six inspectable Oracle-to-BigQuery starter artifacts generated under an Engineering Contract.
+- Independent validation that intentionally finds a semantic failure, applies an approved correction, and reruns only three impacted checks.
+- An evidence-linked three-wave portfolio roadmap and explicit Wave 1 approval.
 
-The Mission Commander can then watch that constraint update strategy,
-architecture, timeline, cost, risk, waves, engineering controls, and governance
-in a deterministic cause-and-effect sequence. Five revised work objects appear
-progressively. Only the Customer Service Portal changes waves, while the
-Customer Analytics Warehouse remains in Wave 1 and Finance Warehouse receives
-a protected boundary. After revised-plan approval, the case ends at Engineering
-Ready.
+## Screenshots
 
-The Engineering Workspace first exposes a provider-neutral Engineering
-Contract containing the approved Oracle-to-BigQuery strategy, Human Constraint,
-protected dependency, controls, validation expectations, and governance action.
-Generation starts only after an explicit click. Six mocked artifacts then
-appear progressively with purpose, lineage, dependencies, governance condition,
-validation status, preview, and next action. A separate package-assembly action
-moves the case to Validation Ready with the Validation Specialist as owner.
-The provider-neutral Validation Contract defines seven deterministic checks,
-thresholds, authority, constraints, and governance prerequisites. An explicit
-validation run preserves six passes and surfaces one intentional Aggregate
-Equivalence failure caused by nested Oracle null-handling semantic drift. The
-Modernization Engineer proposes a one-artifact correction and regression test;
-Mission Commander approval is required before it is applied.
+Screenshot placeholders for the submission package:
 
-Only Null-Behaviour Equivalence, Aggregate Equivalence, and Representative-Query
-Comparison rerun. The final report records seven of seven critical checks
-passing, a 1.8% to 0.0% aggregate variance correction, High confidence, and a
-Validated with Conditions package status.
+1. `screenshots/01-portfolio-discovery.png` — Portfolio evidence and dependency map.
+2. `screenshots/02-decision-propagation.png` — Human constraint and visible plan delta.
+3. `screenshots/03-validation-failure.png` — Independent 1.8% aggregate exception.
+4. `screenshots/04-executive-roadmap.png` — Final roadmap and Wave 1 approval.
 
-The Executive Workspace exposes the complete eleven-stage evidence chain before
-the Executive Advisor can prepare a provider-neutral recommendation and
-three-wave portfolio roadmap. The Mission Commander can inspect all ten product
-assignments, compare the warehouse replatform with a bounded Supplier Quality
-Portal refactor, preview a 25% capacity reduction without changing the baseline,
-and explicitly approve, revise, or return to evidence. Approval attaches the
-Wave 1 Approval and Executive Decision Record, then leaves the case Execution
-Ready with Conditions; this prototype does not deploy or launch workloads.
+## Architecture overview
 
-No recurring timer, continuous loop, backend, or live model call is used.
+The prototype has one shared in-memory case state rendered through two synchronized experiences:
 
-The persistent experience switch can move between Mission Control and HQ
-without losing state. Reset Demo restores both experiences to the initial
-Unverified portfolio. No movement starts before an explicit user action.
+```text
+Mission Control ─┐
+                 ├─ Shared Modernization Case DR-CIC-001
+Modernization HQ ┘      │
+                        ├─ Evidence and specialist decisions
+                        ├─ Provider-neutral contracts
+                        ├─ Mocked engineering artifacts
+                        ├─ Deterministic validation results
+                        └─ Executive roadmap and approval record
+```
 
-The prototype is isolated from the Streamlit application and does not call a
-backend, API, or AI service. Its one-shot animations start only from explicit
-user actions; it has no recurring timers or continuous state loops.
+- `index.html` contains semantic structure and inline SVG symbols.
+- `styles.css` provides responsive enterprise presentation, one-shot motion, Fast pace, and reduced-motion support.
+- `script.js` contains mocked data, deterministic workflow state, provider-neutral contracts, validation results, judge-mode cues, and reset reconstruction.
 
-## Run
+No React, Streamlit, npm, TypeScript, external library, API, or backend is used by this standalone prototype.
 
-Open `index.html` directly in a modern browser, or serve this directory from the
-repository root:
+## Launch
+
+Open `index.html` directly in a current desktop browser, or serve the repository root:
 
 ```bash
+cd /path/to/modernization-ai-lab
 python3 -m http.server 8080
 ```
 
@@ -84,12 +60,94 @@ Then open:
 http://localhost:8080/prototype/mission-control/
 ```
 
-No installation or build step is required.
+You may also serve the prototype directory itself:
 
-## Files
+```bash
+cd prototype/mission-control
+python3 -m http.server 8080
+```
 
-- `index.html` — semantic interface structure and inline SVG symbols
-- `styles.css` — responsive mission-control presentation and motion settings
-- `script.js` — mocked products, agents, panels, navigation, and reset behavior
+Then open `http://localhost:8080/`.
 
-All enterprise names and operational details shown here are synthetic.
+## Guided Demo
+
+1. Enable **Guided Demo** in the Build Week toolbar.
+2. Select **Fast** under Demo Pace for the judge path.
+3. Follow the exact next action shown in the unobtrusive cue.
+4. Use the presenter cue as a short narration prompt.
+5. At any point, use **Reset Current Stage**, **Restart Guided Demo**, or **Reset Full Demo**.
+
+Guided Demo reads the existing shared workflow state. It does not create, skip, or maintain a separate workflow. Switching between Mission Control and Modernization HQ preserves the cue and case state.
+
+## Three-minute demo path
+
+| Step | Objective | Recommended action | Expected visual outcome | Presenter cue | Time |
+|---|---|---|---|---|---:|
+| 1. Portfolio Discovery | Reveal evidence quality and dependencies | Begin Portfolio Discovery | Ten products resolve to evidence states and dependency links appear | “Start with evidence, not opinions.” | 15s |
+| 2. Capability Formation | Form one consequence-led case | Continue to Assessment; assess as one initiative | Three products become the Customer Intelligence Capability | “Modernization follows business consequence, not system boundaries.” | 18s |
+| 3. Living Workspace | Make ownership and progress visible | Start Workspace Flow | Four specialist work objects attach to one shared case | “The work moves; the user never hunts for status.” | 15s |
+| 4. Shared Decision Room | Reduce disagreement to one human decision | Assemble positions; Resolve Decision; protect reports | Three positions converge on the six-month finance-report constraint | “One human constraint resolves the conflict without hiding it.” | 23s |
+| 5. Visible Decision Propagation | Show cause and effect | Propagate Constraint; approve revised plan | Timeline becomes seven months, cost rises 11%, risk falls 34%, portal moves to Wave 2 | “The constraint changes only what it causally affects.” | 18s |
+| 6. Engineering Workspace | Produce governed starter artifacts | Generate Migration Starter Package; Assemble Package | Six linked Oracle-to-BigQuery artifacts become validation-ready | “Generation is controlled engineering work, not a magic prompt.” | 22s |
+| 7. Validation Failure | Demonstrate independent trust controls | Run Independent Validation | A 1.8% quarterly-renewal aggregate variance blocks the package | “Codex-generated does not mean validated.” | 18s |
+| 8. Correction and Validation Success | Correct only affected work | Investigate; approve correction; rerun impacted checks | Variance reaches 0.0%; seven of seven checks pass | “The human approves one targeted correction; unrelated work is preserved.” | 18s |
+| 9. Executive Roadmap and Wave 1 Approval | Reach a governed portfolio outcome | Prepare Executive Roadmap; approve Wave 1 | Two initiatives approved; case is Execution Ready with Conditions | “Every recommendation is traceable and every assumption challengeable.” | 18s |
+
+Target duration: **2 minutes 45 seconds**. Fast pace shortens transitions without skipping state or hiding signature outcomes.
+
+## Sample enterprise and data
+
+All content is synthetic. Apex Aerospace Manufacturing includes five applications and five data platforms. The primary case combines Customer Analytics Warehouse, Customer Service Portal, and Product Telemetry Platform, with Finance Warehouse and twelve dependent finance reports as the governed external dependency.
+
+The happy path produces a staged Oracle-to-Google-BigQuery starter package and a separate Supplier Quality Portal incremental-refactor proposal.
+
+## OpenAI attribution
+
+### GPT-5.6
+
+The product is designed to use GPT-5.6 for modernization reasoning, trade-off analysis, constraint impact, and executive synthesis. This standalone prototype does not make a live GPT-5.6 API call; those responses are deterministic simulations.
+
+### Codex
+
+Codex accelerated implementation of the prototype and is represented in-product as the Modernization Engineer that turns an approved Engineering Contract into inspectable migration artifacts. Artifact contents are mocked and remain subject to independent validation.
+
+### Provider-neutral production path
+
+Domain objects, workflow state, human approvals, contracts, numeric results, and validation remain provider-neutral. Production adapters can replace mocked providers with live GPT-5.6 and Codex integrations without changing the user experience or governance model.
+
+## Deterministic and mocked behavior
+
+- The Apex Aerospace portfolio is synthetic.
+- Agent responses and workflow outcomes are deterministic.
+- Engineering artifact contents are mocked but inspectable.
+- Validation results, including the intentional 1.8% failure and 0.0% corrected result, are deterministic.
+- Workflow controls, state synchronization, accessibility behavior, stage resets, artifact inspection, and human approval gates are real interactive implementations.
+
+The **Demo Simulation** badge opens the same disclosure inside the product.
+
+## Reset and replay
+
+- **Reset Current Stage** reconstructs only the active milestone’s expected entry state while preserving the logically completed upstream path.
+- **Restart Guided Demo** enables the guide and returns to Step 1.
+- **Reset Full Demo** returns all products and workspaces to the initial Unverified state.
+- **Replay Demo** is available in the final completion summary.
+
+## Browser requirements
+
+Use a current desktop version of Chrome, Edge, Firefox, or Safari with JavaScript enabled. A minimum width of 320px is supported; a desktop viewport of at least 1280px is recommended for judging. The interface honors `prefers-reduced-motion`, and primary controls are keyboard reachable with visible focus indicators.
+
+## Limitations
+
+- No live GPT-5.6 or Codex API execution.
+- No persistence after browser refresh.
+- No deployment, authentication, collaboration, enterprise connectors, or portfolio upload.
+- No production database or external service.
+- Wave 1 approval does not deploy or launch workloads.
+
+## Build Week implementation record
+
+Primary Codex task: **Create mission control prototype**
+
+Primary Codex session ID: **019f5d84-a8b6-7192-8183-7eb4f6b976b2**
+
+All enterprise names, operational details, evidence, artifacts, and validation results shown here are synthetic.

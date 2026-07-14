@@ -182,6 +182,18 @@ function createExecutiveDecisionRecord() {
   return { id: "EDR-DR-CIC-001", caseId: "DR-CIC-001", decision: "Approve Wave 1", approver: "Mission Commander", status: "Execution Ready with Conditions", owner: "Transformation Office", nextAction: "Launch Wave 1", evidenceReference: "Executive Evidence Chain · 11 stages", validationReference: "VC-DR-CIC-001 · 7/7 passed", roadmapReference: "PR-DR-CIC-001 · baseline Wave 1", remainingCondition: "Resolve ownership and change authority for twelve dependent finance reports before cutover" };
 }
 
+const guidedDemoSteps = [
+  { title: "Portfolio Discovery", objective: "Reveal evidence quality and portfolio dependencies.", expected: "Ten products resolve into ready, incomplete, or conflicting evidence states.", presenter: "Start with evidence, not opinions.", duration: 15 },
+  { title: "Capability Formation", objective: "Turn related products into one modernization case.", expected: "Three products form the Customer Intelligence Capability with one external finance dependency.", presenter: "Modernization follows business consequence, not system boundaries.", duration: 18 },
+  { title: "Living Workspace", objective: "Make specialist ownership and case progression visible.", expected: "Evidence, Architecture, Business, and Risk reviews attach to one shared case.", presenter: "The work moves; the user never has to hunt for status.", duration: 15 },
+  { title: "Shared Decision Room", objective: "Reduce specialist disagreement to one human decision.", expected: "Three governed positions converge on the six-month finance-report question.", presenter: "One human constraint resolves the conflict without hiding it.", duration: 23 },
+  { title: "Visible Decision Propagation", objective: "Show one constraint changing the complete plan.", expected: "Strategy, timeline, cost, risk, sequencing, controls, and governance update visibly.", presenter: "The constraint changes only what it causally affects.", duration: 18 },
+  { title: "Engineering Workspace", objective: "Turn governed intent into inspectable migration artifacts.", expected: "Codex produces six linked Oracle-to-BigQuery starter artifacts under an explicit contract.", presenter: "Generation is controlled engineering work, not a magic prompt.", duration: 22 },
+  { title: "Validation Failure", objective: "Prove that generated output is not automatically trusted.", expected: "Independent validation detects a 1.8% semantic aggregate variance.", presenter: "Codex-generated does not mean validated.", duration: 18 },
+  { title: "Correction and Validation Success", objective: "Apply one governed correction and rerun only impacted checks.", expected: "The semantic variance reaches 0.0% and all seven critical checks pass.", presenter: "The human approves one targeted correction; unrelated work is preserved.", duration: 18 },
+  { title: "Executive Roadmap and Wave 1 Approval", objective: "Convert traceable evidence into a governed portfolio decision.", expected: "Two initiatives are approved and the case becomes Execution Ready with Conditions.", presenter: "Every recommendation is traceable and every assumption remains challengeable.", duration: 18 }
+];
+
 const state = {
   view: "portfolio",
   productId: null,
@@ -240,6 +252,8 @@ const state = {
   capacitySimulationActive: false,
   executiveWorkObjectIds: new Set(),
   executiveDecisionRecord: null,
+  guidedDemo: false,
+  demoPace: "normal",
   productStates: new Map(),
   agentStates: new Map()
 };
@@ -1472,6 +1486,171 @@ function inspectExecutiveObject(id) {
   $("#executive-inspector").innerHTML = `<p class="eyebrow">EXECUTIVE WORK OBJECT / ${item.sequence}</p><h3>${item.title}</h3><p>Owner: ${item.owner}. Attached to DR-CIC-001 with recommendation, roadmap, validation, approval, and remaining-condition traceability.</p>`;
 }
 
+function currentDemoStep() {
+  if (state.validationStatus === "complete" || state.executiveEntered) return 9;
+  if (["exception", "correction-proposed", "evidence-requested", "correction-rejected", "correction-applied", "rerunning"].includes(state.validationStatus)) return 8;
+  if (state.engineeringStatus === "validation-ready" || state.validationEntered) return 7;
+  if (state.propagationStatus === "approved" || state.engineeringEntered) return 6;
+  if (state.decisionStatus === "ready-replanning" || state.propagationStatus !== "idle") return 5;
+  if (state.workspaceStatus === "blocked" || state.decisionStatus !== "idle") return 4;
+  if (state.assessmentReady || state.hqEntered || state.workspaceStatus !== "idle") return 3;
+  if (state.discovery === "complete" || state.portfolioState === "Assessment Running" || state.capabilityState) return 2;
+  return 1;
+}
+
+function guidedNextAction(step) {
+  if (step === 1) return state.discovery === "running" ? "Observe evidence resolution" : "Begin Portfolio Discovery";
+  if (step === 2) {
+    if (state.portfolioState === "Discovery Complete") return "Continue to Assessment";
+    if (state.portfolioState === "Assessment Running") return "Observe capability formation";
+    if (!$("#capability-inspector").hidden && state.assessmentMode !== "initiative") return "Assess as One Initiative";
+    return "Inspect Customer Intelligence Capability";
+  }
+  if (step === 3) {
+    if (state.experience !== "hq") return "Continue to Decision Room";
+    if (state.hqTransition === "running") return "Observe the case handoff";
+    if (state.workspaceStatus === "idle") return "Start Workspace Flow";
+    return state.workspaceStatus === "paused" ? "Resume Workspace" : "Observe specialist handoffs";
+  }
+  if (step === 4) {
+    if (state.decisionStatus === "idle") return "Assemble Decision Positions";
+    if (state.decisionStatus === "assembling") return "Observe specialist positions";
+    if (!state.decisionQuestionOpen) return "Resolve Decision";
+    return "Yes — protect finance reports for six months";
+  }
+  if (step === 5) {
+    if (state.propagationStatus === "idle") return "Propagate Constraint";
+    if (state.propagationStatus === "running") return "Observe the causal plan changes";
+    return "Approve Revised Plan";
+  }
+  if (step === 6) {
+    if (state.engineeringStatus === "idle") return "Continue to Engineering Workspace";
+    if (state.engineeringStatus === "contract-review") return "Generate Migration Starter Package";
+    if (state.engineeringStatus === "generating") return "Observe six linked artifacts";
+    return "Assemble Package";
+  }
+  if (step === 7) {
+    if (!state.validationEntered) return "Continue to Validation Workspace";
+    if (state.validationStatus === "contract-review") return "Run Independent Validation";
+    return "Observe the intentional semantic failure";
+  }
+  if (step === 8) {
+    if (state.validationStatus === "exception") return "Investigate Failure";
+    if (["correction-proposed", "evidence-requested", "correction-rejected"].includes(state.validationStatus)) return "Approve Correction and Rerun";
+    if (state.validationStatus === "correction-applied") return "Rerun Impacted Validation";
+    return "Observe three targeted checks";
+  }
+  if (!state.executiveEntered) return "Continue to Executive Workspace";
+  if (!state.executivePrepared) return "Prepare Executive Roadmap";
+  if (state.executiveStatus !== "approved") return "Approve Wave 1";
+  return "Inspect Decision Lineage or Replay Demo";
+}
+
+function demoStateIsReliable() {
+  const artifacts = state.migrationPackage.generatedArtifacts;
+  const baseline = portfolioRoadmap.baselineWaves;
+  return new Set(artifacts).size === artifacts.length
+    && state.generatedArtifactIds.size <= engineeringArtifacts.length
+    && state.executiveWorkObjectIds.size <= executiveWorkObjects.length
+    && baseline[1].join("|") === "data-01|app-01"
+    && baseline[2].join("|") === "app-03|data-03|data-02"
+    && (!state.executiveDecisionRecord || state.executiveStatus === "approved")
+    && (state.correctedArtifactVersion !== "v2" || state.correctionProposal.approvalStatus === "Approved by Mission Commander");
+}
+
+function renderGuidedDemo() {
+  const step = currentDemoStep();
+  const definition = guidedDemoSteps[step - 1];
+  const cue = $("#guided-cue");
+  cue.hidden = !state.guidedDemo;
+  cue.dataset.reliable = String(demoStateIsReliable());
+  $("#guided-demo-toggle").checked = state.guidedDemo;
+  if (!state.guidedDemo) return;
+  $("#guided-step-count").textContent = `STEP ${step} OF 9`;
+  $("#guided-step-title").textContent = definition.title;
+  $("#guided-objective").textContent = definition.objective;
+  $("#guided-next-action").textContent = guidedNextAction(step);
+  $("#guided-presenter-cue").textContent = `“${definition.presenter}”`;
+  $("#guided-duration").textContent = `${definition.duration} seconds`;
+  const progress = state.executiveStatus === "approved" ? 100 : Math.round(((step - 1) / 9) * 100);
+  $("#guided-progress-label").textContent = `${progress}% COMPLETE`;
+  $("#guided-progress-bar").style.width = `${progress}%`;
+}
+
+function setGuidedDemo(enabled) {
+  state.guidedDemo = Boolean(enabled);
+  renderGuidedDemo();
+}
+
+function setDemoPace(pace) {
+  if (!['normal', 'fast'].includes(pace)) return;
+  state.demoPace = pace;
+  document.body.classList.toggle("demo-fast", pace === "fast");
+  $$('[data-demo-pace]').forEach((button) => { const active = button.dataset.demoPace === pace; button.classList.toggle("is-active", active); button.setAttribute("aria-pressed", String(active)); });
+}
+
+function resetToGuidedStep(targetStep) {
+  if (!Number.isInteger(targetStep) || targetStep < 1 || targetStep > 9) return false;
+  document.body.classList.add("is-stage-resetting");
+  resetDemo();
+  if (targetStep >= 2) {
+    $("#begin-discovery").disabled = true;
+    revealDependencies();
+    completeDiscovery();
+  }
+  if (targetStep >= 3) {
+    continueToAssessment(); completeCapabilityFormation(); selectCapability(); assessAsInitiative();
+    openExperience("hq"); completeHqHandoff();
+  }
+  if (targetStep >= 4) {
+    startWorkspaceFlow();
+    for (let index = 0; index < 4; index += 1) completeWorkspaceTransition();
+  }
+  if (targetStep >= 5) {
+    startDecisionMovement();
+    for (let index = 0; index < 3; index += 1) completeDecisionStep();
+    handleDecisionAction("resolve"); selectCommanderDecision("yes");
+  }
+  if (targetStep >= 6) {
+    startPropagation();
+    for (let index = 0; index < propagationNodes.length; index += 1) completePropagationStep();
+    approveRevisedPlan();
+  }
+  if (targetStep >= 7) {
+    openEngineeringWorkspace(); startEngineeringGeneration();
+    while (state.engineeringStatus === "generating") completeEngineeringStep();
+    finalizeMigrationPackage();
+  }
+  if (targetStep >= 8) {
+    openValidationWorkspace(); startIndependentValidation();
+    while (state.validationStatus === "running") completeValidationStep();
+  }
+  if (targetStep >= 9) {
+    investigateFailure(); handleCorrectionDecision("approve"); startTargetedRerun();
+    while (state.validationStatus === "rerunning") completeTargetedRerunStep();
+  }
+  document.body.classList.remove("is-stage-resetting");
+  renderHqState();
+  return demoStateIsReliable();
+}
+
+function resetCurrentStage() { resetToGuidedStep(currentDemoStep()); }
+function restartGuidedDemo() { setGuidedDemo(true); resetToGuidedStep(1); }
+
+function toggleDemoInfo(force) {
+  const panel = $("#demo-info-panel");
+  const open = typeof force === "boolean" ? force : panel.hidden;
+  panel.hidden = !open;
+  $("#simulation-info").setAttribute("aria-expanded", String(open));
+  if (open) $("#demo-info-title").focus?.();
+}
+
+function inspectDecisionLineage() {
+  if (state.executiveStatus !== "approved") return;
+  $("#executive-inspector").innerHTML = `<p class="eyebrow">DECISION LINEAGE / DR-CIC-001</p><h3>Portfolio evidence → Human Constraint → Engineering → Validation → Wave 1 Approval</h3><p>Eleven governed evidence stages connect the Mission Commander’s six-month finance-report constraint, six generated artifacts, one approved semantic correction, seven passing checks, and the final two-initiative roadmap.</p>`;
+  $("#executive-inspector").scrollIntoView({ behavior: "smooth", block: "center" });
+}
+
 function hqAgentMessage(id) {
   const snapshot = currentCaseSnapshot();
   if (["contract-review", "running", "exception", "correction-applied", "rerunning"].includes(state.validationStatus) && id === "agent-07") return `${snapshot.task}. Independent results remain attached to VC-DR-CIC-001.`;
@@ -1545,6 +1724,7 @@ function renderHqState() {
   $(".zone-lock", validationZone).hidden = state.validationEntered;
   renderWorkspaceState();
   renderExecutiveWorkspace();
+  renderGuidedDemo();
   if (state.selectedHqAgent) renderHqAgentPanel(state.selectedHqAgent);
   else if (state.selectedWorkObjectId) renderWorkObjectPanel(state.selectedWorkObjectId);
 }
@@ -1966,6 +2146,15 @@ function init() {
   $$('[data-view]').forEach((control) => control.addEventListener("click", () => navigate(control.dataset.view)));
   $$('[data-view-link]').forEach((link) => link.addEventListener("click", (event) => { event.preventDefault(); navigate(link.dataset.viewLink, false); openExperience("mission-control"); }));
   $$('[data-experience-switch]').forEach((button) => button.addEventListener("click", () => openExperience(button.dataset.experienceSwitch)));
+  $("#guided-demo-toggle").addEventListener("change", (event) => setGuidedDemo(event.target.checked));
+  $$('[data-demo-pace]').forEach((button) => button.addEventListener("click", () => setDemoPace(button.dataset.demoPace)));
+  $("#simulation-info").addEventListener("click", () => toggleDemoInfo());
+  $("#close-demo-info").addEventListener("click", () => toggleDemoInfo(false));
+  $("#reset-current-stage").addEventListener("click", resetCurrentStage);
+  $("#restart-guided-demo").addEventListener("click", restartGuidedDemo);
+  $("#disable-guided-demo").addEventListener("click", () => setGuidedDemo(false));
+  $("#replay-demo").addEventListener("click", restartGuidedDemo);
+  $("#inspect-decision-lineage").addEventListener("click", inspectDecisionLineage);
   $("#begin-discovery").addEventListener("click", beginDiscovery);
   $("#continue-assessment").addEventListener("click", continueToAssessment);
   $("#select-capability").addEventListener("click", selectCapability);
@@ -2009,6 +2198,7 @@ function init() {
   $("#executive-work-objects").addEventListener("click", (event) => { const object = event.target.closest("[data-executive-object]"); if (object) inspectExecutiveObject(object.dataset.executiveObject); });
   $("#wave-approval-gate").addEventListener("click", (event) => { const decision = event.target.closest("[data-wave-decision]"); if (decision) handleWaveDecision(decision.dataset.waveDecision); });
   $("#reset-demo").addEventListener("click", resetDemo);
+  document.addEventListener("keydown", (event) => { if (event.key === "Escape" && !$("#demo-info-panel").hidden) toggleDemoInfo(false); });
   $$('[data-hq-agent]').forEach((persona) => persona.addEventListener("click", () => selectHqAgent(persona.dataset.hqAgent)));
   $("#hq-context-panel").addEventListener("click", (event) => {
     const action = event.target.closest("[data-hq-action]");
@@ -2060,6 +2250,8 @@ function init() {
   const initialHash = location.hash.slice(1);
   navigate(["portfolio", "decision", "factory"].includes(initialHash) ? initialHash : "portfolio", false);
   openExperience(initialHash === "hq" ? "hq" : "mission-control", { updateHash: false, startHandoff: false });
+  setDemoPace("normal");
+  renderGuidedDemo();
 }
 
 document.addEventListener("DOMContentLoaded", init);

@@ -6,8 +6,8 @@
     <meta name="description" content="Standalone Modernization AI Lab mission-control prototype.">
     <title>Modernization AI Lab — Mission Control</title>
     <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='4' fill='%230b1720'/%3E%3Cpath d='M7 23V15h4v8m3 0V10h4v13m3 0V6h4v17' stroke='%234bd6c2' stroke-width='2'/%3E%3C/svg%3E">
-    <link rel="stylesheet" href="styles.css?v=0.9">
-    <script src="script.js?v=0.9" defer></script>
+    <link rel="stylesheet" href="styles.css?v=1.0">
+    <script src="script.js?v=1.0" defer></script>
   </head>
   <body>
     <svg class="icon-library" aria-hidden="true">
@@ -22,7 +22,7 @@
       <header class="topbar">
         <a class="brand" href="#portfolio" data-view-link="portfolio" aria-label="Mission Control home">
           <span class="brand-mark" aria-hidden="true"><span></span><span></span><span></span></span>
-          <span><strong>MODERNIZATION AI LAB</strong><small>CONNECTED EXPERIENCES / V0.9</small></span>
+          <span><strong>MODERNIZATION AI LAB</strong><small>OPENAI BUILD WEEK / V1.0</small></span>
         </a>
         <div class="experience-switch" role="group" aria-label="Experience switch">
           <button class="is-active" type="button" data-experience-switch="mission-control" aria-pressed="true">Mission Control</button>
@@ -32,9 +32,32 @@
           <span class="status-dot"></span>
           <span><strong>DEMO SYSTEMS NOMINAL</strong><small>10 PRODUCTS · 8 SPECIALISTS · OFFLINE</small></span>
         </div>
+        <button class="simulation-badge" id="simulation-info" type="button" aria-expanded="false" aria-controls="demo-info-panel">Demo Simulation</button>
         <button class="center-case-button" id="center-active-case" type="button" disabled>Center on Active Case</button>
-        <button class="reset-button" id="reset-demo" type="button">Reset Demo</button>
+        <button class="reset-button" id="reset-demo" type="button">Reset Full Demo</button>
       </header>
+
+      <section class="demo-toolbar" aria-label="Build Week demonstration controls">
+        <div class="openai-attribution"><small>DECISION INTELLIGENCE</small><strong>Designed for GPT-5.6</strong><span>·</span><small>MODERNIZATION ENGINEER</small><strong>Powered by Codex</strong></div>
+        <label class="guided-toggle"><input id="guided-demo-toggle" type="checkbox"><span>Guided Demo</span></label>
+        <div class="pace-control" role="group" aria-label="Demo pace"><span>DEMO PACE</span><button class="is-active" type="button" data-demo-pace="normal" aria-pressed="true">Normal</button><button type="button" data-demo-pace="fast" aria-pressed="false">Fast</button></div>
+        <button type="button" id="reset-current-stage">Reset Current Stage</button>
+      </section>
+
+      <section class="demo-info-panel" id="demo-info-panel" hidden aria-labelledby="demo-info-title">
+        <div><p class="eyebrow">OPENAI BUILD WEEK IMPLEMENTATION</p><h2 id="demo-info-title">Truthful provider attribution</h2></div>
+        <div class="info-grid"><span><small>GPT-5.6 ROLE</small><strong>Modernization reasoning, trade-off analysis, constraint impact and executive synthesis.</strong></span><span><small>CODEX ROLE</small><strong>Implementation acceleration and the product’s engineering-artifact generation workflow.</strong></span><span><small>CURRENT PROTOTYPE</small><strong>Deterministic visual simulation using structured provider-neutral contracts.</strong></span><span><small>PRODUCTION PATH</small><strong>Replace mocked providers with live GPT-5.6 and Codex integrations without changing the user experience.</strong></span></div>
+        <div class="simulation-disclosure"><strong>Demo Simulation</strong><span>Synthetic Apex Aerospace portfolio · deterministic agent responses · mocked artifact contents · deterministic validation results · real interactive workflow and shared-state implementation.</span></div>
+        <button type="button" id="close-demo-info">Close</button>
+      </section>
+
+      <aside class="guided-cue" id="guided-cue" hidden aria-live="polite" aria-label="Guided demo cue">
+        <div><small id="guided-step-count">STEP 1 OF 9</small><strong id="guided-step-title">Portfolio Discovery</strong><span id="guided-progress-label">0% COMPLETE</span></div>
+        <p id="guided-objective">Reveal evidence quality and portfolio dependencies.</p>
+        <dl><div><dt>NEXT</dt><dd id="guided-next-action">Begin Portfolio Discovery</dd></div><div><dt>PRESENTER CUE</dt><dd id="guided-presenter-cue">“Start with evidence, not opinions.”</dd></div><div><dt>TIME</dt><dd id="guided-duration">15 seconds</dd></div></dl>
+        <div class="guided-progress"><i id="guided-progress-bar"></i></div>
+        <div><button type="button" id="restart-guided-demo">Restart Guided Demo</button><button type="button" id="disable-guided-demo">Turn Off</button></div>
+      </aside>
 
       <nav class="environment-nav" data-experience-panel="mission-control" aria-label="Mission control environments">
         <div class="route-line" aria-hidden="true"><span></span></div>
@@ -242,7 +265,7 @@
 
       <section class="hq-experience" id="hq-experience" data-experience-panel="hq" aria-labelledby="hq-title" hidden>
         <header class="hq-header">
-          <div><p class="eyebrow">VERSION 0.9 / EXECUTIVE WORKSPACE</p><h1 id="hq-title">Modernization HQ</h1><p>Turn one validated case into an evidence-linked portfolio roadmap and governed Wave 1 decision.</p></div>
+          <div><p class="eyebrow">VERSION 1.0 / BUILD WEEK JUDGE MODE</p><h1 id="hq-title">Modernization HQ</h1><p>Follow one traceable case from portfolio evidence to a governed Wave 1 decision.</p></div>
           <div class="hq-stage-strip" aria-label="Current HQ workflow context">
             <span><small>WORKFLOW STAGE</small><strong id="hq-workflow-stage">PORTFOLIO UNVERIFIED</strong></span>
             <span><small>SELECTED CAPABILITY</small><strong id="hq-selected-capability">AWAITING FORMATION</strong></span>
@@ -391,7 +414,7 @@
 
           <section class="wave-approval-gate" id="wave-approval-gate" hidden aria-labelledby="wave-approval-title"><div><p class="eyebrow">MISSION COMMANDER / WAVE APPROVAL</p><h3 id="wave-approval-title">Authorize the two Wave 1 initiatives?</h3><p>Customer Analytics Warehouse becomes execution-ready with conditions. Supplier Quality Portal becomes planning-ready.</p></div><div><button type="button" data-wave-decision="approve">Approve Wave 1</button><button type="button" data-wave-decision="revise">Request Revised Roadmap</button><button type="button" data-wave-decision="evidence">Return to Evidence</button></div><span id="wave-decision-status" role="status" aria-live="polite"></span></section>
 
-          <section class="execution-summary" id="execution-summary" hidden aria-live="polite"><div><p class="eyebrow">APEX AEROSPACE / EXECUTION READY WITH CONDITIONS</p><h3>Wave 1 approved by the Mission Commander</h3><div><span><strong>10</strong>products assessed</span><span><strong>2</strong>Wave 1 initiatives</span><span><strong>1</strong>validated migration package</span><span><strong>7 / 7</strong>critical checks passed</span><span><strong>1</strong>governance condition remains</span></div><p>Every recommendation is traceable. Every assumption remains challengeable. Next action: Launch Wave 1.</p></div></section>
+          <section class="execution-summary" id="execution-summary" hidden aria-live="polite"><div><p class="eyebrow">APEX AEROSPACE / EXECUTION READY WITH CONDITIONS</p><h3>Wave 1 approved by the Mission Commander</h3><div><span><strong>10</strong>products assessed</span><span><strong>2</strong>Wave 1 initiatives prioritized</span><span><strong>1</strong>Oracle-to-BigQuery migration package generated</span><span><strong>1</strong>semantic failure detected and corrected</span><span><strong>7 / 7</strong>critical checks passed</span><span><strong>1</strong>governance condition remains</span></div><p><strong>Every recommendation traceable. Every assumption challengeable.</strong> Next action: Launch Wave 1.</p><nav aria-label="Demo completion actions"><button type="button" id="replay-demo">Replay Demo</button><button type="button" id="inspect-decision-lineage">Inspect Decision Lineage</button><a href="README.md" target="_blank" rel="noopener">Open Setup Instructions</a></nav></div></section>
         </section>
 
         <div class="hq-layout">
