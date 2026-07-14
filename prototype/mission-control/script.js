@@ -44,6 +44,14 @@ const hqSpecialists = {
   "agent-08": { title: "Executive Advisor", role: "Executive decision support", zone: "Executive Briefing Room", active: false }
 };
 
+const workspaceWorkObjects = [
+  { id: "evidence", title: "Evidence Package", stage: "Evidence Collected", owner: "Portfolio Intelligence Specialist", agentId: "agent-01", sequence: "01", evidenceCount: "4 sources", finding: "Three capability evidence packages and the dependency map are ready.", concern: "Finance Warehouse ownership conflicts across two sources.", next: "Hand the governed evidence set to Architecture." },
+  { id: "architecture", title: "Architecture Review", stage: "Architecture Review", owner: "Chief Enterprise Architect", agentId: "agent-02", sequence: "02", evidenceCount: "3 signals", finding: "Oracle Exadata anchors the Oracle-to-BigQuery modernization boundary.", concern: "Twelve dependent finance reports increase reporting-boundary coupling.", next: "Attach the target-boundary review and hand off to Business Strategy." },
+  { id: "business", title: "Business Review", stage: "Business Review", owner: "Business Strategist", agentId: "agent-03", sequence: "03", evidenceCount: "3 outcomes", finding: "One capability initiative preserves customer insight value across all three products.", concern: "Separate product tracks would fragment value realization.", next: "Attach value and urgency findings for Risk review." },
+  { id: "risk", title: "Risk Review", stage: "Risk Review", owner: "Risk & Governance Specialist", agentId: "agent-04", sequence: "04", evidenceCount: "2 controls", finding: "Assessment may proceed with the Finance dependency recorded as an exception.", concern: "Finance Warehouse ownership must be resolved by an accountable human.", next: "Pause the case at Decision Pending with a governed blocker." },
+  { id: "decision", title: "Decision Record Placeholder", stage: "Decision Pending", owner: "Mission Commander", agentId: null, sequence: "05", evidenceCount: "4 reviews", finding: "DR-CIC-001 is ready to receive a governed decision in Version 0.5.", concern: "No recommendation is approved while ownership remains conflicting.", next: "Open the Shared Decision Room in Version 0.5." }
+];
+
 const state = {
   view: "portfolio",
   productId: null,
@@ -58,6 +66,12 @@ const state = {
   hqTransition: "idle",
   hqCaseLocation: "portfolio-studio",
   selectedHqAgent: null,
+  selectedWorkObjectId: null,
+  workspaceStage: -1,
+  workspaceStatus: "idle",
+  workspaceTransition: false,
+  workspacePauseRequested: false,
+  completedWorkObjectIds: new Set(),
   productStates: new Map(),
   agentStates: new Map()
 };
@@ -249,6 +263,7 @@ function beginDiscovery() {
   setDiscoveryAgents(true);
   revealDependencies();
   launchEvidenceTokens();
+  renderHqState();
 }
 
 function completeDiscovery() {
@@ -271,6 +286,7 @@ function completeDiscovery() {
   $("#begin-discovery").firstChild.textContent = "Discovery Complete ";
   $("#discovery-summary").hidden = false;
   if (state.productId) selectProduct(state.productId);
+  renderHqState();
 }
 
 function destinationForProduct(id) {
@@ -354,6 +370,7 @@ function continueToAssessment() {
   agentField.classList.remove("is-complete", "is-assessing");
   void agentField.offsetWidth;
   agentField.classList.add("is-assessing");
+  renderHqState();
 }
 
 function completeCapabilityFormation() {
@@ -370,6 +387,7 @@ function completeCapabilityFormation() {
   cluster.classList.add("is-ready");
   $("#select-capability").disabled = false;
   $(".assessment-agent-field").classList.add("is-complete");
+  renderHqState();
 }
 
 function selectCapability() {
@@ -393,6 +411,7 @@ function assessIndividually() {
   $("#assess-initiative").classList.remove("is-selected");
   $$("#capability-products .product-card").forEach((card) => card.classList.add("is-individual-choice"));
   $("#assessment-choice-status").textContent = "Individual assessment selected · three product tracks prepared.";
+  renderHqState();
 }
 
 function assessAsInitiative() {
@@ -417,7 +436,10 @@ function assessAsInitiative() {
 }
 
 function hqNextAction() {
-  if (state.hqCaseLocation === "decision-room") return "INSPECT SPECIALIST PERSPECTIVES";
+  if (state.workspaceStatus === "blocked") return "GOVERNED DECISION REQUIRED";
+  if (state.workspaceStatus === "paused") return "RESUME WORKSPACE";
+  if (state.workspaceStatus === "running") return workspaceWorkObjects[state.workspaceStage].next.toUpperCase();
+  if (state.hqCaseLocation === "decision-room") return "START WORKSPACE FLOW";
   if (state.assessmentReady) return "ENTER SHARED DECISION ROOM";
   if (state.portfolioState === "Capability Formed") return "CHOOSE ASSESSMENT BOUNDARY";
   if (state.portfolioState === "Assessment Running") return "FORMING CAPABILITY";
@@ -426,12 +448,85 @@ function hqNextAction() {
   return "BEGIN DISCOVERY IN MISSION CONTROL";
 }
 
+function currentCaseSnapshot() {
+  if (state.workspaceStatus === "blocked" || state.workspaceStage === 4) {
+    return { stage: "Decision Pending", owner: "Mission Commander", ownerId: null, task: "Resolve governed ownership decision", blocker: "Finance Warehouse ownership conflicts across two sources", next: "Review DR-CIC-001 in Version 0.5", recommendation: "PENDING GOVERNED DECISION" };
+  }
+  if (state.workspaceStage >= 0) {
+    const workObject = workspaceWorkObjects[state.workspaceStage];
+    return { stage: workObject.stage, owner: workObject.owner, ownerId: workObject.agentId, task: workObject.title, blocker: "None", next: state.workspaceStatus === "paused" ? "Resume the stored workspace flow" : workObject.next, recommendation: "PENDING SPECIALIST REVIEW" };
+  }
+  if (state.assessmentReady) return { stage: "Ready to Start", owner: "Portfolio Intelligence Specialist", ownerId: "agent-01", task: "Prepare evidence handoff", blocker: "None", next: state.hqCaseLocation === "decision-room" ? "Start Workspace Flow" : "Enter Modernization HQ", recommendation: "PENDING SPECIALIST REVIEW" };
+  if (state.capabilityState) return { stage: state.capabilityState, owner: "Portfolio Intelligence Specialist", ownerId: "agent-01", task: "Confirm assessment boundary", blocker: "None", next: hqNextAction(), recommendation: "NOT STARTED" };
+  return { stage: state.portfolioState, owner: "Portfolio Intelligence Specialist", ownerId: "agent-01", task: "Collect portfolio evidence", blocker: "None", next: hqNextAction(), recommendation: "NOT STARTED" };
+}
+
+function workObjectStatus(index) {
+  const workObject = workspaceWorkObjects[index];
+  if (state.completedWorkObjectIds.has(workObject.id)) return "Complete";
+  if (state.workspaceStage === 4 && index === 4) return "Blocked";
+  if (state.workspaceStage === index && state.workspaceStatus === "paused") return "Waiting";
+  if (state.workspaceStage === index && state.workspaceStatus === "running") return "In Review";
+  if (state.workspaceStage < 0 && index === 0 && state.assessmentReady) return "Incoming";
+  return "Waiting";
+}
+
+function renderMissionCase() {
+  const snapshot = currentCaseSnapshot();
+  $("#mission-case-stage").textContent = snapshot.stage.toUpperCase();
+  $("#mission-case-owner").textContent = snapshot.owner.toUpperCase();
+  $("#mission-case-blocker").textContent = snapshot.blocker.toUpperCase();
+  $("#mission-case-next").textContent = snapshot.next.toUpperCase();
+  $("#mission-case-dock").classList.toggle("is-blocked", snapshot.blocker !== "None");
+}
+
+function renderWorkObjects() {
+  $("#workspace-work-objects").innerHTML = workspaceWorkObjects.map((workObject, index) => {
+    const status = workObjectStatus(index);
+    const selected = state.selectedWorkObjectId === workObject.id;
+    return `<button class="work-object status-${status.toLowerCase().replaceAll(" ", "-")}${selected ? " is-selected" : ""}" type="button" data-work-object="${workObject.id}" aria-pressed="${selected}"><span class="work-object-sequence">${workObject.sequence}</span><span><strong>${workObject.title}</strong><small>${workObject.owner}</small></span><em>${workObject.evidenceCount}</em><b>${status.toUpperCase()}</b></button>`;
+  }).join("");
+}
+
+function renderWorkQueue() {
+  const statuses = ["Incoming", "In Review", "Waiting", "Blocked", "Complete"];
+  const activeQueue = state.workspaceStatus === "blocked" ? "Blocked" : state.workspaceStatus === "paused" ? "Waiting" : state.workspaceStatus === "running" ? "In Review" : "Incoming";
+  $("#workspace-queue").innerHTML = statuses.map((status) => {
+    const items = workspaceWorkObjects.filter((_, index) => workObjectStatus(index) === status);
+    const caseHere = activeQueue === status;
+    return `<div class="queue-lane status-${status.toLowerCase().replaceAll(" ", "-")}${caseHere ? " is-current" : ""}"><span><strong>${status}</strong><small>${items.length}</small></span>${caseHere ? `<div class="queue-case-chip"><i></i><span>Customer Intelligence Capability<small>${currentCaseSnapshot().stage}</small></span></div>` : ""}<div class="queue-items">${items.map((item) => `<small>${item.sequence} / ${item.title}</small>`).join("") || "<small>NO WORK OBJECTS</small>"}</div></div>`;
+  }).join("");
+}
+
+function renderWorkspaceState() {
+  const snapshot = currentCaseSnapshot();
+  const stageForRail = state.workspaceStage;
+  $$("[data-workflow-stage]").forEach((node) => {
+    const index = Number(node.dataset.workflowStage);
+    node.classList.toggle("is-complete", index < stageForRail || state.completedWorkObjectIds.has(workspaceWorkObjects[index].id));
+    node.classList.toggle("is-active", index === stageForRail);
+    node.classList.toggle("is-blocked", index === 4 && state.workspaceStatus === "blocked");
+  });
+  $("#workspace-status-line").textContent = state.workspaceStatus === "blocked" ? "Decision Pending · Finance ownership conflict requires governed action." : state.workspaceStatus === "paused" ? `Paused after the current transition · ${snapshot.owner} retains ownership.` : state.workspaceStatus === "running" ? `${snapshot.owner} · ${snapshot.task}` : state.assessmentReady ? "Assessment Ready · start the visible specialist workflow." : "Form the capability in Mission Control to activate the workspace.";
+  $("#start-workspace").disabled = !state.assessmentReady || state.hqTransition !== "complete" || state.workspaceStatus !== "idle";
+  $("#pause-workspace").disabled = state.workspaceStatus !== "running" || state.workspacePauseRequested;
+  $("#resume-workspace").disabled = state.workspaceStatus !== "paused";
+  $("#workspace-observatory").classList.toggle("is-blocked", state.workspaceStatus === "blocked");
+  renderWorkObjects();
+  renderWorkQueue();
+  renderMissionCase();
+}
+
 function hqAgentMessage(id) {
+  const snapshot = currentCaseSnapshot();
+  if (state.workspaceStatus === "running" && snapshot.ownerId === id) return `Working on ${snapshot.task}.`;
+  if (state.workspaceStatus === "paused" && snapshot.ownerId === id) return `Workspace paused. Retains ownership of ${snapshot.task}.`;
+  if (state.completedWorkObjectIds.has(workspaceWorkObjects.find((item) => item.agentId === id)?.id)) return "Review attached to DR-CIC-001. Returned to specialist workspace.";
   if (state.hqTransition === "running") {
     if (id === "agent-01") return "Sending the shared evidence package into the room.";
     if (["agent-02", "agent-03", "agent-04"].includes(id)) return "Moving to the Shared Decision Room.";
   }
-  if (state.hqCaseLocation === "decision-room" && (assessmentAgentIds.has(id) || id === "agent-04")) return "Collaborating on the shared case file.";
+  if (state.hqCaseLocation === "decision-room" && (assessmentAgentIds.has(id) || id === "agent-04")) return "Standing by for the next case handoff.";
   return {
     "agent-01": "Monitoring the enterprise portfolio.",
     "agent-02": "Reviewing platform boundaries.",
@@ -442,15 +537,21 @@ function hqAgentMessage(id) {
 }
 
 function renderHqState() {
-  const workflow = state.portfolioState || "Unverified";
+  const snapshot = currentCaseSnapshot();
+  const workflow = state.workspaceStage >= 0 ? snapshot.stage : state.portfolioState || "Unverified";
   $("#hq-workflow-stage").textContent = workflow.toUpperCase();
   $("#hq-selected-capability").textContent = state.capabilityState ? "CUSTOMER INTELLIGENCE" : "AWAITING FORMATION";
-  const activeCount = ["agent-01", "agent-02", "agent-03", "agent-04"].filter((id) => (state.agentStates.get(id) || "Idle") !== "Idle").length;
+  const activeCount = ["agent-01", "agent-02", "agent-03", "agent-04"].filter((id) => ["Working", "Investigating", "Reasoning"].includes(state.agentStates.get(id))).length;
   $("#hq-active-count").textContent = String(activeCount);
   $("#hq-next-action").textContent = hqNextAction();
-  $("#center-active-case").disabled = !state.assessmentReady;
-  const caseState = state.hqCaseLocation === "decision-room" ? "IN SHARED DECISION ROOM" : state.assessmentReady ? "ASSESSMENT READY" : state.capabilityState ? state.capabilityState.toUpperCase() : "AWAITING ASSESSMENT";
+  $("#center-active-case").disabled = !state.capabilityState;
+  const caseState = state.workspaceStage >= 0 ? snapshot.stage.toUpperCase() : state.hqCaseLocation === "decision-room" ? "IN SHARED DECISION ROOM" : state.assessmentReady ? "ASSESSMENT READY" : state.capabilityState ? state.capabilityState.toUpperCase() : "AWAITING ASSESSMENT";
   $("#hq-case-state").textContent = caseState;
+  $("#hq-case-owner").textContent = snapshot.owner.toUpperCase();
+  $("#hq-case-task").textContent = snapshot.task.toUpperCase();
+  $("#hq-case-blocker").textContent = snapshot.blocker.toUpperCase();
+  $("#hq-case-next").textContent = snapshot.next.toUpperCase();
+  $("#hq-case-recommendation").textContent = `RECOMMENDATION / ${snapshot.recommendation}`;
   $("#hq-case-file").classList.toggle("is-dormant", !state.capabilityState);
   $$("[data-hq-agent]").forEach((persona) => {
     const id = persona.dataset.hqAgent;
@@ -458,9 +559,12 @@ function renderHqState() {
     const personaState = specialist.active ? (state.agentStates.get(id) || "Idle") : id === "agent-05" ? "Idle" : "Locked";
     $("[data-hq-state]", persona).textContent = personaState.toUpperCase();
     $("[data-hq-message]", persona).textContent = hqAgentMessage(id);
-    persona.classList.toggle("is-collaborating", state.hqCaseLocation === "decision-room" && ["agent-02", "agent-03", "agent-04"].includes(id));
+    persona.classList.toggle("is-collaborating", state.workspaceStatus === "running" && snapshot.ownerId === id);
+    persona.classList.toggle("is-review-complete", state.completedWorkObjectIds.has(workspaceWorkObjects.find((item) => item.agentId === id)?.id));
   });
+  renderWorkspaceState();
   if (state.selectedHqAgent) renderHqAgentPanel(state.selectedHqAgent);
+  else if (state.selectedWorkObjectId) renderWorkObjectPanel(state.selectedWorkObjectId);
 }
 
 function openExperience(experience, options = {}) {
@@ -509,7 +613,7 @@ function completeHqHandoff() {
   if (state.hqTransition !== "running") return;
   state.hqTransition = "complete";
   state.hqCaseLocation = "decision-room";
-  ["agent-01", "agent-02", "agent-03", "agent-04"].forEach((id) => state.agentStates.set(id, "Complete"));
+  ["agent-01", "agent-02", "agent-03", "agent-04"].forEach((id) => state.agentStates.set(id, "Ready"));
   refreshAgentNodes();
   $("#hq-floor").classList.remove("is-handing-off");
   $("#hq-floor").classList.add("is-handoff-complete", "is-collaboration-ready");
@@ -520,18 +624,117 @@ function renderHqAgentPanel(id) {
   const specialist = hqSpecialists[id];
   if (!specialist) return;
   const agentState = specialist.active ? (state.agentStates.get(id) || "Idle") : id === "agent-05" ? "Idle" : "Locked";
-  const actions = specialist.active ? `<div class="hq-action-list"><button type="button" data-hq-action="evidence">Show my evidence</button><button type="button" data-hq-action="responsibility">Explain my responsibility</button><button type="button" data-hq-action="concern">Show current concern</button><button type="button" data-hq-action="compare">Compare my perspective</button><button type="button" data-hq-action="join">Join the Decision Room</button></div><div class="hq-agent-response" id="hq-agent-response">Select a focused action. Responses are concise, mocked, and grounded in the shared case file.</div>` : `<div class="hq-locked-note">This persona is visible for continuity but remains outside the Version 0.4A active scope.</div>`;
+  const actions = specialist.active ? `<div class="hq-action-list"><button type="button" data-hq-action="evidence">Show my evidence</button><button type="button" data-hq-action="responsibility">Explain my responsibility</button><button type="button" data-hq-action="concern">Show current concern</button><button type="button" data-hq-action="compare">Compare my perspective</button><button type="button" data-hq-action="join">Join the Decision Room</button></div><div class="hq-agent-response" id="hq-agent-response">Select a focused action. Responses are concise, mocked, and grounded in the shared case file.</div>` : `<div class="hq-locked-note">This persona is visible for continuity but remains outside the Version 0.4X active scope.</div>`;
   $("#hq-context-panel").innerHTML = `<div class="hq-panel-content"><p class="eyebrow">SPECIALIST CONTEXT</p><div class="hq-panel-title"><span class="persona-figure" aria-hidden="true"><i></i><b></b></span><div><h2>${specialist.title}</h2><p>${specialist.role}</p></div></div><div class="hq-panel-state"><span><small>CURRENT STATE</small><strong>${agentState.toUpperCase()}</strong></span><span><small>HOME WORKSPACE</small><strong>${specialist.zone.toUpperCase()}</strong></span></div><p class="panel-summary">${hqAgentMessage(id)}</p>${actions}</div>`;
 }
 
 function selectHqAgent(id) {
   state.selectedHqAgent = id;
+  state.selectedWorkObjectId = null;
   $$("[data-hq-agent]").forEach((persona) => {
     const selected = persona.dataset.hqAgent === id;
     persona.classList.toggle("is-selected", selected);
     persona.setAttribute("aria-pressed", String(selected));
   });
   renderHqAgentPanel(id);
+}
+
+function renderWorkObjectPanel(id) {
+  const workObject = workspaceWorkObjects.find((item) => item.id === id);
+  if (!workObject) return;
+  const status = workObjectStatus(workspaceWorkObjects.indexOf(workObject));
+  $("#hq-context-panel").innerHTML = `<div class="hq-panel-content work-detail"><p class="eyebrow">WORK OBJECT / ${workObject.sequence}</p><div class="work-detail-title"><span>${workObject.sequence}</span><div><h2>${workObject.title}</h2><p>${workObject.owner}</p></div></div><div class="hq-panel-state"><span><small>STATUS</small><strong>${status.toUpperCase()}</strong></span><span><small>ATTACHED EVIDENCE</small><strong>${workObject.evidenceCount.toUpperCase()}</strong></span></div><dl><div><dt>FINDING</dt><dd>${workObject.finding}</dd></div><div><dt>CURRENT CONCERN</dt><dd>${workObject.concern}</dd></div><div><dt>NEXT ACTION</dt><dd>${workObject.next}</dd></div></dl><div class="panel-callout">Attached to shared decision record <strong>DR-CIC-001</strong>.</div></div>`;
+}
+
+function selectWorkObject(id) {
+  if (!workspaceWorkObjects.some((item) => item.id === id)) return;
+  state.selectedHqAgent = null;
+  state.selectedWorkObjectId = id;
+  $$('[data-hq-agent]').forEach((persona) => { persona.classList.remove("is-selected"); persona.setAttribute("aria-pressed", "false"); });
+  renderWorkObjects();
+  renderWorkObjectPanel(id);
+}
+
+function renderCasePanel(focus = "summary") {
+  const snapshot = currentCaseSnapshot();
+  const focused = {
+    owner: `<strong>${snapshot.owner}</strong> currently owns <strong>${snapshot.task}</strong>.`,
+    blocker: snapshot.blocker === "None" ? "No active blocker is attached to the case." : `<strong>${snapshot.blocker}.</strong> The case is waiting for accountable human action.`,
+    next: `<strong>${snapshot.next}.</strong> Completed work will not replay when the view changes.`
+  }[focus] || "Select a focused case action to inspect ownership, blockers, or the next handoff.";
+  state.selectedHqAgent = null;
+  state.selectedWorkObjectId = null;
+  $("#hq-context-panel").innerHTML = `<div class="hq-panel-content case-detail"><p class="eyebrow">MODERNIZATION CASE / DR-CIC-001</p><h2>Customer Intelligence Capability</h2><p class="panel-summary">One shared record for three products and the external Finance Warehouse dependency.</p><div class="hq-panel-state"><span><small>CURRENT STAGE</small><strong>${snapshot.stage.toUpperCase()}</strong></span><span><small>CURRENT OWNER</small><strong>${snapshot.owner.toUpperCase()}</strong></span></div><div class="case-detail-actions"><button type="button" data-case-detail="owner">Inspect Current Owner</button><button type="button" data-case-detail="blocker">Show Blocker</button><button type="button" data-case-detail="next">Show Next Action</button></div><div class="hq-agent-response" id="case-detail-response">${focused}</div><div class="case-detail-products"><span>Customer Analytics Warehouse</span><span>Customer Service Portal</span><span>Product Telemetry Platform</span><span class="is-dependency">Finance Warehouse / external dependency</span></div></div>`;
+}
+
+function handleCaseAction(action) {
+  if (action === "mission") { openExperience("mission-control"); return; }
+  if (action === "hq") { openExperience("hq"); return; }
+  if (action === "inspect") { openExperience("hq"); renderCasePanel(); }
+}
+
+function handleCaseDetail(focus) {
+  renderCasePanel(focus);
+  $$('[data-case-detail]').forEach((button) => button.classList.toggle("is-selected", button.dataset.caseDetail === focus));
+}
+
+function startWorkspaceTransition() {
+  if (state.workspaceStatus !== "running" || state.workspaceTransition || state.workspaceStage < 0 || state.workspaceStage > 3) return;
+  const workObject = workspaceWorkObjects[state.workspaceStage];
+  const floor = $("#hq-floor");
+  const persona = $(`[data-hq-agent="${workObject.agentId}"]`);
+  setHqMove(persona, $(`[data-collaboration-target="${workObject.agentId}"]`));
+  state.workspaceTransition = true;
+  state.agentStates.set(workObject.agentId, "Working");
+  floor.dataset.workspaceStep = String(state.workspaceStage);
+  floor.classList.remove("is-workspace-transition");
+  void floor.offsetWidth;
+  floor.classList.add("is-workspace-transition");
+  renderHqState();
+}
+
+function startWorkspaceFlow() {
+  if (!state.assessmentReady || state.hqTransition !== "complete" || state.workspaceStatus !== "idle") return;
+  state.workspaceStage = 0;
+  state.workspaceStatus = "running";
+  state.workspacePauseRequested = false;
+  startWorkspaceTransition();
+}
+
+function pauseWorkspace() {
+  if (state.workspaceStatus !== "running") return;
+  state.workspacePauseRequested = true;
+  if (!state.workspaceTransition) state.workspaceStatus = "paused";
+  renderHqState();
+}
+
+function resumeWorkspace() {
+  if (state.workspaceStatus !== "paused") return;
+  state.workspaceStatus = "running";
+  state.workspacePauseRequested = false;
+  renderHqState();
+  startWorkspaceTransition();
+}
+
+function completeWorkspaceTransition() {
+  if (!state.workspaceTransition || state.workspaceStage < 0 || state.workspaceStage > 3) return;
+  const completed = workspaceWorkObjects[state.workspaceStage];
+  const floor = $("#hq-floor");
+  floor.classList.remove("is-workspace-transition");
+  state.workspaceTransition = false;
+  state.completedWorkObjectIds.add(completed.id);
+  state.agentStates.set(completed.agentId, "Complete");
+  if (state.workspaceStage === 3) {
+    state.workspaceStage = 4;
+    state.workspaceStatus = "blocked";
+    state.workspacePauseRequested = false;
+  } else {
+    state.workspaceStage += 1;
+    state.workspaceStatus = state.workspacePauseRequested ? "paused" : "running";
+    state.workspacePauseRequested = false;
+  }
+  renderHqState();
+  if (state.workspaceStatus === "running") startWorkspaceTransition();
 }
 
 function handleHqAction(action) {
@@ -597,15 +800,22 @@ function resetHqState() {
   state.hqTransition = "idle";
   state.hqCaseLocation = "portfolio-studio";
   state.selectedHqAgent = null;
+  state.selectedWorkObjectId = null;
+  state.workspaceStage = -1;
+  state.workspaceStatus = "idle";
+  state.workspaceTransition = false;
+  state.workspacePauseRequested = false;
+  state.completedWorkObjectIds = new Set();
   const floor = $("#hq-floor");
-  floor.classList.remove("is-handing-off", "is-handoff-complete", "is-collaboration-ready");
+  floor.classList.remove("is-handing-off", "is-handoff-complete", "is-collaboration-ready", "is-workspace-transition");
+  floor.removeAttribute("data-workspace-step");
   [$("#hq-case-file"), ...$$('[data-hq-agent]')].forEach((element) => {
     element.style.removeProperty("--hq-move-x");
     element.style.removeProperty("--hq-move-y");
-    element.classList.remove("is-selected", "is-collaborating");
+    element.classList.remove("is-selected", "is-collaborating", "is-review-complete");
     if (element.hasAttribute("aria-pressed")) element.setAttribute("aria-pressed", "false");
   });
-  $("#hq-context-panel").innerHTML = `<div class="hq-panel-empty"><span class="persona-figure" aria-hidden="true"><i></i><b></b></span><p class="eyebrow">SPECIALIST CONTEXT</p><h2>Select a persona</h2><p>Choose a specialist to inspect its role, current responsibility, evidence, and concern.</p></div>`;
+  $("#hq-context-panel").innerHTML = `<div class="hq-panel-empty"><span class="target-reticle" aria-hidden="true"><i></i></span><p class="eyebrow">WORKSPACE CONTEXT</p><h2>Inspect the active work</h2><p>Select the case, a work object, or a specialist to see concise ownership and next-action detail.</p></div>`;
 }
 
 function resetDemo() {
@@ -651,17 +861,32 @@ function init() {
   $("#assess-initiative").addEventListener("click", assessAsInitiative);
   $("#continue-decision-room").addEventListener("click", continueToDecisionRoom);
   $("#center-active-case").addEventListener("click", centerActiveCase);
+  $("#start-workspace").addEventListener("click", startWorkspaceFlow);
+  $("#pause-workspace").addEventListener("click", pauseWorkspace);
+  $("#resume-workspace").addEventListener("click", resumeWorkspace);
   $("#reset-demo").addEventListener("click", resetDemo);
   $$('[data-hq-agent]').forEach((persona) => persona.addEventListener("click", () => selectHqAgent(persona.dataset.hqAgent)));
   $("#hq-context-panel").addEventListener("click", (event) => {
     const action = event.target.closest("[data-hq-action]");
     if (action) handleHqAction(action.dataset.hqAction);
+    const caseDetail = event.target.closest("[data-case-detail]");
+    if (caseDetail) handleCaseDetail(caseDetail.dataset.caseDetail);
+  });
+  $("#workspace-work-objects").addEventListener("click", (event) => {
+    const workObject = event.target.closest("[data-work-object]");
+    if (workObject) selectWorkObject(workObject.dataset.workObject);
+  });
+  $$('[data-case-action]').forEach((button) => button.addEventListener("click", () => handleCaseAction(button.dataset.caseAction)));
+  $("#hq-case-file").addEventListener("click", () => renderCasePanel());
+  $("#hq-case-file").addEventListener("keydown", (event) => {
+    if (event.key === "Enter" || event.key === " ") { event.preventDefault(); renderCasePanel(); }
   });
   $(".assessment-agent-field").addEventListener("animationend", (event) => {
     if (event.target === event.currentTarget && event.animationName === "assessment-sequence") completeCapabilityFormation();
   });
   $("#hq-floor").addEventListener("animationend", (event) => {
     if (event.target === event.currentTarget && event.animationName === "hq-sequence") completeHqHandoff();
+    if (event.target === event.currentTarget && event.animationName === "workspace-sequence") completeWorkspaceTransition();
   });
   const initialHash = location.hash.slice(1);
   navigate(["portfolio", "decision", "factory"].includes(initialHash) ? initialHash : "portfolio", false);

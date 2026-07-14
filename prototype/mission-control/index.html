@@ -6,8 +6,8 @@
     <meta name="description" content="Standalone Modernization AI Lab mission-control prototype.">
     <title>Modernization AI Lab — Mission Control</title>
     <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='4' fill='%230b1720'/%3E%3Cpath d='M7 23V15h4v8m3 0V10h4v13m3 0V6h4v17' stroke='%234bd6c2' stroke-width='2'/%3E%3C/svg%3E">
-    <link rel="stylesheet" href="styles.css?v=0.4a">
-    <script src="script.js?v=0.4a" defer></script>
+    <link rel="stylesheet" href="styles.css?v=0.4x">
+    <script src="script.js?v=0.4x" defer></script>
   </head>
   <body>
     <svg class="icon-library" aria-hidden="true">
@@ -22,7 +22,7 @@
       <header class="topbar">
         <a class="brand" href="#portfolio" data-view-link="portfolio" aria-label="Mission Control home">
           <span class="brand-mark" aria-hidden="true"><span></span><span></span><span></span></span>
-          <span><strong>MODERNIZATION AI LAB</strong><small>CONNECTED EXPERIENCES / V0.4A</small></span>
+          <span><strong>MODERNIZATION AI LAB</strong><small>CONNECTED EXPERIENCES / V0.4X</small></span>
         </a>
         <div class="experience-switch" role="group" aria-label="Experience switch">
           <button class="is-active" type="button" data-experience-switch="mission-control" aria-pressed="true">Mission Control</button>
@@ -56,6 +56,16 @@
       </nav>
 
       <main data-experience-panel="mission-control">
+        <section class="mission-case-dock" id="mission-case-dock" aria-label="Active modernization case">
+          <div class="mission-case-identity"><span class="case-live-dot" aria-hidden="true"></span><span><small>ACTIVE MODERNIZATION CASE</small><strong>Customer Intelligence Capability</strong></span></div>
+          <div><small>STAGE</small><strong id="mission-case-stage">AWAITING FORMATION</strong></div>
+          <div><small>CURRENT OWNER</small><strong id="mission-case-owner">PORTFOLIO INTELLIGENCE</strong></div>
+          <div><small>BLOCKER</small><strong id="mission-case-blocker">NONE</strong></div>
+          <div><small>NEXT</small><strong id="mission-case-next">BEGIN DISCOVERY</strong></div>
+          <button type="button" data-case-action="inspect">Inspect Case</button>
+          <button type="button" data-case-action="hq">Switch to Modernization HQ</button>
+        </section>
+
         <section class="environment is-visible" id="portfolio-view" data-environment="portfolio" aria-labelledby="portfolio-title">
           <div class="section-heading">
             <div><p class="eyebrow">ENVIRONMENT 01 / PORTFOLIO INTELLIGENCE</p><h1 id="portfolio-title">Portfolio Command Center</h1><p>Survey the synthetic Apex Aerospace estate and select a product to inspect its modernization posture.</p></div>
@@ -229,7 +239,7 @@
 
       <section class="hq-experience" id="hq-experience" data-experience-panel="hq" aria-labelledby="hq-title" hidden>
         <header class="hq-header">
-          <div><p class="eyebrow">ALTERNATIVE EXPERIENCE / COLLABORATION FLOOR</p><h1 id="hq-title">Modernization HQ</h1><p>One shared modernization record. Eight specialist workspaces. A visible path from portfolio evidence to governed decision.</p></div>
+          <div><p class="eyebrow">VERSION 0.4X / LIVING WORKSPACE</p><h1 id="hq-title">Modernization HQ</h1><p>Follow one shared modernization case as evidence, reviews, ownership, and blockers attach to the work.</p></div>
           <div class="hq-stage-strip" aria-label="Current HQ workflow context">
             <span><small>WORKFLOW STAGE</small><strong id="hq-workflow-stage">PORTFOLIO UNVERIFIED</strong></span>
             <span><small>SELECTED CAPABILITY</small><strong id="hq-selected-capability">AWAITING FORMATION</strong></span>
@@ -238,6 +248,31 @@
           </div>
         </header>
 
+        <section class="workspace-observatory" id="workspace-observatory" aria-labelledby="workspace-observatory-title">
+          <div class="workspace-commandbar">
+            <div><p class="eyebrow">MISSION COMMANDER / ACTIVE WORK</p><h2 id="workspace-observatory-title">Customer Intelligence Capability</h2><span id="workspace-status-line" role="status" aria-live="polite">Form the capability in Mission Control to activate the workspace.</span></div>
+            <div class="workspace-actions">
+              <button class="primary-action" id="start-workspace" type="button" disabled>Start Workspace Flow</button>
+              <button class="secondary-action" id="pause-workspace" type="button" disabled>Pause Workspace</button>
+              <button class="secondary-action" id="resume-workspace" type="button" disabled>Resume Workspace</button>
+              <button class="secondary-action" type="button" data-case-action="mission">Return to Mission Control</button>
+            </div>
+          </div>
+
+          <div class="workflow-rail" id="workflow-rail" aria-label="Modernization case workflow">
+            <span data-workflow-stage="0"><i>01</i><strong>Evidence Collected</strong><small>Portfolio Intelligence</small></span>
+            <span data-workflow-stage="1"><i>02</i><strong>Architecture Review</strong><small>Enterprise Architecture</small></span>
+            <span data-workflow-stage="2"><i>03</i><strong>Business Review</strong><small>Business Strategy</small></span>
+            <span data-workflow-stage="3"><i>04</i><strong>Risk Review</strong><small>Risk &amp; Governance</small></span>
+            <span data-workflow-stage="4"><i>05</i><strong>Decision Pending</strong><small>Mission Commander</small></span>
+          </div>
+
+          <div class="workspace-grid">
+            <section class="work-object-board" aria-labelledby="work-object-title"><div class="workspace-section-heading"><span>ATTACHED WORK OBJECTS</span><strong id="work-object-title">ONE SHARED CASE RECORD</strong></div><div class="work-object-list" id="workspace-work-objects"></div></section>
+            <section class="work-queue" aria-labelledby="work-queue-title"><div class="workspace-section-heading"><span>WORK QUEUE</span><strong id="work-queue-title">LIVE CASE POSITION</strong></div><div class="queue-lanes" id="workspace-queue"></div></section>
+          </div>
+        </section>
+
         <div class="hq-layout">
           <div class="hq-floor" id="hq-floor" aria-label="Modernization HQ floor plan">
             <section class="hq-zone zone-portfolio is-open" data-zone="portfolio" aria-labelledby="zone-portfolio-title">
@@ -245,12 +280,14 @@
               <button class="hq-persona" type="button" data-hq-agent="agent-01" aria-pressed="false">
                 <span class="persona-figure" aria-hidden="true"><i></i><b></b></span><span class="persona-copy"><strong>Portfolio Intelligence Specialist</strong><small data-hq-role>Evidence steward</small><em data-hq-state>IDLE</em><span data-hq-message>Monitoring the enterprise portfolio.</span></span>
               </button>
-              <div class="hq-case-file" id="hq-case-file" aria-label="Customer Intelligence Capability case file">
+              <div class="hq-case-file" id="hq-case-file" role="button" tabindex="0" aria-label="Inspect Customer Intelligence Capability modernization case">
                 <div class="case-file-top"><span>SHARED CASE FILE</span><strong id="hq-case-state">AWAITING ASSESSMENT</strong></div>
                 <h3>Customer Intelligence Capability</h3>
                 <div class="case-products"><span>Customer Service Portal</span><span>Customer Analytics Warehouse</span><span>Product Telemetry Platform</span></div>
                 <div class="case-dependency"><i></i><span>Finance Warehouse</span><small>12 dependent finance reports</small></div>
                 <div class="case-signals"><span><small>EVIDENCE</small><strong>3 / 3 READY</strong></span><span><small>VALUE</small><strong>HIGH</strong></span><span><small>URGENCY</small><strong>HIGH</strong></span><span><small>RISK</small><strong>ELEVATED</strong></span></div>
+                <div class="case-operations"><span><small>OWNER</small><strong id="hq-case-owner">PORTFOLIO INTELLIGENCE</strong></span><span><small>CURRENT TASK</small><strong id="hq-case-task">FORM CAPABILITY</strong></span><span><small>BLOCKER</small><strong id="hq-case-blocker">NONE</strong></span><span><small>NEXT ACTION</small><strong id="hq-case-next">BEGIN DISCOVERY</strong></span></div>
+                <div class="case-record"><span>DECISION RECORD</span><strong>DR-CIC-001</strong><small id="hq-case-recommendation">RECOMMENDATION / PENDING SPECIALIST REVIEW</small></div>
                 <div class="case-evidence-tokens" aria-hidden="true"><i></i><i></i><i></i></div>
               </div>
             </section>
@@ -282,7 +319,7 @@
           </div>
 
           <aside class="hq-context-panel" id="hq-context-panel" aria-live="polite">
-            <div class="hq-panel-empty"><span class="persona-figure" aria-hidden="true"><i></i><b></b></span><p class="eyebrow">SPECIALIST CONTEXT</p><h2>Select a persona</h2><p>Choose a specialist to inspect its role, current responsibility, evidence, and concern.</p></div>
+            <div class="hq-panel-empty"><span class="target-reticle" aria-hidden="true"><i></i></span><p class="eyebrow">WORKSPACE CONTEXT</p><h2>Inspect the active work</h2><p>Select the case, a work object, or a specialist to see concise ownership and next-action detail.</p></div>
           </aside>
         </div>
       </section>
