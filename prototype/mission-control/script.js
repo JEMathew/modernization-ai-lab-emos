@@ -38,10 +38,10 @@ const hqSpecialists = {
   "agent-02": { title: "Chief Enterprise Architect", role: "Architecture authority", zone: "Architecture Studio", active: true, evidence: "Customer Analytics Warehouse carries high technical urgency and anchors the Oracle-to-BigQuery boundary.", responsibility: "I define the shared technical boundary, target-state implications, and architecture decision points.", concern: "Twelve dependent finance reports increase coupling at the reporting boundary.", perspective: "I optimize for a coherent capability architecture without hiding integration consequence." },
   "agent-03": { title: "Business Strategist", role: "Value and outcome lead", zone: "Business Strategy Studio", active: true, evidence: "Customer Service Portal has high business importance and Product Telemetry has high future strategic value.", responsibility: "I connect the combined initiative to customer outcomes and measurable enterprise value.", concern: "Separating the three products would fragment value realization across multiple delivery tracks.", perspective: "I favor one initiative because the business outcome spans all three products." },
   "agent-04": { title: "Risk & Governance Specialist", role: "Control and approval lead", zone: "Risk & Governance Center", active: true, evidence: "Evidence coverage is complete for the three capability products; Finance ownership remains conflicted.", responsibility: "I preserve accountable decisions, surface unresolved controls, and define human approval boundaries.", concern: "The reporting dependency must remain explicit in every downstream decision record.", perspective: "I allow assessment to proceed while keeping the ownership conflict as a governed exception." },
-  "agent-05": { title: "Wave Planning Specialist", role: "Future sequencing lead", zone: "Shared Decision Room", active: false, evidence: "Wave evidence is not active in Version 0.4A.", responsibility: "I will sequence approved initiatives when wave planning becomes active.", concern: "No planning concern is evaluated in this version.", perspective: "Planning begins only after the governed decision stage." },
+  "agent-05": { title: "Wave Planning Specialist", role: "Constraint propagation owner", zone: "Shared Decision Room", active: true, evidence: "The six-month finance-report freeze is attached to DR-CIC-001.", responsibility: "I propagate governed constraints through strategy, timeline, cost, risk, and wave sequencing.", concern: "The portal must follow the warehouse without moving unaffected products.", perspective: "I revise only plan elements causally affected by the Human Constraint." },
   "agent-06": { title: "Codex Modernization Engineer", role: "Migration engineering", zone: "Codex Engineering Lab", active: false },
   "agent-07": { title: "Validation Specialist", role: "Quality and controls", zone: "Validation Lab", active: false },
-  "agent-08": { title: "Executive Advisor", role: "Executive decision support", zone: "Executive Briefing Room", active: false }
+  "agent-08": { title: "Executive Advisor", role: "Constraint impact explanation", zone: "Executive Briefing Room", active: true, evidence: "The revised plan records a three-month extension, eleven-percent cost increase, and thirty-four-percent risk reduction.", responsibility: "I explain visible decision consequences and preserve traceability to DR-CIC-001.", concern: "Ownership validation remains open after the protected boundary is created.", perspective: "The revised plan trades time and cost for lower disruption and explicit governance." }
 };
 
 const workspaceWorkObjects = [
@@ -59,6 +59,25 @@ const decisionPositions = {
 };
 
 const decisionTimeline = ["Evidence Received", "Architecture Position Added", "Business Position Added", "Risk Objection Added", "Decision Unresolved", "Human Decision Required"];
+
+const propagationNodes = [
+  { id: "strategy", label: "Strategy", owner: "Wave Planning Specialist", reason: "The six-month freeze favors staged replatforming over a broad rebuild." },
+  { id: "architecture", label: "Architecture", owner: "Chief Enterprise Architect", reason: "Compatibility views and a dual run protect unchanged finance reports." },
+  { id: "timeline", label: "Timeline", owner: "Wave Planning Specialist", reason: "The protected transition extends delivery from four to seven months." },
+  { id: "cost", label: "Migration Cost", owner: "Wave Planning Specialist", reason: "Compatibility and reconciliation controls add eleven percent." },
+  { id: "risk", label: "Operational Risk", owner: "Risk & Governance Specialist", reason: "The protected boundary reduces operational risk by thirty-four percent." },
+  { id: "wave", label: "Wave Planning", owner: "Wave Planning Specialist", reason: "The portal moves behind the warehouse to preserve reporting behavior." },
+  { id: "engineering", label: "Engineering Controls", owner: "Chief Enterprise Architect", reason: "Compatibility views, dual run, regression tests, and ownership validation become mandatory." },
+  { id: "governance", label: "Governance", owner: "Executive Advisor", reason: "Ownership validation remains open and every revision traces to the Human Constraint." }
+];
+
+const propagationWorkObjects = [
+  { id: "revised-strategy", title: "Revised Strategy", owner: "Wave Planning Specialist", releaseAt: 0, finding: "Staged replatform replaces the broader rebuild to honor the six-month freeze." },
+  { id: "revised-architecture", title: "Revised Architecture", owner: "Chief Enterprise Architect", releaseAt: 1, finding: "Compatibility views and dual-run reconciliation protect the finance boundary." },
+  { id: "revised-wave", title: "Revised Wave Plan", owner: "Wave Planning Specialist", releaseAt: 5, finding: "Customer Service Portal moves from Wave 1 to Wave 2; the warehouse remains Wave 1." },
+  { id: "risk-control", title: "Risk Control Plan", owner: "Risk & Governance Specialist", releaseAt: 6, finding: "Regression tests and ownership validation become required controls." },
+  { id: "impact-summary", title: "Constraint Impact Summary", owner: "Executive Advisor", releaseAt: 7, finding: "Seven-month staged plan, eleven-percent cost increase, and thirty-four-percent risk reduction." }
+];
 
 const state = {
   view: "portfolio",
@@ -87,6 +106,10 @@ const state = {
   decisionQuestionOpen: false,
   commanderDecision: null,
   humanConstraintAttached: false,
+  propagationStatus: "idle",
+  propagationStep: -1,
+  propagatedNodeIds: new Set(),
+  propagationWorkObjectIds: new Set(),
   productStates: new Map(),
   agentStates: new Map()
 };
@@ -111,7 +134,10 @@ function stateClass(label) {
     "Evidence Incomplete": "status-incomplete",
     "Conflict Detected": "status-conflict",
     "Assessing": "status-assessing",
-    "Assessment Complete": "status-complete"
+    "Assessment Complete": "status-complete",
+    "Plan Revised": "status-complete",
+    "Sequenced After Warehouse": "status-complete",
+    "Protected Boundary": "status-incomplete"
   }[label] || "";
 }
 
@@ -451,6 +477,9 @@ function assessAsInitiative() {
 }
 
 function hqNextAction() {
+  if (state.propagationStatus === "approved") return "GENERATE MIGRATION STARTER PACKAGE";
+  if (state.propagationStatus === "complete") return "APPROVE REVISED PLAN";
+  if (state.propagationStatus === "running") return "PROPAGATING HUMAN CONSTRAINT";
   if (state.decisionStatus === "ready-replanning") return "PROPAGATE CONSTRAINT";
   if (state.decisionStatus === "waiting-evidence") return "RETURN TO DECISION GATE";
   if (state.decisionStatus === "unresolved") return "RESOLVE DECISION";
@@ -468,6 +497,9 @@ function hqNextAction() {
 }
 
 function currentCaseSnapshot() {
+  if (state.propagationStatus === "approved") return { stage: "Engineering Ready", owner: "Modernization Engineer", ownerId: "agent-06", task: "Approved revised plan attached", blocker: "None", next: "Generate Migration Starter Package", evidence: "5 revised work objects + Human Constraint", recommendation: "STAGED REPLATFORM APPROVED" };
+  if (state.propagationStatus === "complete") return { stage: "Revised Plan Ready", owner: "Mission Commander", ownerId: null, task: "Review propagated plan", blocker: "Revised plan requires human approval", next: "Approve Revised Plan", evidence: "8 propagated impacts + 5 work objects", recommendation: "STAGED REPLATFORM / APPROVAL PENDING" };
+  if (state.propagationStatus === "running") { const node = propagationNodes[state.propagationStep]; return { stage: "Decision Propagating", owner: "Wave Planning Specialist", ownerId: "agent-05", task: `Coordinate ${node.label} update with ${node.owner}`, blocker: "None", next: `Propagate to ${propagationNodes[state.propagationStep + 1]?.label || "revised-plan approval"}`, evidence: `${state.propagatedNodeIds.size} of 8 impacts attached`, recommendation: "STAGED REPLATFORM / REVISING" }; }
   if (state.decisionStatus === "ready-replanning") return { stage: "Ready for Replanning", owner: "Wave Planning Specialist", ownerId: "agent-05", task: "Human Constraint attached", blocker: "Report ownership remains a governance action", next: "Propagate Constraint", evidence: "4 reviews + Mission Commander decision", recommendation: state.commanderDecision === "yes" ? "STAGED REPLATFORM WITH SIX-MONTH FREEZE" : "GOVERNED CHANGE PATH APPROVED" };
   if (state.decisionStatus === "waiting-evidence") return { stage: "Waiting", owner: "Portfolio Intelligence Specialist", ownerId: "agent-01", task: "Collect targeted decision evidence", blocker: "Four evidence requests are pending", next: "Return to Decision Gate", evidence: "Targeted requests issued", recommendation: "DECISION DEFERRED" };
   if (["unresolved", "assembling"].includes(state.decisionStatus)) return { stage: state.decisionStatus === "unresolved" ? "Decision Unresolved" : "Decision Pending", owner: "Mission Commander", ownerId: null, task: state.decisionStatus === "unresolved" ? "Human Decision Required" : "Specialist positions assembling", blocker: "Finance reporting constraint requires a human decision", next: state.decisionStatus === "unresolved" ? "Resolve Decision" : "Complete position assembly", evidence: `${state.positionsAttached.size} specialist positions attached`, recommendation: "MULTIPLE GOVERNED POSITIONS" };
@@ -514,11 +546,12 @@ function renderWorkObjects() {
     return `<button class="work-object status-${status.toLowerCase().replaceAll(" ", "-")}${selected ? " is-selected" : ""}" type="button" data-work-object="${workObject.id}" aria-pressed="${selected}"><span class="work-object-sequence">${workObject.sequence}</span><span><strong>${workObject.title}</strong><small>${workObject.owner}</small></span><em>${workObject.evidenceCount}</em><b>${status.toUpperCase()}</b></button>`;
   }).join("") : `<div class="work-object-empty"><strong>WORK OBJECTS NOT YET RELEASED</strong><small>Complete capability assessment to prepare the Evidence Package.</small></div>`;
   if (state.humanConstraintAttached) $("#workspace-work-objects").insertAdjacentHTML("beforeend", `<button class="work-object status-incoming" type="button" data-work-object="constraint"><span class="work-object-sequence">06</span><span><strong>Human Constraint</strong><small>Mission Commander</small></span><em>DR-CIC-001</em><b>ATTACHED</b></button>`);
+  propagationWorkObjects.filter((item) => state.propagationWorkObjectIds.has(item.id)).forEach((item, index) => $("#workspace-work-objects").insertAdjacentHTML("beforeend", `<button class="work-object status-complete" type="button" data-work-object="${item.id}"><span class="work-object-sequence">${String(index + 7).padStart(2, "0")}</span><span><strong>${item.title}</strong><small>${item.owner}</small></span><em>DR-CIC-001</em><b>ATTACHED</b></button>`));
 }
 
 function renderWorkQueue() {
   const statuses = ["Incoming", "In Review", "Waiting", "Blocked", "Complete"];
-  const activeQueue = state.decisionStatus === "ready-replanning" ? "Incoming" : state.decisionStatus === "waiting-evidence" ? "Waiting" : state.workspaceStatus === "blocked" ? "Blocked" : state.workspaceStatus === "paused" ? "Waiting" : state.workspaceStatus === "running" ? "In Review" : "Incoming";
+  const activeQueue = state.propagationStatus === "approved" ? "Complete" : state.propagationStatus === "complete" ? "Waiting" : state.propagationStatus === "running" ? "In Review" : state.decisionStatus === "ready-replanning" ? "Incoming" : state.decisionStatus === "waiting-evidence" ? "Waiting" : state.workspaceStatus === "blocked" ? "Blocked" : state.workspaceStatus === "paused" ? "Waiting" : state.workspaceStatus === "running" ? "In Review" : "Incoming";
   $("#workspace-queue").innerHTML = statuses.map((status) => {
     const items = workspaceWorkObjects.filter((_, index) => workObjectStatus(index) === status);
     const caseHere = activeQueue === status;
@@ -541,7 +574,7 @@ function renderWorkspaceState() {
   $("#case-progress-marker").classList.toggle("is-moving", state.workspaceTransition);
   $("#case-progress-marker").classList.toggle("is-blocked", decisionBlocked);
   $("#case-progress-label").textContent = state.workspaceStage >= 0 ? snapshot.stage.toUpperCase() : state.assessmentReady ? "READY FOR EVIDENCE" : "AWAITING START";
-  $("#workspace-status-line").textContent = state.decisionStatus === "ready-replanning" ? "Ready for Replanning · Human Constraint attached · Wave Planning owns the next action." : state.decisionStatus === "waiting-evidence" ? "Waiting · Portfolio Intelligence owns four targeted evidence requests." : state.decisionStatus === "unresolved" ? "Decision Unresolved · Human Decision Required." : state.workspaceStatus === "blocked" ? "Decision Pending · Waiting for Mission Commander." : state.workspaceStatus === "paused" ? `Paused after the current transition · ${snapshot.owner} retains ownership.` : state.workspaceStatus === "running" ? `${snapshot.owner} · ${snapshot.task}` : state.assessmentReady ? "Assessment Ready · start the visible specialist workflow." : "Form the capability in Mission Control to activate the workspace.";
+  $("#workspace-status-line").textContent = state.propagationStatus === "approved" ? "Engineering Ready · Modernization Engineer owns the next action." : state.propagationStatus === "complete" ? "Revised Plan Ready · waiting for Mission Commander approval." : state.propagationStatus === "running" ? `${snapshot.owner} · ${snapshot.task} because the Human Constraint changed the plan.` : state.decisionStatus === "ready-replanning" ? "Ready for Replanning · Human Constraint attached · Wave Planning owns the next action." : state.decisionStatus === "waiting-evidence" ? "Waiting · Portfolio Intelligence owns four targeted evidence requests." : state.decisionStatus === "unresolved" ? "Decision Unresolved · Human Decision Required." : state.workspaceStatus === "blocked" ? "Decision Pending · Waiting for Mission Commander." : state.workspaceStatus === "paused" ? `Paused after the current transition · ${snapshot.owner} retains ownership.` : state.workspaceStatus === "running" ? `${snapshot.owner} · ${snapshot.task}` : state.assessmentReady ? "Assessment Ready · start the visible specialist workflow." : "Form the capability in Mission Control to activate the workspace.";
   $("#start-workspace").disabled = !state.assessmentReady || state.hqTransition !== "complete" || state.workspaceStatus !== "idle";
   $("#pause-workspace").disabled = state.workspaceStatus !== "running" || state.workspacePauseRequested;
   $("#resume-workspace").disabled = state.workspaceStatus !== "paused";
@@ -550,6 +583,7 @@ function renderWorkspaceState() {
   renderWorkQueue();
   renderMissionCase();
   renderDecisionRoom();
+  renderPropagationWorkspace();
 }
 
 function positionDetail(key) {
@@ -591,7 +625,7 @@ function governedQuestionContent() {
 
 function renderDecisionRecord() {
   const decisionLabel = state.commanderDecision === "yes" ? "Yes — protect finance reports for six months" : state.commanderDecision === "no" ? "No — finance reports may change" : state.commanderDecision === "evidence" ? "Request more evidence" : "Pending";
-  $("#decision-record-fields").innerHTML = `<span><small>CASE ID</small><strong>DR-CIC-001</strong></span><span><small>SPECIALIST POSITIONS</small><strong>${state.positionsAttached.size} / 3 attached</strong></span><span><small>EVIDENCE REFERENCES</small><strong>Evidence Package · Architecture · Business · Risk</strong></span><span><small>ASSUMPTIONS</small><strong>3 governed assumptions</strong></span><span><small>CHALLENGE</small><strong>${state.decisionChallengeAttached ? "Attached" : "Not requested"}</strong></span><span><small>UNRESOLVED QUESTION</small><strong>Six-month report freeze</strong></span><span><small>MISSION COMMANDER DECISION</small><strong>${decisionLabel}</strong></span><span><small>CONSTRAINT</small><strong>${state.humanConstraintAttached ? (state.commanderDecision === "yes" ? "Finance reports frozen for six months" : "Governed report change permitted") : "Pending"}</strong></span><span><small>REMAINING GOVERNANCE ACTION</small><strong>Confirm report ownership and change authority</strong></span><span><small>SEQUENCE</small><strong>DR-CIC-001 / V0.5 / 06</strong></span><span><small>NEXT WORKFLOW STAGE</small><strong>${state.decisionStatus === "ready-replanning" ? "Ready for Replanning" : state.decisionStatus === "waiting-evidence" ? "Waiting" : "Human Decision Required"}</strong></span>`;
+  $("#decision-record-fields").innerHTML = `<span><small>CASE ID</small><strong>DR-CIC-001</strong></span><span><small>SPECIALIST POSITIONS</small><strong>${state.positionsAttached.size} / 3 attached</strong></span><span><small>EVIDENCE REFERENCES</small><strong>Evidence Package · Architecture · Business · Risk</strong></span><span><small>ASSUMPTIONS</small><strong>3 governed assumptions</strong></span><span><small>CHALLENGE</small><strong>${state.decisionChallengeAttached ? "Attached" : "Not requested"}</strong></span><span><small>UNRESOLVED QUESTION</small><strong>Six-month report freeze</strong></span><span><small>MISSION COMMANDER DECISION</small><strong>${decisionLabel}</strong></span><span><small>CONSTRAINT</small><strong>${state.humanConstraintAttached ? (state.commanderDecision === "yes" ? "Finance reports frozen for six months" : "Governed report change permitted") : "Pending"}</strong></span><span><small>REMAINING GOVERNANCE ACTION</small><strong>Confirm report ownership and change authority</strong></span><span><small>SEQUENCE</small><strong>DR-CIC-001 / V0.6 / ${state.propagatedNodeIds.size + 6}</strong></span><span><small>NEXT WORKFLOW STAGE</small><strong>${state.propagationStatus === "approved" ? "Engineering Ready" : state.propagationStatus === "complete" ? "Revised Plan Approval" : state.propagationStatus === "running" ? "Decision Propagation" : state.decisionStatus === "ready-replanning" ? "Ready for Replanning" : state.decisionStatus === "waiting-evidence" ? "Waiting" : "Human Decision Required"}</strong></span>`;
 }
 
 function renderDecisionRoom() {
@@ -677,8 +711,124 @@ function selectCommanderDecision(decision) {
   renderHqState();
 }
 
+function propagationDelta() {
+  const rows = [
+    ["Strategy", "Rebuild", "Staged Replatform"], ["Timeline", "4 Months", "7 Months"], ["Initial Disruption", "High", "Low"], ["Migration Cost", "Baseline", "+11%"], ["Operational Risk", "High", "Reduced 34%"], ["Customer Service Portal", "Wave 1", "Wave 2"], ["Finance Warehouse", "Exposed", "Protected Boundary"], ["Engineering Controls", "Compatibility views", "Dual run · regression tests · ownership validation"]
+  ];
+  return `<p class="eyebrow">DECISION DELTA / HUMAN CONSTRAINT</p><h3>What changed because finance reports must remain unchanged for six months</h3><div class="delta-table"><div><strong>PLAN ELEMENT</strong><strong>BEFORE</strong><strong>AFTER</strong></div>${rows.map((row) => `<div>${row.map((cell) => `<span>${cell}</span>`).join("")}</div>`).join("")}</div>`;
+}
+
+function propagationActionContent(action) {
+  const content = {
+    delta: propagationDelta(), compare: propagationDelta(),
+    strategy: `<p class="eyebrow">REVISED STRATEGY / DR-CIC-001</p><h3>Staged Replatform</h3><p>The six-month report freeze replaces the broader rebuild with a warehouse-first staged path. Customer value remains the goal, but transition compatibility now governs sequencing.</p>`,
+    architecture: `<p class="eyebrow">REVISED ARCHITECTURE / DR-CIC-001</p><h3>Protected reporting boundary</h3><p>Compatibility views preserve report contracts while dual-run reconciliation proves parity. The Customer Service Portal decouples only after the warehouse boundary is stable.</p>`,
+    wave: `<p class="eyebrow">REVISED WAVE PLAN / DR-CIC-001</p><h3>Warehouse first; portal second</h3><p>Customer Analytics Warehouse remains Wave 1. Customer Service Portal moves from Wave 1 to Wave 2. Product Telemetry Platform and the remaining products do not move.</p>`,
+    risk: `<p class="eyebrow">RISK CONTROL PLAN / DR-CIC-001</p><h3>Operational risk reduced 34%</h3><p>Compatibility views, dual-run reconciliation, regression tests, and ownership validation control the protected transition. Cost rises eleven percent to fund those controls.</p>`,
+    governance: `<p class="eyebrow">GOVERNANCE / DR-CIC-001</p><h3>Protected boundary with an open ownership action</h3><p>The Finance Warehouse receives a Protected Boundary. Its unresolved ownership marker remains visible and must be validated before controlled report changes are authorized.</p>`
+  };
+  return content[action];
+}
+
+function renderPropagationProducts() {
+  const waveRevised = state.propagatedNodeIds.has("wave");
+  $("#wave-plan").innerHTML = `<div class="wave-lane"><span>WAVE 1</span><article class="wave-product is-revised"><small>PLAN REVISED</small><strong>Customer Analytics Warehouse</strong><em>Remains Wave 1</em></article>${waveRevised ? "" : `<article class="wave-product portal-product"><small>BASELINE</small><strong>Customer Service Portal</strong><em>Wave 1</em></article>`}</div><div class="wave-transfer ${waveRevised ? "is-visible" : ""}"><span>HUMAN CONSTRAINT</span><strong>Portal sequenced after warehouse</strong><i>→</i></div><div class="wave-lane"><span>WAVE 2</span>${waveRevised ? `<article class="wave-product portal-product is-moved"><small>SEQUENCED AFTER WAREHOUSE</small><strong>Customer Service Portal</strong><em>Moved from Wave 1</em></article>` : `<small class="empty-wave">AWAITING PROPAGATION</small>`}</div><div class="protected-products"><article class="wave-product finance-product ${state.propagatedNodeIds.has("architecture") ? "is-protected" : ""}"><small>${state.propagatedNodeIds.has("architecture") ? "PROTECTED BOUNDARY" : "EXPOSED"}</small><strong>Finance Warehouse</strong><em>Ownership unresolved</em></article><article class="wave-product"><small>NO WAVE MOVEMENT</small><strong>Product Telemetry Platform</strong><em>Plan unchanged</em></article><span>6 remaining products · no movement</span></div>`;
+}
+
+function renderPropagationObjects() {
+  const released = propagationWorkObjects.filter((item) => state.propagationWorkObjectIds.has(item.id));
+  $("#propagation-work-objects").innerHTML = released.length ? released.map((item) => `<button type="button" data-propagation-object="${item.id}"><span>✓</span><div><strong>${item.title}</strong><small>${item.owner}</small></div><em>ATTACHED TO DR-CIC-001</em></button>`).join("") : `<div class="propagation-empty"><strong>NO REVISED WORK OBJECTS YET</strong><small>Objects appear only when their causal node completes.</small></div>`;
+}
+
+function renderPropagationWorkspace() {
+  const eligible = state.commanderDecision === "yes" && state.humanConstraintAttached;
+  const workspace = $("#propagation-workspace");
+  workspace.hidden = !eligible;
+  if (!eligible) return;
+  $("#propagation-nodes").innerHTML = propagationNodes.map((node, index) => { const done = state.propagatedNodeIds.has(node.id); const active = state.propagationStatus === "running" && state.propagationStep === index; return `<article class="propagation-node${done ? " is-complete" : ""}${active ? " is-active" : ""}" data-propagation-node="${node.id}"><i>${String(index + 1).padStart(2, "0")}</i><div><strong>${node.label}</strong><small>${node.owner}</small><p>${done || active ? node.reason : "Waiting for upstream consequence."}</p></div><em>${done ? "UPDATED" : active ? "UPDATING" : "WAITING"}</em></article>`; }).join("");
+  const labels = { idle: "READY TO PROPAGATE", running: `UPDATING ${propagationNodes[state.propagationStep]?.label.toUpperCase()}`, complete: "REVISED PLAN READY", approved: "ENGINEERING READY" };
+  $("#propagation-status").textContent = labels[state.propagationStatus];
+  $("#propagate-constraint").hidden = state.propagationStatus !== "idle";
+  $("#propagation-actions").classList.toggle("is-enabled", ["complete", "approved"].includes(state.propagationStatus));
+  $$("[data-propagation-action]").forEach((button) => { button.disabled = !["complete", "approved"].includes(state.propagationStatus); });
+  $("#revised-plan-gate").hidden = state.propagationStatus !== "complete";
+  $("#engineering-handoff").hidden = state.propagationStatus !== "approved";
+  renderPropagationProducts();
+  renderPropagationObjects();
+}
+
+function openPropagationWorkspace() {
+  if (state.commanderDecision !== "yes" || !state.humanConstraintAttached) return;
+  renderHqState();
+  $("#propagation-workspace").scrollIntoView({ behavior: "smooth", block: "start" });
+}
+
+function startPropagation() {
+  if (state.propagationStatus !== "idle" || state.commanderDecision !== "yes" || !state.humanConstraintAttached) return;
+  state.propagationStatus = "running";
+  state.propagationStep = 0;
+  state.agentStates.set("agent-05", "Propagating");
+  runPropagationStep();
+}
+
+function runPropagationStep() {
+  const chain = $("#propagation-chain");
+  const contributorId = { "Wave Planning Specialist": "agent-05", "Chief Enterprise Architect": "agent-02", "Risk & Governance Specialist": "agent-04", "Executive Advisor": "agent-08" }[propagationNodes[state.propagationStep].owner];
+  if (contributorId) state.agentStates.set(contributorId, "Updating");
+  chain.dataset.propagationStep = String(state.propagationStep);
+  chain.classList.remove("is-propagating");
+  void chain.offsetWidth;
+  chain.classList.add("is-propagating");
+  renderHqState();
+}
+
+function completePropagationStep() {
+  if (state.propagationStatus !== "running") return;
+  const node = propagationNodes[state.propagationStep];
+  const contributorId = { "Wave Planning Specialist": "agent-05", "Chief Enterprise Architect": "agent-02", "Risk & Governance Specialist": "agent-04", "Executive Advisor": "agent-08" }[node.owner];
+  if (contributorId) state.agentStates.set(contributorId, "Work Attached");
+  state.propagatedNodeIds.add(node.id);
+  if (node.id === "strategy") setProductState("data-01", "Plan Revised");
+  if (node.id === "architecture") setProductState("data-04", "Protected Boundary");
+  if (node.id === "wave") setProductState("app-03", "Sequenced After Warehouse");
+  propagationWorkObjects.filter((item) => item.releaseAt === state.propagationStep).forEach((item) => state.propagationWorkObjectIds.add(item.id));
+  if (node.id === "architecture") state.agentStates.set("agent-02", "Architecture Revised");
+  if (node.id === "risk") state.agentStates.set("agent-04", "Controls Revised");
+  if (node.id === "governance") state.agentStates.set("agent-08", "Impact Explained");
+  if (state.propagationStep < propagationNodes.length - 1) { state.propagationStep += 1; runPropagationStep(); return; }
+  $("#propagation-chain").classList.remove("is-propagating");
+  state.propagationStatus = "complete";
+  state.agentStates.set("agent-05", "Plan Revised");
+  $("#propagation-inspector").innerHTML = propagationDelta();
+  renderHqState();
+}
+
+function handlePropagationAction(action) {
+  if (!["complete", "approved"].includes(state.propagationStatus)) return;
+  $("#propagation-inspector").innerHTML = propagationActionContent(action);
+  $$("[data-propagation-action]").forEach((button) => button.classList.toggle("is-selected", button.dataset.propagationAction === action));
+}
+
+function inspectPropagationObject(id) {
+  const item = propagationWorkObjects.find((candidate) => candidate.id === id && state.propagationWorkObjectIds.has(candidate.id));
+  if (!item) return;
+  $("#propagation-inspector").innerHTML = `<p class="eyebrow">WORK OBJECT / ATTACHED TO DR-CIC-001</p><h3>${item.title}</h3><p><strong>${item.owner}</strong> attached this object because the Human Constraint changed the plan.</p><p>${item.finding}</p>`;
+}
+
+function approveRevisedPlan() {
+  if (state.propagationStatus !== "complete") return;
+  state.propagationStatus = "approved";
+  state.agentStates.set("agent-05", "Handoff Complete");
+  state.agentStates.set("agent-06", "Engineering Ready");
+  renderHqState();
+}
+
 function hqAgentMessage(id) {
   const snapshot = currentCaseSnapshot();
+  if (state.propagationStatus === "running" && state.agentStates.get(id) === "Updating") return `Attaching the ${propagationNodes[state.propagationStep].label} consequence to DR-CIC-001.`;
+  if (state.propagationStatus === "running" && snapshot.ownerId === id) return `Updating ${snapshot.task.replace("Update ", "")} because the Human Constraint changed the plan.`;
+  if (state.propagationStatus === "complete" && id === "agent-05") return "Five revised work objects attached. Waiting for revised-plan approval.";
+  if (state.propagationStatus === "approved" && id === "agent-06") return "Engineering Ready. Waiting to generate the migration starter package in Version 0.7.";
   if (state.workspaceStatus === "running" && snapshot.ownerId === id) return `Working on ${snapshot.task}.`;
   if (state.workspaceStatus === "paused" && snapshot.ownerId === id) return `Workspace paused. Retains ownership of ${snapshot.task}.`;
   if (state.completedWorkObjectIds.has(workspaceWorkObjects.find((item) => item.agentId === id)?.id)) return "Review attached to DR-CIC-001. Returned to specialist workspace.";
@@ -692,7 +842,8 @@ function hqAgentMessage(id) {
     "agent-02": "Reviewing platform boundaries.",
     "agent-03": "Mapping capability outcomes.",
     "agent-04": "Watching evidence exceptions.",
-    "agent-05": "Waiting for the planning stage."
+    "agent-05": "Waiting for an approved constraint to propagate.",
+    "agent-08": "Waiting to explain governed plan consequences."
   }[id] || "Available in a future stage.";
 }
 
@@ -701,7 +852,7 @@ function renderHqState() {
   const workflow = state.workspaceStage >= 0 ? snapshot.stage : state.portfolioState || "Unverified";
   $("#hq-workflow-stage").textContent = workflow.toUpperCase();
   $("#hq-selected-capability").textContent = state.capabilityState ? "CUSTOMER INTELLIGENCE" : "AWAITING FORMATION";
-  const activeCount = ["agent-01", "agent-02", "agent-03", "agent-04"].filter((id) => ["Working", "Investigating", "Reasoning"].includes(state.agentStates.get(id))).length;
+  const activeCount = ["agent-01", "agent-02", "agent-03", "agent-04", "agent-05", "agent-08"].filter((id) => ["Working", "Investigating", "Reasoning", "Propagating", "Updating"].includes(state.agentStates.get(id))).length;
   $("#hq-active-count").textContent = String(activeCount);
   $("#hq-next-action").textContent = hqNextAction();
   $("#center-active-case").disabled = !state.capabilityState;
@@ -717,12 +868,17 @@ function renderHqState() {
   $$("[data-hq-agent]").forEach((persona) => {
     const id = persona.dataset.hqAgent;
     const specialist = hqSpecialists[id];
-    const personaState = specialist.active ? (state.agentStates.get(id) || "Idle") : id === "agent-05" ? "Idle" : "Locked";
+    const personaState = specialist.active || (id === "agent-06" && state.propagationStatus === "approved") ? (state.agentStates.get(id) || "Idle") : "Locked";
     $("[data-hq-state]", persona).textContent = personaState.toUpperCase();
     $("[data-hq-message]", persona).textContent = hqAgentMessage(id);
     persona.classList.toggle("is-collaborating", state.workspaceStatus === "running" && snapshot.ownerId === id);
     persona.classList.toggle("is-review-complete", state.completedWorkObjectIds.has(workspaceWorkObjects.find((item) => item.agentId === id)?.id));
   });
+  const executiveZone = $(".zone-executive");
+  const executiveEnabled = state.propagationStatus !== "idle";
+  executiveZone.classList.toggle("is-locked", !executiveEnabled);
+  executiveZone.classList.toggle("is-open", executiveEnabled);
+  $(".zone-lock", executiveZone).hidden = executiveEnabled;
   renderWorkspaceState();
   if (state.selectedHqAgent) renderHqAgentPanel(state.selectedHqAgent);
   else if (state.selectedWorkObjectId) renderWorkObjectPanel(state.selectedWorkObjectId);
@@ -808,6 +964,14 @@ function renderWorkObjectPanel(id) {
 }
 
 function selectWorkObject(id) {
+  const propagatedObject = propagationWorkObjects.find((item) => item.id === id && state.propagationWorkObjectIds.has(item.id));
+  if (propagatedObject) {
+    state.selectedHqAgent = null;
+    state.selectedWorkObjectId = id;
+    $("#hq-context-panel").innerHTML = `<div class="hq-panel-content work-detail"><p class="eyebrow">PROPAGATED WORK OBJECT / DR-CIC-001</p><div class="work-detail-title"><span>✓</span><div><h2>${propagatedObject.title}</h2><p>${propagatedObject.owner}</p></div></div><div class="hq-panel-state"><span><small>STATUS</small><strong>ATTACHED</strong></span><span><small>CAUSE</small><strong>HUMAN CONSTRAINT</strong></span></div><dl><div><dt>WHY IT CHANGED</dt><dd>${propagatedObject.finding}</dd></div><div><dt>TRACEABILITY</dt><dd>Finance reports frozen for six months · DR-CIC-001.</dd></div></dl></div>`;
+    renderWorkObjects();
+    return;
+  }
   if (id === "constraint" && state.humanConstraintAttached) {
     state.selectedHqAgent = null;
     state.selectedWorkObjectId = "constraint";
@@ -981,6 +1145,10 @@ function resetHqState() {
   state.decisionQuestionOpen = false;
   state.commanderDecision = null;
   state.humanConstraintAttached = false;
+  state.propagationStatus = "idle";
+  state.propagationStep = -1;
+  state.propagatedNodeIds = new Set();
+  state.propagationWorkObjectIds = new Set();
   const floor = $("#hq-floor");
   floor.classList.remove("is-handing-off", "is-handoff-complete", "is-collaboration-ready", "is-workspace-transition");
   floor.removeAttribute("data-workspace-step");
@@ -1000,6 +1168,16 @@ function resetHqState() {
   $("#decision-outcome").hidden = true;
   $("#decision-outcome").innerHTML = "";
   $("#decision-inspector").innerHTML = `<p class="eyebrow">DECISION RECORD / INSPECTION</p><h3>Positions are ready to assemble</h3><p>Select Assemble Decision Positions to attach all three governed recommendations to the shared case.</p>`;
+  $("#propagation-workspace").hidden = true;
+  $("#propagation-chain").classList.remove("is-propagating");
+  $("#propagation-chain").dataset.propagationStep = "-1";
+  $("#propagation-nodes").innerHTML = "";
+  $("#propagation-work-objects").innerHTML = "";
+  $("#wave-plan").innerHTML = "";
+  $$("[data-propagation-action]").forEach((button) => button.classList.remove("is-selected"));
+  $("#propagation-inspector").innerHTML = `<p class="eyebrow">CONSTRAINT IMPACT / AWAITING AUTHORIZATION</p><h3>Propagation has not started</h3><p>Select Propagate Constraint to watch cause and effect move through eight governed planning nodes.</p>`;
+  $("#revised-plan-gate").hidden = true;
+  $("#engineering-handoff").hidden = true;
 }
 
 function resetDemo() {
@@ -1054,8 +1232,13 @@ function init() {
   $("#human-decision-gate").addEventListener("click", (event) => { const option = event.target.closest("[data-commander-decision]"); if (option) selectCommanderDecision(option.dataset.commanderDecision); });
   $("#decision-outcome").addEventListener("click", (event) => {
     if (event.target.closest("#return-decision-gate")) { state.commanderDecision = null; state.decisionStatus = "unresolved"; state.decisionQuestionOpen = true; $("#decision-outcome").hidden = true; $("#human-decision-gate").hidden = false; renderHqState(); }
-    if (event.target.closest("#continue-propagation")) $("#propagation-boundary").textContent = "Ready for Version 0.6 — Decision Propagation. No replanning runs in Version 0.5.";
+    if (event.target.closest("#continue-propagation")) openPropagationWorkspace();
   });
+  $("#propagate-constraint").addEventListener("click", startPropagation);
+  $("#propagation-actions").addEventListener("click", (event) => { const action = event.target.closest("[data-propagation-action]"); if (action) handlePropagationAction(action.dataset.propagationAction); });
+  $("#propagation-work-objects").addEventListener("click", (event) => { const object = event.target.closest("[data-propagation-object]"); if (object) inspectPropagationObject(object.dataset.propagationObject); });
+  $("#approve-revised-plan").addEventListener("click", approveRevisedPlan);
+  $("#continue-engineering").addEventListener("click", () => { $("#engineering-boundary").textContent = "Engineering Workspace is the Version 0.7 boundary; no artifacts were generated."; });
   $("#reset-demo").addEventListener("click", resetDemo);
   $$('[data-hq-agent]').forEach((persona) => persona.addEventListener("click", () => selectHqAgent(persona.dataset.hqAgent)));
   $("#hq-context-panel").addEventListener("click", (event) => {
@@ -1091,6 +1274,9 @@ function init() {
   });
   $("#decision-stage").addEventListener("animationend", (event) => {
     if (event.target === event.currentTarget && event.animationName === "decision-position-sequence") completeDecisionStep();
+  });
+  $("#propagation-chain").addEventListener("animationend", (event) => {
+    if (event.target === event.currentTarget && event.animationName === "constraint-propagation-step") completePropagationStep();
   });
   const initialHash = location.hash.slice(1);
   navigate(["portfolio", "decision", "factory"].includes(initialHash) ? initialHash : "portfolio", false);

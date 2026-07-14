@@ -1,4 +1,4 @@
-# Modernization AI Lab — Mission Control 0.5
+# Modernization AI Lab — Mission Control 0.6
 
 Mission Control is a standalone visual and interaction prototype for exploring
 the Modernization AI Lab as three connected environments:
@@ -7,10 +7,10 @@ the Modernization AI Lab as three connected environments:
 2. Agent Decision Room
 3. Codex Modernization Factory
 
-Version 0.5 preserves the complete Version 0.3 Mission Control, Version 0.4A
-Modernization HQ, and Version 0.4X Living Workspace journeys. It extends the
-shared Customer Intelligence Capability case into one governed Shared Decision
-Canvas attached to `DR-CIC-001`.
+Version 0.6 preserves the complete Mission Control, Modernization HQ, Living
+Workspace, and Shared Decision Room journeys. It extends the shared Customer
+Intelligence Capability case with visible decision propagation attached to
+`DR-CIC-001`.
 
 After Assessment Ready, the user can start a deterministic specialist sequence:
 Portfolio Intelligence hands off evidence, Architecture attaches its review,
@@ -20,8 +20,16 @@ finish the current transition before stopping. At Decision Pending, three
 specialist positions attach to the case with evidence, assumptions, confidence,
 and consequences. The Mission Commander can compare them, inspect a governed
 challenge, reduce the conflict to one question, and choose any of three decision
-gate paths. The primary path creates a Human Constraint and ends at Ready for
-Replanning; Version 0.5 does not run replanning.
+gate paths. The primary path creates a Human Constraint and reaches Ready for
+Replanning.
+
+The Mission Commander can then watch that constraint update strategy,
+architecture, timeline, cost, risk, waves, engineering controls, and governance
+in a deterministic cause-and-effect sequence. Five revised work objects appear
+progressively. Only the Customer Service Portal changes waves, while the
+Customer Analytics Warehouse remains in Wave 1 and Finance Warehouse receives
+a protected boundary. After revised-plan approval, the case ends at Engineering
+Ready; Version 0.6 does not generate engineering artifacts.
 
 No recurring timer, continuous loop, backend, or live model call is used.
 

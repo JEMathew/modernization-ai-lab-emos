@@ -6,8 +6,8 @@
     <meta name="description" content="Standalone Modernization AI Lab mission-control prototype.">
     <title>Modernization AI Lab — Mission Control</title>
     <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='4' fill='%230b1720'/%3E%3Cpath d='M7 23V15h4v8m3 0V10h4v13m3 0V6h4v17' stroke='%234bd6c2' stroke-width='2'/%3E%3C/svg%3E">
-    <link rel="stylesheet" href="styles.css?v=0.5">
-    <script src="script.js?v=0.5" defer></script>
+    <link rel="stylesheet" href="styles.css?v=0.6">
+    <script src="script.js?v=0.6" defer></script>
   </head>
   <body>
     <svg class="icon-library" aria-hidden="true">
@@ -22,7 +22,7 @@
       <header class="topbar">
         <a class="brand" href="#portfolio" data-view-link="portfolio" aria-label="Mission Control home">
           <span class="brand-mark" aria-hidden="true"><span></span><span></span><span></span></span>
-          <span><strong>MODERNIZATION AI LAB</strong><small>CONNECTED EXPERIENCES / V0.5</small></span>
+          <span><strong>MODERNIZATION AI LAB</strong><small>CONNECTED EXPERIENCES / V0.6</small></span>
         </a>
         <div class="experience-switch" role="group" aria-label="Experience switch">
           <button class="is-active" type="button" data-experience-switch="mission-control" aria-pressed="true">Mission Control</button>
@@ -239,7 +239,7 @@
 
       <section class="hq-experience" id="hq-experience" data-experience-panel="hq" aria-labelledby="hq-title" hidden>
         <header class="hq-header">
-          <div><p class="eyebrow">VERSION 0.5 / SHARED DECISION ROOM</p><h1 id="hq-title">Modernization HQ</h1><p>Follow one shared modernization case as evidence, positions, governance, and human decisions attach to the work.</p></div>
+          <div><p class="eyebrow">VERSION 0.6 / VISIBLE DECISION PROPAGATION</p><h1 id="hq-title">Modernization HQ</h1><p>Watch one governed human decision visibly revise strategy, architecture, risk, sequencing, and controls.</p></div>
           <div class="hq-stage-strip" aria-label="Current HQ workflow context">
             <span><small>WORKFLOW STAGE</small><strong id="hq-workflow-stage">PORTFOLIO UNVERIFIED</strong></span>
             <span><small>SELECTED CAPABILITY</small><strong id="hq-selected-capability">AWAITING FORMATION</strong></span>
@@ -299,6 +299,28 @@
           </section>
           <section class="decision-outcome" id="decision-outcome" hidden aria-live="polite"></section>
           <section class="decision-record-trace" id="decision-record-trace" aria-labelledby="decision-record-title"><div class="workspace-section-heading"><span>TRACEABLE DECISION RECORD</span><strong id="decision-record-title">DR-CIC-001</strong></div><div id="decision-record-fields"></div></section>
+        </section>
+
+        <section class="propagation-workspace" id="propagation-workspace" hidden aria-labelledby="propagation-title">
+          <header class="propagation-header">
+            <div><p class="eyebrow">VISIBLE DECISION PROPAGATION / DR-CIC-001</p><h2 id="propagation-title">One constraint changes the modernization plan</h2><p>The Human Constraint remains the cause. Every downstream revision records why it changed.</p></div>
+            <div class="propagation-command"><small>HUMAN CONSTRAINT</small><strong>Finance reports frozen for six months</strong><span id="propagation-status">READY TO PROPAGATE</span><button class="primary-action" id="propagate-constraint" type="button">Propagate Constraint</button></div>
+          </header>
+
+          <div class="propagation-chain" id="propagation-chain" data-propagation-step="-1" aria-label="Constraint cause and effect chain">
+            <div class="constraint-source"><small>HUMAN CONSTRAINT</small><strong>Six-month finance report freeze</strong><span>MISSION COMMANDER · DR-CIC-001</span></div>
+            <div class="propagation-nodes" id="propagation-nodes"></div>
+          </div>
+
+          <div class="propagation-grid">
+            <section class="propagation-products" aria-labelledby="propagation-products-title"><div class="workspace-section-heading"><span>AFFECTED PRODUCT MOVEMENT</span><strong id="propagation-products-title">ONLY CONSEQUENCES MOVE</strong></div><div class="wave-plan" id="wave-plan"></div></section>
+            <section class="propagation-objects" aria-labelledby="propagation-objects-title"><div class="workspace-section-heading"><span>NEW WORK OBJECTS</span><strong id="propagation-objects-title">ATTACHED PROGRESSIVELY</strong></div><div id="propagation-work-objects"></div></section>
+          </div>
+
+          <div class="propagation-actions" id="propagation-actions" aria-label="Propagation inspection actions"><button type="button" data-propagation-action="delta">Show What Changed</button><button type="button" data-propagation-action="strategy">Inspect Revised Strategy</button><button type="button" data-propagation-action="architecture">Inspect Revised Architecture</button><button type="button" data-propagation-action="wave">Inspect Revised Wave</button><button type="button" data-propagation-action="risk">Inspect Risk Controls</button><button type="button" data-propagation-action="governance">Inspect Governance</button><button type="button" data-propagation-action="compare">Compare Before / After</button><button type="button" data-case-action="mission">Return to Mission Control</button></div>
+          <section class="propagation-inspector" id="propagation-inspector" aria-live="polite"><p class="eyebrow">CONSTRAINT IMPACT / AWAITING AUTHORIZATION</p><h3>Propagation has not started</h3><p>Select Propagate Constraint to watch cause and effect move through eight governed planning nodes.</p></section>
+          <section class="revised-plan-gate" id="revised-plan-gate" hidden aria-live="polite"><div><p class="eyebrow">REVISED PLAN / HUMAN APPROVAL</p><h3>DR-CIC-001 is ready for revised-plan approval</h3><p>The constraint has been propagated, affected products resequenced, and five work objects attached. No engineering artifacts have been generated.</p></div><button class="primary-action" id="approve-revised-plan" type="button">Approve Revised Plan</button></section>
+          <section class="engineering-handoff" id="engineering-handoff" hidden aria-live="polite"><div><p class="eyebrow">CASE / ENGINEERING READY</p><h3>Modernization Engineer now owns DR-CIC-001</h3><p>Next action: Generate Migration Starter Package.</p></div><button class="primary-action" id="continue-engineering" type="button">Continue to Engineering Workspace</button><small id="engineering-boundary">Version 0.7 will activate engineering generation.</small></section>
         </section>
 
         <div class="hq-layout">
