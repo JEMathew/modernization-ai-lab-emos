@@ -52,6 +52,14 @@ const workspaceWorkObjects = [
   { id: "decision", title: "Decision Record Placeholder", stage: "Decision Pending", owner: "Mission Commander", agentId: null, sequence: "05", evidenceCount: "4 reviews", finding: "DR-CIC-001 is ready to receive a governed decision in Version 0.5.", concern: "No recommendation is approved while ownership remains conflicting.", next: "Open the Shared Decision Room in Version 0.5." }
 ];
 
+const decisionPositions = {
+  business: { title: "Business Strategist", confidence: "82%", recommendation: "Rebuild the broader Customer Intelligence Capability around a unified customer-service experience.", evidence: ["High customer-service business importance", "Fragmented customer intelligence", "Planned future capabilities", "High potential strategic value"], counter: ["Greater functional-change scope", "Longer delivery risk", "Protected finance reports complicate transition"], assumption: "Finance reporting can tolerate coordinated semantic and integration changes.", consequence: "Business disruption and delayed value." },
+  architect: { title: "Chief Enterprise Architect", confidence: "91%", recommendation: "Replatform the Customer Analytics Warehouse first, then decouple the Customer Service Portal incrementally.", evidence: ["Clear Oracle-to-BigQuery compatibility path", "High warehouse technical urgency", "Manageable staged architecture", "Reduced initial change surface"], counter: ["Temporary dual-platform complexity", "Dependency isolation remains necessary"], assumption: "Finance-report compatibility can be preserved during a staged migration.", consequence: "Unexpected reporting breakage and extended dual run." },
+  risk: { title: "Risk & Governance Specialist", confidence: "77%", recommendation: "Do not approve either strategy until the twelve Finance Warehouse-dependent reports and their ownership are governed.", evidence: ["Twelve dependent finance reports", "Conflicting ownership across sources", "Executive metric sensitivity", "Incomplete change authority"], counter: ["Delay increases operating cost and platform obsolescence"], assumption: "The organization cannot safely modify or retire reports without confirmed ownership and approval.", consequence: "Financial reporting defects or unauthorized changes." }
+};
+
+const decisionTimeline = ["Evidence Received", "Architecture Position Added", "Business Position Added", "Risk Objection Added", "Decision Unresolved", "Human Decision Required"];
+
 const state = {
   view: "portfolio",
   productId: null,
@@ -72,6 +80,13 @@ const state = {
   workspaceTransition: false,
   workspacePauseRequested: false,
   completedWorkObjectIds: new Set(),
+  decisionStatus: "idle",
+  decisionStep: -1,
+  positionsAttached: new Set(),
+  decisionChallengeAttached: false,
+  decisionQuestionOpen: false,
+  commanderDecision: null,
+  humanConstraintAttached: false,
   productStates: new Map(),
   agentStates: new Map()
 };
@@ -436,6 +451,10 @@ function assessAsInitiative() {
 }
 
 function hqNextAction() {
+  if (state.decisionStatus === "ready-replanning") return "PROPAGATE CONSTRAINT";
+  if (state.decisionStatus === "waiting-evidence") return "RETURN TO DECISION GATE";
+  if (state.decisionStatus === "unresolved") return "RESOLVE DECISION";
+  if (state.decisionStatus === "assembling") return "ATTACH SPECIALIST POSITIONS";
   if (state.workspaceStatus === "blocked") return "GOVERNED DECISION REQUIRED";
   if (state.workspaceStatus === "paused") return "RESUME WORKSPACE";
   if (state.workspaceStatus === "running") return workspaceWorkObjects[state.workspaceStage].next.toUpperCase();
@@ -449,20 +468,25 @@ function hqNextAction() {
 }
 
 function currentCaseSnapshot() {
+  if (state.decisionStatus === "ready-replanning") return { stage: "Ready for Replanning", owner: "Wave Planning Specialist", ownerId: "agent-05", task: "Human Constraint attached", blocker: "Report ownership remains a governance action", next: "Propagate Constraint", evidence: "4 reviews + Mission Commander decision", recommendation: state.commanderDecision === "yes" ? "STAGED REPLATFORM WITH SIX-MONTH FREEZE" : "GOVERNED CHANGE PATH APPROVED" };
+  if (state.decisionStatus === "waiting-evidence") return { stage: "Waiting", owner: "Portfolio Intelligence Specialist", ownerId: "agent-01", task: "Collect targeted decision evidence", blocker: "Four evidence requests are pending", next: "Return to Decision Gate", evidence: "Targeted requests issued", recommendation: "DECISION DEFERRED" };
+  if (["unresolved", "assembling"].includes(state.decisionStatus)) return { stage: state.decisionStatus === "unresolved" ? "Decision Unresolved" : "Decision Pending", owner: "Mission Commander", ownerId: null, task: state.decisionStatus === "unresolved" ? "Human Decision Required" : "Specialist positions assembling", blocker: "Finance reporting constraint requires a human decision", next: state.decisionStatus === "unresolved" ? "Resolve Decision" : "Complete position assembly", evidence: `${state.positionsAttached.size} specialist positions attached`, recommendation: "MULTIPLE GOVERNED POSITIONS" };
   if (state.workspaceStatus === "blocked" || state.workspaceStage === 4) {
-    return { stage: "Decision Pending", owner: "Mission Commander", ownerId: null, task: "Resolve governed ownership decision", blocker: "Finance Warehouse ownership conflicts across two sources", next: "Review DR-CIC-001 in Version 0.5", recommendation: "PENDING GOVERNED DECISION" };
+    return { stage: "Decision Pending", owner: "Mission Commander", ownerId: null, task: "Waiting for Mission Commander.", blocker: "Finance Warehouse reporting dependency and conflicting ownership evidence", next: "Assemble Decision Positions", evidence: "4 completed specialist reviews", recommendation: "PENDING GOVERNED DECISION" };
   }
   if (state.workspaceStage >= 0) {
     const workObject = workspaceWorkObjects[state.workspaceStage];
-    return { stage: workObject.stage, owner: workObject.owner, ownerId: workObject.agentId, task: workObject.title, blocker: "None", next: state.workspaceStatus === "paused" ? "Resume the stored workspace flow" : workObject.next, recommendation: "PENDING SPECIALIST REVIEW" };
+    return { stage: workObject.stage, owner: workObject.owner, ownerId: workObject.agentId, task: workObject.title, blocker: "None", next: state.workspaceStatus === "paused" ? "Resume the stored workspace flow" : workObject.next, evidence: `${workObject.evidenceCount} attached`, recommendation: "PENDING SPECIALIST REVIEW" };
   }
-  if (state.assessmentReady) return { stage: "Ready to Start", owner: "Portfolio Intelligence Specialist", ownerId: "agent-01", task: "Prepare evidence handoff", blocker: "None", next: state.hqCaseLocation === "decision-room" ? "Start Workspace Flow" : "Enter Modernization HQ", recommendation: "PENDING SPECIALIST REVIEW" };
-  if (state.capabilityState) return { stage: state.capabilityState, owner: "Portfolio Intelligence Specialist", ownerId: "agent-01", task: "Confirm assessment boundary", blocker: "None", next: hqNextAction(), recommendation: "NOT STARTED" };
-  return { stage: state.portfolioState, owner: "Portfolio Intelligence Specialist", ownerId: "agent-01", task: "Collect portfolio evidence", blocker: "None", next: hqNextAction(), recommendation: "NOT STARTED" };
+  if (state.assessmentReady) return { stage: "Ready to Start", owner: "Portfolio Intelligence Specialist", ownerId: "agent-01", task: "Prepare evidence handoff", blocker: "None", next: state.hqCaseLocation === "decision-room" ? "Start Workspace Flow" : "Enter Modernization HQ", evidence: "4 governed sources ready", recommendation: "PENDING SPECIALIST REVIEW" };
+  if (state.capabilityState) return { stage: state.capabilityState, owner: "Portfolio Intelligence Specialist", ownerId: "agent-01", task: "Confirm assessment boundary", blocker: "None", next: hqNextAction(), evidence: "3 capability packages", recommendation: "NOT STARTED" };
+  return { stage: state.portfolioState, owner: "Portfolio Intelligence Specialist", ownerId: "agent-01", task: "Collect portfolio evidence", blocker: "None", next: hqNextAction(), evidence: state.discovery === "complete" ? "10 products reviewed" : "Portfolio inventory pending", recommendation: "NOT STARTED" };
 }
 
 function workObjectStatus(index) {
   const workObject = workspaceWorkObjects[index];
+  if (index === 4 && state.decisionStatus === "ready-replanning") return "Complete";
+  if (index === 4 && state.decisionStatus === "waiting-evidence") return "Waiting";
   if (state.completedWorkObjectIds.has(workObject.id)) return "Complete";
   if (state.workspaceStage === 4 && index === 4) return "Blocked";
   if (state.workspaceStage === index && state.workspaceStatus === "paused") return "Waiting";
@@ -481,16 +505,20 @@ function renderMissionCase() {
 }
 
 function renderWorkObjects() {
-  $("#workspace-work-objects").innerHTML = workspaceWorkObjects.map((workObject, index) => {
+  const availableThrough = state.workspaceStage >= 0 ? state.workspaceStage : state.assessmentReady ? 0 : -1;
+  const availableWorkObjects = workspaceWorkObjects.slice(0, availableThrough + 1);
+  $("#workspace-work-objects").innerHTML = availableWorkObjects.length ? availableWorkObjects.map((workObject) => {
+    const index = workspaceWorkObjects.indexOf(workObject);
     const status = workObjectStatus(index);
     const selected = state.selectedWorkObjectId === workObject.id;
     return `<button class="work-object status-${status.toLowerCase().replaceAll(" ", "-")}${selected ? " is-selected" : ""}" type="button" data-work-object="${workObject.id}" aria-pressed="${selected}"><span class="work-object-sequence">${workObject.sequence}</span><span><strong>${workObject.title}</strong><small>${workObject.owner}</small></span><em>${workObject.evidenceCount}</em><b>${status.toUpperCase()}</b></button>`;
-  }).join("");
+  }).join("") : `<div class="work-object-empty"><strong>WORK OBJECTS NOT YET RELEASED</strong><small>Complete capability assessment to prepare the Evidence Package.</small></div>`;
+  if (state.humanConstraintAttached) $("#workspace-work-objects").insertAdjacentHTML("beforeend", `<button class="work-object status-incoming" type="button" data-work-object="constraint"><span class="work-object-sequence">06</span><span><strong>Human Constraint</strong><small>Mission Commander</small></span><em>DR-CIC-001</em><b>ATTACHED</b></button>`);
 }
 
 function renderWorkQueue() {
   const statuses = ["Incoming", "In Review", "Waiting", "Blocked", "Complete"];
-  const activeQueue = state.workspaceStatus === "blocked" ? "Blocked" : state.workspaceStatus === "paused" ? "Waiting" : state.workspaceStatus === "running" ? "In Review" : "Incoming";
+  const activeQueue = state.decisionStatus === "ready-replanning" ? "Incoming" : state.decisionStatus === "waiting-evidence" ? "Waiting" : state.workspaceStatus === "blocked" ? "Blocked" : state.workspaceStatus === "paused" ? "Waiting" : state.workspaceStatus === "running" ? "In Review" : "Incoming";
   $("#workspace-queue").innerHTML = statuses.map((status) => {
     const items = workspaceWorkObjects.filter((_, index) => workObjectStatus(index) === status);
     const caseHere = activeQueue === status;
@@ -500,21 +528,153 @@ function renderWorkQueue() {
 
 function renderWorkspaceState() {
   const snapshot = currentCaseSnapshot();
+  const decisionBlocked = state.workspaceStatus === "blocked" && !["ready-replanning", "waiting-evidence"].includes(state.decisionStatus);
   const stageForRail = state.workspaceStage;
   $$("[data-workflow-stage]").forEach((node) => {
     const index = Number(node.dataset.workflowStage);
     node.classList.toggle("is-complete", index < stageForRail || state.completedWorkObjectIds.has(workspaceWorkObjects[index].id));
     node.classList.toggle("is-active", index === stageForRail);
-    node.classList.toggle("is-blocked", index === 4 && state.workspaceStatus === "blocked");
+    node.classList.toggle("is-blocked", index === 4 && decisionBlocked);
   });
-  $("#workspace-status-line").textContent = state.workspaceStatus === "blocked" ? "Decision Pending · Finance ownership conflict requires governed action." : state.workspaceStatus === "paused" ? `Paused after the current transition · ${snapshot.owner} retains ownership.` : state.workspaceStatus === "running" ? `${snapshot.owner} · ${snapshot.task}` : state.assessmentReady ? "Assessment Ready · start the visible specialist workflow." : "Form the capability in Mission Control to activate the workspace.";
+  const markerStage = Math.max(0, state.workspaceStage);
+  $("#case-progress-marker").style.setProperty("--case-stage", String(markerStage));
+  $("#case-progress-marker").classList.toggle("is-moving", state.workspaceTransition);
+  $("#case-progress-marker").classList.toggle("is-blocked", decisionBlocked);
+  $("#case-progress-label").textContent = state.workspaceStage >= 0 ? snapshot.stage.toUpperCase() : state.assessmentReady ? "READY FOR EVIDENCE" : "AWAITING START";
+  $("#workspace-status-line").textContent = state.decisionStatus === "ready-replanning" ? "Ready for Replanning · Human Constraint attached · Wave Planning owns the next action." : state.decisionStatus === "waiting-evidence" ? "Waiting · Portfolio Intelligence owns four targeted evidence requests." : state.decisionStatus === "unresolved" ? "Decision Unresolved · Human Decision Required." : state.workspaceStatus === "blocked" ? "Decision Pending · Waiting for Mission Commander." : state.workspaceStatus === "paused" ? `Paused after the current transition · ${snapshot.owner} retains ownership.` : state.workspaceStatus === "running" ? `${snapshot.owner} · ${snapshot.task}` : state.assessmentReady ? "Assessment Ready · start the visible specialist workflow." : "Form the capability in Mission Control to activate the workspace.";
   $("#start-workspace").disabled = !state.assessmentReady || state.hqTransition !== "complete" || state.workspaceStatus !== "idle";
   $("#pause-workspace").disabled = state.workspaceStatus !== "running" || state.workspacePauseRequested;
   $("#resume-workspace").disabled = state.workspaceStatus !== "paused";
-  $("#workspace-observatory").classList.toggle("is-blocked", state.workspaceStatus === "blocked");
+  $("#workspace-observatory").classList.toggle("is-blocked", decisionBlocked);
   renderWorkObjects();
   renderWorkQueue();
   renderMissionCase();
+  renderDecisionRoom();
+}
+
+function positionDetail(key) {
+  const position = decisionPositions[key];
+  return `<p class="eyebrow">SPECIALIST POSITION / ${position.confidence} CONFIDENCE</p><h3>${position.title}</h3><p><strong>Recommendation:</strong> ${position.recommendation}</p><div class="position-evidence-grid"><div><small>SUPPORTING EVIDENCE</small><ul>${position.evidence.map((item) => `<li>${item}</li>`).join("")}</ul></div><div><small>COUNTER-EVIDENCE</small><ul>${position.counter.map((item) => `<li>${item}</li>`).join("")}</ul></div><div><small>KEY ASSUMPTION</small><p>${position.assumption}</p></div><div><small>CONSEQUENCE IF WRONG</small><p>${position.consequence}</p></div></div>`;
+}
+
+function decisionComparison() {
+  const rows = [
+    ["Business value", "Highest / unified experience", "High / analytics foundation", "Protected by governance"],
+    ["Technical feasibility", "Moderate", "High", "Conditional"],
+    ["Operational risk", "High", "Moderate", "Lowest before approval"],
+    ["Expected disruption", "High", "Low–moderate", "Delay"],
+    ["Delivery speed", "Slower", "Faster first value", "Blocked"],
+    ["Dependency exposure", "High", "Controlled", "Unresolved"],
+    ["Reversibility", "Lower", "Higher", "Highest"],
+    ["Confidence", "82%", "91%", "77%"]
+  ];
+  return `<p class="eyebrow">CONCISE RECOMMENDATION COMPARISON</p><h3>Three governed positions · one shared case</h3><div class="comparison-table"><div><strong>DIMENSION</strong><strong>BUSINESS</strong><strong>ARCHITECTURE</strong><strong>RISK</strong></div>${rows.map((row) => `<div>${row.map((cell) => `<span>${cell}</span>`).join("")}</div>`).join("")}</div>`;
+}
+
+function decisionActionContent(action) {
+  const content = {
+    compare: decisionComparison(),
+    shared: `<p class="eyebrow">SHARED EVIDENCE</p><h3>Evidence all three positions accept</h3><p>Customer Analytics Warehouse has high technical urgency; customer intelligence is fragmented; twelve Finance Warehouse-dependent reports cross the modernization boundary; and action delayed increases obsolescence.</p>`,
+    conflict: `<p class="eyebrow">CONFLICTING EVIDENCE</p><h3>Finance dependency is technically visible but not governable yet</h3><p>Two sources conflict on report ownership, change authority is incomplete, and executive-metric sensitivity is confirmed. The evidence supports modernization, but not an unqualified transition choice.</p>`,
+    assumptions: `<p class="eyebrow">KEY ASSUMPTIONS</p><h3>The conflict is about tolerance for change</h3><p><strong>Business:</strong> coordinated semantic change is tolerable. <strong>Architecture:</strong> compatibility can be preserved. <strong>Risk:</strong> reports cannot safely change without confirmed authority.</p>`,
+    change: `<p class="eyebrow">WHAT WOULD CHANGE THEIR MINDS?</p><h3>Targeted evidence, not another broad assessment</h3><p>Business needs proof that a staged path will not fragment customer outcomes. Architecture needs compatibility-test failures to reject staging. Risk needs confirmed ownership, change authority, and reconciliation controls to permit approval.</p>`,
+    challenge: `<p class="eyebrow">GOVERNED CHALLENGE / ATTACHED TO DR-CIC-001</p><h3>Risk Specialist challenges the Chief Enterprise Architect</h3><blockquote><strong>Risk:</strong> The staged replatform recommendation depends on preserving twelve Finance Warehouse-dependent reports, but ownership and change authority are unresolved.</blockquote><blockquote><strong>Architect:</strong> The strategy remains feasible if the reports are protected through compatibility views, dual-run reconciliation, and an explicit six-month freeze.</blockquote>`,
+    blocked: governedQuestionContent(),
+    resolve: governedQuestionContent()
+  };
+  return content[action];
+}
+
+function governedQuestionContent() {
+  return `<p class="eyebrow">UNRESOLVED HUMAN DECISION</p><h3>Must the twelve Finance Warehouse-dependent reports remain unchanged during the first six months?</h3><p>Yes favors staged replatforming with compatibility controls. No makes broader rebuild or semantic redesign more viable. More evidence delays the decision but reduces uncertainty. Ownership remains a required governance follow-up.</p>`;
+}
+
+function renderDecisionRecord() {
+  const decisionLabel = state.commanderDecision === "yes" ? "Yes — protect finance reports for six months" : state.commanderDecision === "no" ? "No — finance reports may change" : state.commanderDecision === "evidence" ? "Request more evidence" : "Pending";
+  $("#decision-record-fields").innerHTML = `<span><small>CASE ID</small><strong>DR-CIC-001</strong></span><span><small>SPECIALIST POSITIONS</small><strong>${state.positionsAttached.size} / 3 attached</strong></span><span><small>EVIDENCE REFERENCES</small><strong>Evidence Package · Architecture · Business · Risk</strong></span><span><small>ASSUMPTIONS</small><strong>3 governed assumptions</strong></span><span><small>CHALLENGE</small><strong>${state.decisionChallengeAttached ? "Attached" : "Not requested"}</strong></span><span><small>UNRESOLVED QUESTION</small><strong>Six-month report freeze</strong></span><span><small>MISSION COMMANDER DECISION</small><strong>${decisionLabel}</strong></span><span><small>CONSTRAINT</small><strong>${state.humanConstraintAttached ? (state.commanderDecision === "yes" ? "Finance reports frozen for six months" : "Governed report change permitted") : "Pending"}</strong></span><span><small>REMAINING GOVERNANCE ACTION</small><strong>Confirm report ownership and change authority</strong></span><span><small>SEQUENCE</small><strong>DR-CIC-001 / V0.5 / 06</strong></span><span><small>NEXT WORKFLOW STAGE</small><strong>${state.decisionStatus === "ready-replanning" ? "Ready for Replanning" : state.decisionStatus === "waiting-evidence" ? "Waiting" : "Human Decision Required"}</strong></span>`;
+}
+
+function renderDecisionRoom() {
+  const visible = state.workspaceStage === 4 || state.decisionStatus !== "idle";
+  const canvas = $("#shared-decision-canvas");
+  canvas.hidden = !visible;
+  if (!visible) return;
+  const snapshot = currentCaseSnapshot();
+  $("#decision-canvas-state").textContent = snapshot.stage.toUpperCase();
+  $("#decision-case-core-state").textContent = snapshot.stage.toUpperCase();
+  $("#assemble-positions").hidden = state.decisionStatus !== "idle";
+  $$("[data-decision-position]").forEach((node) => {
+    const attached = state.positionsAttached.has(node.dataset.decisionPosition);
+    node.classList.toggle("is-attached", attached);
+    $("em", node).textContent = attached ? node.dataset.decisionPosition === "risk" ? "OBJECTION ATTACHED" : "POSITION ATTACHED" : node.dataset.decisionPosition === "risk" ? "OBJECTION WAITING" : "POSITION WAITING";
+  });
+  const activeTimeline = state.decisionStatus === "idle" ? 1 : state.decisionStatus === "assembling" ? Math.min(4, state.positionsAttached.size + 1) : 6;
+  $("#decision-timeline").innerHTML = decisionTimeline.map((item, index) => `<span class="${index < activeTimeline ? "is-complete" : ""}"><i>${String(index + 1).padStart(2, "0")}</i><strong>${item}</strong></span>`).join("");
+  $("#decision-actions").classList.toggle("is-enabled", state.decisionStatus !== "idle" && state.decisionStatus !== "assembling");
+  $$("[data-decision-action]").forEach((button) => { button.disabled = !["unresolved", "waiting-evidence", "ready-replanning"].includes(state.decisionStatus); });
+  renderDecisionRecord();
+}
+
+function startDecisionMovement() {
+  if (state.decisionStatus !== "idle") return;
+  state.decisionStatus = "assembling";
+  state.decisionStep = 0;
+  runDecisionStep();
+}
+
+function runDecisionStep() {
+  const stage = $("#decision-stage");
+  stage.dataset.decisionStep = String(state.decisionStep);
+  stage.classList.remove("is-positioning");
+  void stage.offsetWidth;
+  stage.classList.add("is-positioning");
+  renderHqState();
+}
+
+function completeDecisionStep() {
+  if (state.decisionStatus !== "assembling") return;
+  const order = ["business", "architect", "risk"];
+  state.positionsAttached.add(order[state.decisionStep]);
+  if (state.decisionStep < 2) { state.decisionStep += 1; runDecisionStep(); return; }
+  $("#decision-stage").classList.remove("is-positioning");
+  $("#decision-stage").dataset.decisionStep = "3";
+  state.decisionStatus = "unresolved";
+  state.decisionStep = 3;
+  ["agent-02", "agent-03", "agent-04"].forEach((id) => state.agentStates.set(id, "Position Attached"));
+  $("#decision-inspector").innerHTML = decisionComparison();
+  renderHqState();
+}
+
+function handleDecisionAction(action) {
+  if (state.decisionStatus === "idle" || state.decisionStatus === "assembling") return;
+  if (action === "challenge") state.decisionChallengeAttached = true;
+  if (["blocked", "resolve"].includes(action)) { state.decisionQuestionOpen = true; $("#human-decision-gate").hidden = false; }
+  $("#decision-inspector").innerHTML = decisionActionContent(action);
+  $$("[data-decision-action]").forEach((button) => button.classList.toggle("is-selected", button.dataset.decisionAction === action));
+  renderDecisionRecord();
+}
+
+function selectDecisionPosition(key) {
+  if (!state.positionsAttached.has(key)) return;
+  $("#decision-inspector").innerHTML = positionDetail(key);
+}
+
+function selectCommanderDecision(decision) {
+  if (!state.decisionQuestionOpen || !["yes", "no", "evidence"].includes(decision)) return;
+  state.commanderDecision = decision;
+  if (decision === "evidence") {
+    state.decisionStatus = "waiting-evidence";
+    state.humanConstraintAttached = false;
+    $("#decision-outcome").innerHTML = `<p class="eyebrow">TARGETED EVIDENCE REQUESTS / DR-CIC-001</p><h3>Case moved to Waiting</h3><div class="evidence-request-list"><span>Report ownership</span><span>Change authority</span><span>Oracle compatibility</span><span>Executive-metric dependencies</span></div><button class="primary-action" type="button" id="return-decision-gate">Return to Decision Gate</button>`;
+  } else {
+    state.decisionStatus = "ready-replanning";
+    state.humanConstraintAttached = true;
+    const constraint = decision === "yes" ? "Finance reports frozen for six months" : "Finance reports may change under governed change control";
+    $("#decision-outcome").innerHTML = `<p class="eyebrow">HUMAN CONSTRAINT / ATTACHED TO DR-CIC-001</p><h3>${constraint}</h3><div class="outcome-facts"><span><small>DECISION AUTHORITY</small><strong>Mission Commander</strong></span><span><small>CASE STATE</small><strong>Ready for Replanning</strong></span><span><small>CURRENT OWNER</small><strong>Wave Planning Specialist</strong></span><span><small>GOVERNANCE FOLLOW-UP</small><strong>Confirm ownership and change authority</strong></span></div><button class="primary-action" type="button" id="continue-propagation">Continue to Decision Propagation</button><p id="propagation-boundary">Version 0.5 ends at Ready for Replanning.</p>`;
+  }
+  $("#decision-outcome").hidden = false;
+  $("#human-decision-gate").hidden = decision !== "evidence";
+  renderHqState();
 }
 
 function hqAgentMessage(id) {
@@ -551,6 +711,7 @@ function renderHqState() {
   $("#hq-case-task").textContent = snapshot.task.toUpperCase();
   $("#hq-case-blocker").textContent = snapshot.blocker.toUpperCase();
   $("#hq-case-next").textContent = snapshot.next.toUpperCase();
+  $("#hq-case-current-evidence").textContent = snapshot.evidence.toUpperCase();
   $("#hq-case-recommendation").textContent = `RECOMMENDATION / ${snapshot.recommendation}`;
   $("#hq-case-file").classList.toggle("is-dormant", !state.capabilityState);
   $$("[data-hq-agent]").forEach((persona) => {
@@ -647,6 +808,13 @@ function renderWorkObjectPanel(id) {
 }
 
 function selectWorkObject(id) {
+  if (id === "constraint" && state.humanConstraintAttached) {
+    state.selectedHqAgent = null;
+    state.selectedWorkObjectId = "constraint";
+    $("#hq-context-panel").innerHTML = `<div class="hq-panel-content work-detail"><p class="eyebrow">HUMAN CONSTRAINT / DR-CIC-001</p><div class="work-detail-title"><span>06</span><div><h2>${state.commanderDecision === "yes" ? "Finance reports frozen for six months" : "Governed report change permitted"}</h2><p>Mission Commander</p></div></div><div class="hq-panel-state"><span><small>STATUS</small><strong>ATTACHED</strong></span><span><small>NEXT OWNER</small><strong>WAVE PLANNING</strong></span></div><dl><div><dt>REMAINING GOVERNANCE ACTION</dt><dd>Confirm report ownership and change authority.</dd></div><div><dt>NEXT ACTION</dt><dd>Propagate Constraint in Version 0.6.</dd></div></dl></div>`;
+    renderWorkObjects();
+    return;
+  }
   if (!workspaceWorkObjects.some((item) => item.id === id)) return;
   state.selectedHqAgent = null;
   state.selectedWorkObjectId = id;
@@ -806,6 +974,13 @@ function resetHqState() {
   state.workspaceTransition = false;
   state.workspacePauseRequested = false;
   state.completedWorkObjectIds = new Set();
+  state.decisionStatus = "idle";
+  state.decisionStep = -1;
+  state.positionsAttached = new Set();
+  state.decisionChallengeAttached = false;
+  state.decisionQuestionOpen = false;
+  state.commanderDecision = null;
+  state.humanConstraintAttached = false;
   const floor = $("#hq-floor");
   floor.classList.remove("is-handing-off", "is-handoff-complete", "is-collaboration-ready", "is-workspace-transition");
   floor.removeAttribute("data-workspace-step");
@@ -816,6 +991,15 @@ function resetHqState() {
     if (element.hasAttribute("aria-pressed")) element.setAttribute("aria-pressed", "false");
   });
   $("#hq-context-panel").innerHTML = `<div class="hq-panel-empty"><span class="target-reticle" aria-hidden="true"><i></i></span><p class="eyebrow">WORKSPACE CONTEXT</p><h2>Inspect the active work</h2><p>Select the case, a work object, or a specialist to see concise ownership and next-action detail.</p></div>`;
+  $("#shared-decision-canvas").hidden = true;
+  $("#decision-stage").classList.remove("is-positioning");
+  $("#decision-stage").dataset.decisionStep = "-1";
+  $$("[data-decision-position]").forEach((node) => node.classList.remove("is-attached"));
+  $$("[data-decision-action]").forEach((button) => button.classList.remove("is-selected"));
+  $("#human-decision-gate").hidden = true;
+  $("#decision-outcome").hidden = true;
+  $("#decision-outcome").innerHTML = "";
+  $("#decision-inspector").innerHTML = `<p class="eyebrow">DECISION RECORD / INSPECTION</p><h3>Positions are ready to assemble</h3><p>Select Assemble Decision Positions to attach all three governed recommendations to the shared case.</p>`;
 }
 
 function resetDemo() {
@@ -864,6 +1048,14 @@ function init() {
   $("#start-workspace").addEventListener("click", startWorkspaceFlow);
   $("#pause-workspace").addEventListener("click", pauseWorkspace);
   $("#resume-workspace").addEventListener("click", resumeWorkspace);
+  $("#assemble-positions").addEventListener("click", startDecisionMovement);
+  $("#decision-actions").addEventListener("click", (event) => { const button = event.target.closest("[data-decision-action]"); if (button) handleDecisionAction(button.dataset.decisionAction); });
+  $("#decision-stage").addEventListener("click", (event) => { const position = event.target.closest("[data-decision-position]"); if (position) selectDecisionPosition(position.dataset.decisionPosition); else if (event.target.closest("#decision-case-core")) renderCasePanel(); });
+  $("#human-decision-gate").addEventListener("click", (event) => { const option = event.target.closest("[data-commander-decision]"); if (option) selectCommanderDecision(option.dataset.commanderDecision); });
+  $("#decision-outcome").addEventListener("click", (event) => {
+    if (event.target.closest("#return-decision-gate")) { state.commanderDecision = null; state.decisionStatus = "unresolved"; state.decisionQuestionOpen = true; $("#decision-outcome").hidden = true; $("#human-decision-gate").hidden = false; renderHqState(); }
+    if (event.target.closest("#continue-propagation")) $("#propagation-boundary").textContent = "Ready for Version 0.6 — Decision Propagation. No replanning runs in Version 0.5.";
+  });
   $("#reset-demo").addEventListener("click", resetDemo);
   $$('[data-hq-agent]').forEach((persona) => persona.addEventListener("click", () => selectHqAgent(persona.dataset.hqAgent)));
   $("#hq-context-panel").addEventListener("click", (event) => {
@@ -877,9 +1069,18 @@ function init() {
     if (workObject) selectWorkObject(workObject.dataset.workObject);
   });
   $$('[data-case-action]').forEach((button) => button.addEventListener("click", () => handleCaseAction(button.dataset.caseAction)));
-  $("#hq-case-file").addEventListener("click", () => renderCasePanel());
+  $("#hq-case-file").addEventListener("click", (event) => {
+    const caseDetail = event.target.closest("[data-case-detail]");
+    if (caseDetail) { event.stopPropagation(); handleCaseDetail(caseDetail.dataset.caseDetail); }
+    else renderCasePanel();
+  });
   $("#hq-case-file").addEventListener("keydown", (event) => {
-    if (event.key === "Enter" || event.key === " ") { event.preventDefault(); renderCasePanel(); }
+    if (event.key === "Enter" || event.key === " ") {
+      event.preventDefault();
+      const caseDetail = event.target.closest("[data-case-detail]");
+      if (caseDetail) handleCaseDetail(caseDetail.dataset.caseDetail);
+      else renderCasePanel();
+    }
   });
   $(".assessment-agent-field").addEventListener("animationend", (event) => {
     if (event.target === event.currentTarget && event.animationName === "assessment-sequence") completeCapabilityFormation();
@@ -887,6 +1088,9 @@ function init() {
   $("#hq-floor").addEventListener("animationend", (event) => {
     if (event.target === event.currentTarget && event.animationName === "hq-sequence") completeHqHandoff();
     if (event.target === event.currentTarget && event.animationName === "workspace-sequence") completeWorkspaceTransition();
+  });
+  $("#decision-stage").addEventListener("animationend", (event) => {
+    if (event.target === event.currentTarget && event.animationName === "decision-position-sequence") completeDecisionStep();
   });
   const initialHash = location.hash.slice(1);
   navigate(["portfolio", "decision", "factory"].includes(initialHash) ? initialHash : "portfolio", false);

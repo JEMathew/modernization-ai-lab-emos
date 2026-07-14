@@ -1,4 +1,4 @@
-# Modernization AI Lab — Mission Control 0.4X
+# Modernization AI Lab — Mission Control 0.5
 
 Mission Control is a standalone visual and interaction prototype for exploring
 the Modernization AI Lab as three connected environments:
@@ -7,18 +7,23 @@ the Modernization AI Lab as three connected environments:
 2. Agent Decision Room
 3. Codex Modernization Factory
 
-Version 0.4X preserves the complete Version 0.3 Mission Control and Version 0.4A
-Modernization HQ journeys, then adds the Living Workspace foundation. Mission
-Control and HQ render one shared Customer Intelligence Capability case with a
-visible owner, task, blocker, next action, five attached work objects, and a
-five-lane work queue.
+Version 0.5 preserves the complete Version 0.3 Mission Control, Version 0.4A
+Modernization HQ, and Version 0.4X Living Workspace journeys. It extends the
+shared Customer Intelligence Capability case into one governed Shared Decision
+Canvas attached to `DR-CIC-001`.
 
 After Assessment Ready, the user can start a deterministic specialist sequence:
 Portfolio Intelligence hands off evidence, Architecture attaches its review,
 Business Strategy attaches value findings, and Risk & Governance pauses the
 case at Decision Pending. Pause and Resume preserve the exact stored stage and
-finish the current transition before stopping. No recurring timer, continuous
-loop, backend, or live model call is used.
+finish the current transition before stopping. At Decision Pending, three
+specialist positions attach to the case with evidence, assumptions, confidence,
+and consequences. The Mission Commander can compare them, inspect a governed
+challenge, reduce the conflict to one question, and choose any of three decision
+gate paths. The primary path creates a Human Constraint and ends at Ready for
+Replanning; Version 0.5 does not run replanning.
+
+No recurring timer, continuous loop, backend, or live model call is used.
 
 The persistent experience switch can move between Mission Control and HQ
 without losing state. Reset Demo restores both experiences to the initial

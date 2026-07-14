@@ -6,8 +6,8 @@
     <meta name="description" content="Standalone Modernization AI Lab mission-control prototype.">
     <title>Modernization AI Lab — Mission Control</title>
     <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='4' fill='%230b1720'/%3E%3Cpath d='M7 23V15h4v8m3 0V10h4v13m3 0V6h4v17' stroke='%234bd6c2' stroke-width='2'/%3E%3C/svg%3E">
-    <link rel="stylesheet" href="styles.css?v=0.4x">
-    <script src="script.js?v=0.4x" defer></script>
+    <link rel="stylesheet" href="styles.css?v=0.5">
+    <script src="script.js?v=0.5" defer></script>
   </head>
   <body>
     <svg class="icon-library" aria-hidden="true">
@@ -22,7 +22,7 @@
       <header class="topbar">
         <a class="brand" href="#portfolio" data-view-link="portfolio" aria-label="Mission Control home">
           <span class="brand-mark" aria-hidden="true"><span></span><span></span><span></span></span>
-          <span><strong>MODERNIZATION AI LAB</strong><small>CONNECTED EXPERIENCES / V0.4X</small></span>
+          <span><strong>MODERNIZATION AI LAB</strong><small>CONNECTED EXPERIENCES / V0.5</small></span>
         </a>
         <div class="experience-switch" role="group" aria-label="Experience switch">
           <button class="is-active" type="button" data-experience-switch="mission-control" aria-pressed="true">Mission Control</button>
@@ -239,7 +239,7 @@
 
       <section class="hq-experience" id="hq-experience" data-experience-panel="hq" aria-labelledby="hq-title" hidden>
         <header class="hq-header">
-          <div><p class="eyebrow">VERSION 0.4X / LIVING WORKSPACE</p><h1 id="hq-title">Modernization HQ</h1><p>Follow one shared modernization case as evidence, reviews, ownership, and blockers attach to the work.</p></div>
+          <div><p class="eyebrow">VERSION 0.5 / SHARED DECISION ROOM</p><h1 id="hq-title">Modernization HQ</h1><p>Follow one shared modernization case as evidence, positions, governance, and human decisions attach to the work.</p></div>
           <div class="hq-stage-strip" aria-label="Current HQ workflow context">
             <span><small>WORKFLOW STAGE</small><strong id="hq-workflow-stage">PORTFOLIO UNVERIFIED</strong></span>
             <span><small>SELECTED CAPABILITY</small><strong id="hq-selected-capability">AWAITING FORMATION</strong></span>
@@ -265,12 +265,40 @@
             <span data-workflow-stage="2"><i>03</i><strong>Business Review</strong><small>Business Strategy</small></span>
             <span data-workflow-stage="3"><i>04</i><strong>Risk Review</strong><small>Risk &amp; Governance</small></span>
             <span data-workflow-stage="4"><i>05</i><strong>Decision Pending</strong><small>Mission Commander</small></span>
+            <div class="case-progress-marker" id="case-progress-marker" role="status" aria-live="polite"><i></i><span><small>SHARED CASE</small><strong id="case-progress-label">AWAITING START</strong></span></div>
           </div>
 
           <div class="workspace-grid">
             <section class="work-object-board" aria-labelledby="work-object-title"><div class="workspace-section-heading"><span>ATTACHED WORK OBJECTS</span><strong id="work-object-title">ONE SHARED CASE RECORD</strong></div><div class="work-object-list" id="workspace-work-objects"></div></section>
             <section class="work-queue" aria-labelledby="work-queue-title"><div class="workspace-section-heading"><span>WORK QUEUE</span><strong id="work-queue-title">LIVE CASE POSITION</strong></div><div class="queue-lanes" id="workspace-queue"></div></section>
           </div>
+        </section>
+
+        <section class="shared-decision-canvas" id="shared-decision-canvas" hidden aria-labelledby="decision-canvas-title">
+          <header class="decision-canvas-header">
+            <div><p class="eyebrow">SHARED DECISION CANVAS / DR-CIC-001</p><h2 id="decision-canvas-title">Customer Intelligence Capability</h2><p>One governed record connecting completed evidence, specialist positions, and the Mission Commander decision.</p></div>
+            <div class="decision-canvas-state"><small>CASE STATE</small><strong id="decision-canvas-state">DECISION PENDING</strong><button class="primary-action" id="assemble-positions" type="button">Assemble Decision Positions</button></div>
+          </header>
+
+          <div class="decision-stage" id="decision-stage" data-decision-step="-1">
+            <svg class="recommendation-paths" viewBox="0 0 1000 360" preserveAspectRatio="none" aria-hidden="true"><path d="M170 92 C330 92 340 180 500 180"/><path d="M830 92 C670 92 660 180 500 180"/><path class="risk-path" d="M500 326 C500 270 500 245 500 180"/></svg>
+            <button class="decision-position position-business" type="button" data-decision-position="business"><span>BS</span><div><small>BUSINESS STRATEGIST · 82%</small><strong>Unified capability rebuild</strong><em>POSITION WAITING</em></div></button>
+            <button class="decision-position position-architect" type="button" data-decision-position="architect"><span>EA</span><div><small>CHIEF ENTERPRISE ARCHITECT · 91%</small><strong>Warehouse-first staged replatform</strong><em>POSITION WAITING</em></div></button>
+            <button class="decision-position position-risk" type="button" data-decision-position="risk"><span>RG</span><div><small>RISK &amp; GOVERNANCE · 77%</small><strong>Govern reports before approval</strong><em>OBJECTION WAITING</em></div></button>
+            <button class="decision-case-core" id="decision-case-core" type="button"><small>SHARED CASE / DR-CIC-001</small><strong>Customer Intelligence Capability</strong><span id="decision-case-core-state">DECISION PENDING</span><em>4 COMPLETED REVIEWS · FINANCE DEPENDENCY</em></button>
+          </div>
+
+          <div class="decision-timeline" id="decision-timeline" aria-label="DR-CIC-001 decision timeline"></div>
+          <div class="decision-actionbar" id="decision-actions" aria-label="Decision inspection actions">
+            <button type="button" data-decision-action="compare">Compare Recommendations</button><button type="button" data-decision-action="shared">Show Shared Evidence</button><button type="button" data-decision-action="conflict">Show Conflicting Evidence</button><button type="button" data-decision-action="assumptions">Review Assumptions</button><button type="button" data-decision-action="change">What Would Change Their Minds?</button><button type="button" data-decision-action="challenge">Ask One Specialist to Challenge Another</button><button type="button" data-decision-action="blocked">Why Is the Decision Blocked?</button><button type="button" data-decision-action="resolve">Resolve Decision</button>
+          </div>
+          <section class="decision-inspector" id="decision-inspector" aria-live="polite"><p class="eyebrow">DECISION RECORD / INSPECTION</p><h3>Positions are ready to assemble</h3><p>Select Assemble Decision Positions to attach all three governed recommendations to the shared case.</p></section>
+          <section class="human-decision-gate" id="human-decision-gate" hidden aria-labelledby="human-gate-title">
+            <div><p class="eyebrow">HUMAN DECISION GATE / MISSION COMMANDER</p><h3 id="human-gate-title">Must the twelve Finance Warehouse-dependent reports remain unchanged during the first six months?</h3><div class="question-implications"><span><strong>YES</strong>Favors staged replatforming with compatibility controls.</span><span><strong>NO</strong>Makes broader rebuild or semantic redesign more viable.</span><span><strong>MORE EVIDENCE</strong>Delays the decision but reduces uncertainty.</span></div><p>Report ownership uncertainty remains a required governance follow-up, whichever strategy is selected.</p></div>
+            <div class="gate-options"><button type="button" data-commander-decision="yes">Yes — protect finance reports for six months</button><button type="button" data-commander-decision="no">No — finance reports may change</button><button type="button" data-commander-decision="evidence">Request more evidence</button></div>
+          </section>
+          <section class="decision-outcome" id="decision-outcome" hidden aria-live="polite"></section>
+          <section class="decision-record-trace" id="decision-record-trace" aria-labelledby="decision-record-title"><div class="workspace-section-heading"><span>TRACEABLE DECISION RECORD</span><strong id="decision-record-title">DR-CIC-001</strong></div><div id="decision-record-fields"></div></section>
         </section>
 
         <div class="hq-layout">
@@ -286,7 +314,7 @@
                 <div class="case-products"><span>Customer Service Portal</span><span>Customer Analytics Warehouse</span><span>Product Telemetry Platform</span></div>
                 <div class="case-dependency"><i></i><span>Finance Warehouse</span><small>12 dependent finance reports</small></div>
                 <div class="case-signals"><span><small>EVIDENCE</small><strong>3 / 3 READY</strong></span><span><small>VALUE</small><strong>HIGH</strong></span><span><small>URGENCY</small><strong>HIGH</strong></span><span><small>RISK</small><strong>ELEVATED</strong></span></div>
-                <div class="case-operations"><span><small>OWNER</small><strong id="hq-case-owner">PORTFOLIO INTELLIGENCE</strong></span><span><small>CURRENT TASK</small><strong id="hq-case-task">FORM CAPABILITY</strong></span><span><small>BLOCKER</small><strong id="hq-case-blocker">NONE</strong></span><span><small>NEXT ACTION</small><strong id="hq-case-next">BEGIN DISCOVERY</strong></span></div>
+                <div class="case-operations"><span class="case-operation-link" data-case-detail="owner" role="button" tabindex="0"><small>CURRENT OWNER</small><strong id="hq-case-owner">PORTFOLIO INTELLIGENCE</strong></span><span><small>CURRENT TASK</small><strong id="hq-case-task">FORM CAPABILITY</strong></span><span class="case-operation-link" data-case-detail="blocker" role="button" tabindex="0"><small>CURRENT BLOCKER</small><strong id="hq-case-blocker">NONE</strong></span><span class="case-operation-link" data-case-detail="next" role="button" tabindex="0"><small>NEXT ACTION</small><strong id="hq-case-next">BEGIN DISCOVERY</strong></span><span><small>CURRENT EVIDENCE</small><strong id="hq-case-current-evidence">PORTFOLIO INVENTORY</strong></span></div>
                 <div class="case-record"><span>DECISION RECORD</span><strong>DR-CIC-001</strong><small id="hq-case-recommendation">RECOMMENDATION / PENDING SPECIALIST REVIEW</small></div>
                 <div class="case-evidence-tokens" aria-hidden="true"><i></i><i></i><i></i></div>
               </div>
