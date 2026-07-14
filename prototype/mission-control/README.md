@@ -14,6 +14,7 @@ Mission Control is a standalone HTML, CSS, and JavaScript prototype created for 
 - Six inspectable Oracle-to-BigQuery starter artifacts generated under an Engineering Contract.
 - Independent validation that intentionally finds a semantic failure, applies an approved correction, and reruns only three impacted checks.
 - An evidence-linked three-wave portfolio roadmap and explicit Wave 1 approval.
+- An experimental Portfolio Upload Lab with local CSV/JSON validation, dependency checks, transparent scoring, and synthetic industry samples.
 
 ## Screenshots
 
@@ -42,6 +43,8 @@ Modernization HQ ┘      │
 - `index.html` contains semantic structure and inline SVG symbols.
 - `styles.css` provides responsive enterprise presentation, one-shot motion, Fast pace, and reduced-motion support.
 - `script.js` contains mocked data, deterministic workflow state, provider-neutral contracts, validation results, judge-mode cues, and reset reconstruction.
+- `portfolio-lab.js` contains the standalone parser, schema validation, dependency checks, ten-unit limit, and deterministic scoring engine.
+- `portfolio-lab-ui.js` connects that engine to the upload, mapping, validation-report, sample, scoring, and journey-handoff interface.
 
 No React, Streamlit, npm, TypeScript, external library, API, or backend is used by this standalone prototype.
 
@@ -78,6 +81,20 @@ Then open `http://localhost:8080/`.
 5. At any point, use **Reset Current Stage**, **Restart Guided Demo**, or **Reset Full Demo**.
 
 Guided Demo reads the existing shared workflow state. It does not create, skip, or maintain a separate workflow. Switching between Mission Control and Modernization HQ preserves the cue and case state.
+
+## Portfolio Upload Lab
+
+The entry launchpad keeps **Run Guided Demo** as the recommended Apex Aerospace experience. **Upload Portfolio** opens an experimental local sandbox, while **Load Sample Portfolio** provides synthetic Retail, Manufacturing, and Financial Services examples.
+
+The lab accepts:
+
+- `portfolio.csv` or a JSON portfolio with the required fields `asset_id`, `asset_name`, `asset_type`, `business_capability`, `technology`, `business_criticality`, `owner`, `lifecycle_status`, `dependencies`, `annual_cost`, `technical_health`, and `business_value`;
+- optional `dependencies.csv` with `source_asset_id` and `target_asset_id`; and
+- optional `constraints.json` containing a JSON object.
+
+Validation reports missing values or mappings, duplicate IDs, invalid asset types, broken dependencies, empty rows, invalid costs, malformed artifacts, and unsupported formats. Familiar source names such as `System Name`, `Category`, and `Importance` can be mapped to the canonical schema. Accepted portfolios are limited to ten modernization units using **Analyze First 10** or **Select 10**.
+
+The Modernization Priority Score is calculated locally from Technical Urgency (30%), Business Value (25%), Operating Cost (15%), Dependency Readiness (15%), Risk Reduction (10%), and Evidence Confidence (5%). Every component score is displayed and one primary candidate is recommended. The handoff starts the standard guided journey with the uploaded candidate name and validated metadata attached as experimental context. Deep modernization still requires representative SQL, schema, or engineering metadata.
 
 ## Three-minute demo path
 
@@ -140,7 +157,8 @@ Use a current desktop version of Chrome, Edge, Firefox, or Safari with JavaScrip
 
 - No live GPT-5.6 or Codex API execution.
 - No persistence after browser refresh.
-- No deployment, authentication, collaboration, enterprise connectors, or portfolio upload.
+- No deployment, authentication, collaboration, enterprise connectors, persistence, or large-portfolio analysis.
+- Portfolio Upload Lab is capped at ten units and does not parse documents, repositories, images, source code, or architecture diagrams.
 - No production database or external service.
 - Wave 1 approval does not deploy or launch workloads.
 

@@ -1,0 +1,32 @@
+{
+  "portfolio": [
+    {
+      "asset_id": "JSON-APP-1",
+      "asset_name": "Customer Care Portal",
+      "asset_type": "application",
+      "business_capability": "Customer Service",
+      "technology": ".NET / SQL Server",
+      "business_criticality": "High",
+      "owner": "Customer Operations",
+      "lifecycle_status": "aging",
+      "dependencies": ["JSON-DATA-1"],
+      "annual_cost": 620000,
+      "technical_health": "poor",
+      "business_value": "high"
+    },
+    {
+      "asset_id": "JSON-DATA-1",
+      "asset_name": "Customer Insights Warehouse",
+      "asset_type": "data_platform",
+      "business_capability": "Customer Intelligence",
+      "technology": "Oracle Exadata",
+      "business_criticality": "Critical",
+      "owner": "Data Office",
+      "lifecycle_status": "end of support",
+      "dependencies": [],
+      "annual_cost": 1250000,
+      "technical_health": "critical",
+      "business_value": "critical"
+    }
+  ]
+}

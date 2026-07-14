@@ -6,8 +6,10 @@
     <meta name="description" content="Standalone Modernization AI Lab mission-control prototype.">
     <title>Modernization AI Lab — Mission Control</title>
     <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='4' fill='%230b1720'/%3E%3Cpath d='M7 23V15h4v8m3 0V10h4v13m3 0V6h4v17' stroke='%234bd6c2' stroke-width='2'/%3E%3C/svg%3E">
-    <link rel="stylesheet" href="styles.css?v=1.0">
-    <script src="script.js?v=1.0" defer></script>
+    <link rel="stylesheet" href="styles.css?v=1.1">
+    <script src="portfolio-lab.js?v=1.1" defer></script>
+    <script src="script.js?v=1.1" defer></script>
+    <script src="portfolio-lab-ui.js?v=1.1" defer></script>
   </head>
   <body>
     <svg class="icon-library" aria-hidden="true">
@@ -33,6 +35,7 @@
           <span><strong>DEMO SYSTEMS NOMINAL</strong><small>10 PRODUCTS · 8 SPECIALISTS · OFFLINE</small></span>
         </div>
         <button class="simulation-badge" id="simulation-info" type="button" aria-expanded="false" aria-controls="demo-info-panel">Demo Simulation</button>
+        <button class="lab-entry-button" id="open-portfolio-lab" type="button">Portfolio Upload Lab</button>
         <button class="center-case-button" id="center-active-case" type="button" disabled>Center on Active Case</button>
         <button class="reset-button" id="reset-demo" type="button">Reset Full Demo</button>
       </header>
@@ -50,6 +53,51 @@
         <div class="simulation-disclosure"><strong>Demo Simulation</strong><span>Synthetic Apex Aerospace portfolio · deterministic agent responses · mocked artifact contents · deterministic validation results · real interactive workflow and shared-state implementation.</span></div>
         <button type="button" id="close-demo-info">Close</button>
       </section>
+
+      <section class="entry-launchpad" id="entry-launchpad" role="dialog" aria-modal="true" aria-labelledby="entry-title">
+        <div class="entry-panel">
+          <header><div><p class="eyebrow">MISSION CONTROL / SELECT EXPERIENCE</p><h1 id="entry-title">How would you like to begin?</h1><p>The guided experience remains the recommended Build Week path. Portfolio Upload Lab is an experimental, local-only analysis sandbox.</p></div><span>SYNTHETIC DATA ONLY</span></header>
+          <div class="entry-options">
+            <article class="entry-option is-recommended"><span class="entry-rating">★★★★★ RECOMMENDED</span><h2>Run Guided Demo</h2><p>Use the complete Apex Aerospace scenario and the existing three-minute governed journey.</p><button class="primary-action" id="entry-guided-demo" type="button">Run Guided Demo <svg aria-hidden="true"><use href="#icon-arrow"></use></svg></button></article>
+            <article class="entry-option"><span class="entry-label">EXPERIMENTAL</span><h2>Upload Portfolio</h2><p>Analyze a local CSV or JSON portfolio. Files remain in this browser session.</p><small>CSV · JSON</small><button type="button" id="entry-upload">Open Upload Lab</button></article>
+            <article class="entry-option"><span class="entry-label">SYNTHETIC SAMPLES</span><h2>Load Sample Portfolio</h2><p>Start with a compact industry portfolio designed for transparent analysis.</p><div class="sample-entry-actions"><button type="button" data-sample-sector="retail">Retail</button><button type="button" data-sample-sector="manufacturing">Manufacturing</button><button type="button" data-sample-sector="financial-services">Financial Services</button></div></article>
+          </div>
+        </div>
+      </section>
+
+      <section class="portfolio-upload-lab" id="portfolio-upload-lab" hidden aria-labelledby="upload-lab-title">
+        <div class="upload-lab-shell">
+          <header class="upload-lab-header"><div><p class="eyebrow">EXPERIMENTAL / LOCAL ANALYSIS SANDBOX</p><h1 id="upload-lab-title" tabindex="-1">Portfolio Upload Lab</h1><p>Validate up to ten modernization units and calculate a transparent primary-candidate recommendation.</p></div><div><span>SYNTHETIC DATA ONLY</span><button type="button" id="close-portfolio-lab">Close Lab</button></div></header>
+
+          <section class="upload-requirements" aria-label="Supported portfolio artifacts">
+            <div><small>REQUIRED</small><strong>portfolio.csv or portfolio.json</strong><span>12-field portfolio schema</span></div>
+            <div><small>OPTIONAL</small><strong>dependencies.csv</strong><span>source_asset_id, target_asset_id</span></div>
+            <div><small>OPTIONAL</small><strong>constraints.json</strong><span>Governance context</span></div>
+            <div class="is-rejected"><small>NOT SUPPORTED</small><strong>Documents, repositories, images</strong><span>PDF · DOCX · PPTX · ZIP · Visio · diagrams</span></div>
+          </section>
+
+          <div class="upload-lab-grid">
+            <section class="upload-control-panel">
+              <div class="lab-step-heading"><span>01</span><div><small>PROVIDE ARTIFACTS</small><h2>Portfolio evidence</h2></div></div>
+              <label class="file-drop"><span>Portfolio file <strong>Required</strong></span><input id="portfolio-file" type="file" accept=".csv,.json,text/csv,application/json"><small id="portfolio-file-name">Choose portfolio.csv or JSON</small></label>
+              <label class="file-drop"><span>Dependency file <strong>Optional</strong></span><input id="dependencies-file" type="file" accept=".csv,text/csv"><small id="dependencies-file-name">Choose dependencies.csv</small></label>
+              <label class="file-drop"><span>Constraints file <strong>Optional</strong></span><input id="constraints-file" type="file" accept=".json,application/json"><small id="constraints-file-name">Choose constraints.json</small></label>
+              <div class="upload-actions"><button type="button" id="validate-upload">Validate Portfolio</button><button type="button" id="reset-upload-lab">Reset Lab</button><button type="button" id="cancel-upload">Cancel</button></div>
+              <p class="upload-privacy">Files are processed locally in memory. Nothing is uploaded to a backend or external service.</p>
+            </section>
+
+            <section class="lab-workbench" aria-live="polite">
+              <div class="lab-empty" id="upload-lab-empty"><span class="target-reticle" aria-hidden="true"><i></i></span><p class="eyebrow">AWAITING PORTFOLIO</p><h2>Validation begins immediately</h2><p>Choose a supported portfolio artifact or load a synthetic sample to inspect schema, dependencies, evidence quality, and candidate scores.</p></div>
+              <section class="mapping-panel" id="mapping-panel" hidden aria-labelledby="mapping-title"><div class="lab-step-heading"><span>02</span><div><small>COLUMN MAPPING</small><h2 id="mapping-title">Map source columns</h2></div></div><p>Confirm how source columns map to the required portfolio schema.</p><div id="mapping-fields"></div><button type="button" id="apply-column-mapping">Apply Mapping</button></section>
+              <section class="validation-report" id="validation-report" hidden aria-labelledby="validation-report-title"><div class="lab-step-heading"><span>03</span><div><small>VALIDATION REPORT</small><h2 id="validation-report-title">Portfolio validation</h2></div></div><div class="validation-summary" id="upload-validation-summary"></div><div class="validation-issues" id="upload-validation-issues"></div><div class="validation-actions"><button type="button" id="continue-accepted">Continue with Accepted Records</button><button type="button" id="cancel-validation">Cancel</button></div></section>
+              <section class="unit-limit-panel" id="unit-limit-panel" hidden aria-labelledby="unit-limit-title"><div class="lab-step-heading"><span>04</span><div><small>PORTFOLIO LIMIT</small><h2 id="unit-limit-title">Choose ten modernization units</h2></div></div><p>This sandbox analyzes a maximum of ten units.</p><div class="limit-actions"><button type="button" id="analyze-first-ten">Analyze First 10</button><button type="button" id="select-ten">Select 10</button></div><div id="unit-selector" hidden></div><button type="button" id="analyze-selected" hidden>Analyze Selected Units</button></section>
+              <section class="analysis-results" id="analysis-results" hidden aria-labelledby="analysis-title"><div class="lab-step-heading"><span>05</span><div><small>DETERMINISTIC ANALYSIS</small><h2 id="analysis-title">Modernization Priority Scores</h2></div></div><div class="scoring-legend"><span>30% Technical Urgency</span><span>25% Business Value</span><span>15% Operating Cost</span><span>15% Dependency Readiness</span><span>10% Risk Reduction</span><span>5% Evidence Confidence</span></div><div id="candidate-recommendation"></div><div class="score-table" id="score-table"></div><div class="journey-boundary"><strong>Deep modernization requires representative SQL, schema, or engineering metadata.</strong><span>This sandbox continues with uploaded asset names and validated metadata. It does not promise engineering output for arbitrary uploads.</span></div><button class="primary-action" type="button" id="start-uploaded-journey">Start Modernization Journey <svg aria-hidden="true"><use href="#icon-arrow"></use></svg></button></section>
+            </section>
+          </div>
+        </div>
+      </section>
+
+      <section class="uploaded-journey-context" id="uploaded-journey-context" hidden aria-live="polite"><div><small>EXPERIMENTAL PORTFOLIO HANDOFF</small><strong id="uploaded-journey-title">Uploaded modernization case</strong></div><div><small>PRIMARY CANDIDATE</small><strong id="uploaded-candidate-name">—</strong></div><div><small>VALIDATED UNITS</small><strong id="uploaded-unit-count">0</strong></div><div><small>BOUNDARY</small><strong>STANDARD GUIDED JOURNEY · METADATA ONLY</strong></div><button type="button" id="return-upload-lab">Return to Analysis</button></section>
 
       <aside class="guided-cue" id="guided-cue" hidden aria-live="polite" aria-label="Guided demo cue">
         <div><small id="guided-step-count">STEP 1 OF 9</small><strong id="guided-step-title">Portfolio Discovery</strong><span id="guided-progress-label">0% COMPLETE</span></div>
