@@ -1,4 +1,4 @@
-# Modernization AI Lab — Mission Control 0.3
+# Modernization AI Lab — Mission Control 0.4A
 
 Mission Control is a standalone visual and interaction prototype for exploring
 the Modernization AI Lab as three connected environments:
@@ -7,16 +7,22 @@ the Modernization AI Lab as three connected environments:
 2. Agent Decision Room
 3. Codex Modernization Factory
 
-Version 0.3 preserves the complete discovery journey and adds a consequence-led
-assessment landscape. After discovery, the same ten product cards reorganize
-into the Customer Intelligence Capability, an external Finance Warehouse
-reporting dependency, and two secondary consequence clusters. Three assessment
-specialists converge on the capability, expose its reasoning signals, and let
-the user choose individual assessment or the primary one-initiative path.
+Version 0.4A preserves the complete Version 0.3 Mission Control journey and adds
+Modernization HQ as an alternative, connected experience. HQ renders the same
+journey state as a professional workplace floor with eight zones and eight
+specialist personas. The active Customer Intelligence Capability remains one
+shared case file across both experiences.
 
 Selecting the capability as one modernization initiative places it into
-Assessment Ready and unlocks the Decision Room handoff. The journey remains
-fully resettable to Version 0.2's initial Unverified portfolio.
+Assessment Ready and unlocks the Decision Room handoff. Continuing moves the
+case file, its evidence tokens, and the Architecture, Business Strategy, and
+Risk specialists into the Shared Decision Room. Persona actions expose concise
+mocked evidence, responsibility, concern, and perspective responses. Future
+engineering, validation, and executive zones remain visibly locked.
+
+The persistent experience switch can move between Mission Control and HQ
+without losing state. Reset Demo restores both experiences to the initial
+Unverified portfolio. No movement starts before an explicit user action.
 
 The prototype is isolated from the Streamlit application and does not call a
 backend, API, or AI service. Its one-shot animations start only from explicit

@@ -33,6 +33,17 @@ const assessmentSignals = {
   "data-05": "High future strategic value"
 };
 
+const hqSpecialists = {
+  "agent-01": { title: "Portfolio Intelligence Specialist", role: "Evidence steward", zone: "Portfolio Intelligence Studio", active: true, evidence: "The shared case contains three evidence-ready products and the Finance Warehouse reporting dependency.", responsibility: "I preserve the evidence chain and keep every specialist aligned to one modernization record.", concern: "The Finance Warehouse ownership conflict remains visible even though the capability is Assessment Ready.", perspective: "I prioritize evidence completeness and traceability before recommendation quality." },
+  "agent-02": { title: "Chief Enterprise Architect", role: "Architecture authority", zone: "Architecture Studio", active: true, evidence: "Customer Analytics Warehouse carries high technical urgency and anchors the Oracle-to-BigQuery boundary.", responsibility: "I define the shared technical boundary, target-state implications, and architecture decision points.", concern: "Twelve dependent finance reports increase coupling at the reporting boundary.", perspective: "I optimize for a coherent capability architecture without hiding integration consequence." },
+  "agent-03": { title: "Business Strategist", role: "Value and outcome lead", zone: "Business Strategy Studio", active: true, evidence: "Customer Service Portal has high business importance and Product Telemetry has high future strategic value.", responsibility: "I connect the combined initiative to customer outcomes and measurable enterprise value.", concern: "Separating the three products would fragment value realization across multiple delivery tracks.", perspective: "I favor one initiative because the business outcome spans all three products." },
+  "agent-04": { title: "Risk & Governance Specialist", role: "Control and approval lead", zone: "Risk & Governance Center", active: true, evidence: "Evidence coverage is complete for the three capability products; Finance ownership remains conflicted.", responsibility: "I preserve accountable decisions, surface unresolved controls, and define human approval boundaries.", concern: "The reporting dependency must remain explicit in every downstream decision record.", perspective: "I allow assessment to proceed while keeping the ownership conflict as a governed exception." },
+  "agent-05": { title: "Wave Planning Specialist", role: "Future sequencing lead", zone: "Shared Decision Room", active: false, evidence: "Wave evidence is not active in Version 0.4A.", responsibility: "I will sequence approved initiatives when wave planning becomes active.", concern: "No planning concern is evaluated in this version.", perspective: "Planning begins only after the governed decision stage." },
+  "agent-06": { title: "Codex Modernization Engineer", role: "Migration engineering", zone: "Codex Engineering Lab", active: false },
+  "agent-07": { title: "Validation Specialist", role: "Quality and controls", zone: "Validation Lab", active: false },
+  "agent-08": { title: "Executive Advisor", role: "Executive decision support", zone: "Executive Briefing Room", active: false }
+};
+
 const state = {
   view: "portfolio",
   productId: null,
@@ -42,6 +53,11 @@ const state = {
   capabilityState: null,
   assessmentMode: null,
   assessmentReady: false,
+  experience: "mission-control",
+  hqEntered: false,
+  hqTransition: "idle",
+  hqCaseLocation: "portfolio-studio",
+  selectedHqAgent: null,
   productStates: new Map(),
   agentStates: new Map()
 };
@@ -397,13 +413,151 @@ function assessAsInitiative() {
   $("#assess-initiative").classList.add("is-selected");
   $$("#capability-products .product-card").forEach((card) => card.classList.remove("is-individual-choice"));
   $("#assessment-choice-status").textContent = "One initiative selected · shared assessment boundary confirmed.";
+  renderHqState();
+}
+
+function hqNextAction() {
+  if (state.hqCaseLocation === "decision-room") return "INSPECT SPECIALIST PERSPECTIVES";
+  if (state.assessmentReady) return "ENTER SHARED DECISION ROOM";
+  if (state.portfolioState === "Capability Formed") return "CHOOSE ASSESSMENT BOUNDARY";
+  if (state.portfolioState === "Assessment Running") return "FORMING CAPABILITY";
+  if (state.portfolioState === "Discovery Complete") return "CONTINUE TO ASSESSMENT";
+  if (state.discovery === "running") return "EVIDENCE REVIEW IN PROGRESS";
+  return "BEGIN DISCOVERY IN MISSION CONTROL";
+}
+
+function hqAgentMessage(id) {
+  if (state.hqTransition === "running") {
+    if (id === "agent-01") return "Sending the shared evidence package into the room.";
+    if (["agent-02", "agent-03", "agent-04"].includes(id)) return "Moving to the Shared Decision Room.";
+  }
+  if (state.hqCaseLocation === "decision-room" && (assessmentAgentIds.has(id) || id === "agent-04")) return "Collaborating on the shared case file.";
+  return {
+    "agent-01": "Monitoring the enterprise portfolio.",
+    "agent-02": "Reviewing platform boundaries.",
+    "agent-03": "Mapping capability outcomes.",
+    "agent-04": "Watching evidence exceptions.",
+    "agent-05": "Waiting for the planning stage."
+  }[id] || "Available in a future stage.";
+}
+
+function renderHqState() {
+  const workflow = state.portfolioState || "Unverified";
+  $("#hq-workflow-stage").textContent = workflow.toUpperCase();
+  $("#hq-selected-capability").textContent = state.capabilityState ? "CUSTOMER INTELLIGENCE" : "AWAITING FORMATION";
+  const activeCount = ["agent-01", "agent-02", "agent-03", "agent-04"].filter((id) => (state.agentStates.get(id) || "Idle") !== "Idle").length;
+  $("#hq-active-count").textContent = String(activeCount);
+  $("#hq-next-action").textContent = hqNextAction();
+  $("#center-active-case").disabled = !state.assessmentReady;
+  const caseState = state.hqCaseLocation === "decision-room" ? "IN SHARED DECISION ROOM" : state.assessmentReady ? "ASSESSMENT READY" : state.capabilityState ? state.capabilityState.toUpperCase() : "AWAITING ASSESSMENT";
+  $("#hq-case-state").textContent = caseState;
+  $("#hq-case-file").classList.toggle("is-dormant", !state.capabilityState);
+  $$("[data-hq-agent]").forEach((persona) => {
+    const id = persona.dataset.hqAgent;
+    const specialist = hqSpecialists[id];
+    const personaState = specialist.active ? (state.agentStates.get(id) || "Idle") : id === "agent-05" ? "Idle" : "Locked";
+    $("[data-hq-state]", persona).textContent = personaState.toUpperCase();
+    $("[data-hq-message]", persona).textContent = hqAgentMessage(id);
+    persona.classList.toggle("is-collaborating", state.hqCaseLocation === "decision-room" && ["agent-02", "agent-03", "agent-04"].includes(id));
+  });
+  if (state.selectedHqAgent) renderHqAgentPanel(state.selectedHqAgent);
+}
+
+function openExperience(experience, options = {}) {
+  if (!["mission-control", "hq"].includes(experience)) return;
+  const { updateHash = true, startHandoff = true } = options;
+  state.experience = experience;
+  $$("[data-experience-panel]").forEach((panel) => { panel.hidden = panel.dataset.experiencePanel !== experience; });
+  $$("[data-experience-switch]").forEach((button) => {
+    const active = button.dataset.experienceSwitch === experience;
+    button.classList.toggle("is-active", active);
+    button.setAttribute("aria-pressed", String(active));
+  });
+  renderHqState();
+  if (experience === "hq" && state.assessmentReady && !state.hqEntered && startHandoff) beginHqHandoff();
+  if (updateHash) history.replaceState(null, "", experience === "hq" ? "#hq" : `#${state.view}`);
+  window.scrollTo({ top: 0, behavior: "smooth" });
+}
+
+function setHqMove(element, target) {
+  const sourceBox = element.getBoundingClientRect();
+  const targetBox = target.getBoundingClientRect();
+  element.style.setProperty("--hq-move-x", `${targetBox.left + targetBox.width / 2 - sourceBox.left - sourceBox.width / 2}px`);
+  element.style.setProperty("--hq-move-y", `${targetBox.top + targetBox.height / 2 - sourceBox.top - sourceBox.height / 2}px`);
+}
+
+function beginHqHandoff() {
+  if (!state.assessmentReady || state.hqTransition !== "idle") return;
+  state.hqEntered = true;
+  state.hqTransition = "running";
+  state.hqCaseLocation = "moving";
+  state.agentStates.set("agent-01", "Investigating");
+  state.agentStates.set("agent-02", "Reasoning");
+  state.agentStates.set("agent-03", "Reasoning");
+  state.agentStates.set("agent-04", "Reasoning");
+  refreshAgentNodes();
+  renderHqState();
+  const floor = $("#hq-floor");
+  setHqMove($("#hq-case-file"), $("#hq-decision-target"));
+  ["agent-02", "agent-03", "agent-04"].forEach((id) => setHqMove($(`[data-hq-agent="${id}"]`), $(`[data-collaboration-target="${id}"]`)));
+  floor.classList.remove("is-handing-off", "is-handoff-complete", "is-collaboration-ready");
+  void floor.offsetWidth;
+  floor.classList.add("is-handing-off");
+}
+
+function completeHqHandoff() {
+  if (state.hqTransition !== "running") return;
+  state.hqTransition = "complete";
+  state.hqCaseLocation = "decision-room";
+  ["agent-01", "agent-02", "agent-03", "agent-04"].forEach((id) => state.agentStates.set(id, "Complete"));
+  refreshAgentNodes();
+  $("#hq-floor").classList.remove("is-handing-off");
+  $("#hq-floor").classList.add("is-handoff-complete", "is-collaboration-ready");
+  renderHqState();
+}
+
+function renderHqAgentPanel(id) {
+  const specialist = hqSpecialists[id];
+  if (!specialist) return;
+  const agentState = specialist.active ? (state.agentStates.get(id) || "Idle") : id === "agent-05" ? "Idle" : "Locked";
+  const actions = specialist.active ? `<div class="hq-action-list"><button type="button" data-hq-action="evidence">Show my evidence</button><button type="button" data-hq-action="responsibility">Explain my responsibility</button><button type="button" data-hq-action="concern">Show current concern</button><button type="button" data-hq-action="compare">Compare my perspective</button><button type="button" data-hq-action="join">Join the Decision Room</button></div><div class="hq-agent-response" id="hq-agent-response">Select a focused action. Responses are concise, mocked, and grounded in the shared case file.</div>` : `<div class="hq-locked-note">This persona is visible for continuity but remains outside the Version 0.4A active scope.</div>`;
+  $("#hq-context-panel").innerHTML = `<div class="hq-panel-content"><p class="eyebrow">SPECIALIST CONTEXT</p><div class="hq-panel-title"><span class="persona-figure" aria-hidden="true"><i></i><b></b></span><div><h2>${specialist.title}</h2><p>${specialist.role}</p></div></div><div class="hq-panel-state"><span><small>CURRENT STATE</small><strong>${agentState.toUpperCase()}</strong></span><span><small>HOME WORKSPACE</small><strong>${specialist.zone.toUpperCase()}</strong></span></div><p class="panel-summary">${hqAgentMessage(id)}</p>${actions}</div>`;
+}
+
+function selectHqAgent(id) {
+  state.selectedHqAgent = id;
+  $$("[data-hq-agent]").forEach((persona) => {
+    const selected = persona.dataset.hqAgent === id;
+    persona.classList.toggle("is-selected", selected);
+    persona.setAttribute("aria-pressed", String(selected));
+  });
+  renderHqAgentPanel(id);
+}
+
+function handleHqAction(action) {
+  const specialist = hqSpecialists[state.selectedHqAgent];
+  if (!specialist || !specialist.active) return;
+  const responses = {
+    evidence: specialist.evidence,
+    responsibility: specialist.responsibility,
+    concern: specialist.concern,
+    compare: specialist.perspective,
+    join: state.assessmentReady ? state.hqCaseLocation === "decision-room" ? "I am already collaborating around the shared Customer Intelligence Capability record." : "The case is Assessment Ready. I am joining the Shared Decision Room now." : "The capability must reach Assessment Ready before I can join the Shared Decision Room."
+  };
+  $("#hq-agent-response").textContent = responses[action];
+  $$("[data-hq-action]").forEach((button) => button.classList.toggle("is-selected", button.dataset.hqAction === action));
+  if (action === "join" && state.assessmentReady && state.hqTransition === "idle") beginHqHandoff();
+}
+
+function centerActiveCase() {
+  openExperience("hq");
+  const target = state.assessmentReady ? $("#hq-decision-target") : $("#hq-case-file");
+  target.scrollIntoView({ behavior: "smooth", block: "center" });
 }
 
 function continueToDecisionRoom() {
   if (!state.assessmentReady || state.assessmentMode !== "initiative") return;
-  clearAgent();
-  $("#agent-panel").innerHTML = `<div class="assessment-handoff"><div class="summary-symbol" aria-hidden="true">✓</div><p class="eyebrow">CAPABILITY INITIATIVE / ASSESSMENT READY</p><h2>Customer Intelligence Capability</h2><p>Customer Service Portal, Customer Analytics Warehouse, and Product Telemetry Platform now share one governed assessment boundary.</p><div class="handoff-evidence"><span>Capability products <strong>3</strong></span><span>Reporting dependency <strong>Finance Warehouse</strong></span><span>Assessment specialists <strong>3 complete</strong></span></div><div class="panel-callout">Governed specialist review begins in the next version.</div></div>`;
-  navigate("decision");
+  openExperience("hq");
 }
 
 function navigate(view, updateHash = true) {
@@ -437,6 +591,23 @@ function resetAssessmentLandscape() {
   $("#portfolio-title + p").textContent = "Survey the synthetic Apex Aerospace estate and select a product to inspect its modernization posture.";
 }
 
+function resetHqState() {
+  state.experience = "mission-control";
+  state.hqEntered = false;
+  state.hqTransition = "idle";
+  state.hqCaseLocation = "portfolio-studio";
+  state.selectedHqAgent = null;
+  const floor = $("#hq-floor");
+  floor.classList.remove("is-handing-off", "is-handoff-complete", "is-collaboration-ready");
+  [$("#hq-case-file"), ...$$('[data-hq-agent]')].forEach((element) => {
+    element.style.removeProperty("--hq-move-x");
+    element.style.removeProperty("--hq-move-y");
+    element.classList.remove("is-selected", "is-collaborating");
+    if (element.hasAttribute("aria-pressed")) element.setAttribute("aria-pressed", "false");
+  });
+  $("#hq-context-panel").innerHTML = `<div class="hq-panel-empty"><span class="persona-figure" aria-hidden="true"><i></i><b></b></span><p class="eyebrow">SPECIALIST CONTEXT</p><h2>Select a persona</h2><p>Choose a specialist to inspect its role, current responsibility, evidence, and concern.</p></div>`;
+}
+
 function resetDemo() {
   state.discovery = "unverified";
   state.portfolioState = "Unverified";
@@ -444,6 +615,7 @@ function resetDemo() {
   state.assessmentMode = null;
   state.assessmentReady = false;
   initializeEntityStates();
+  resetHqState();
   clearProduct();
   clearAgent();
   resetAssessmentLandscape();
@@ -461,7 +633,8 @@ function resetDemo() {
   const button = $("#begin-discovery");
   button.disabled = false;
   button.firstChild.textContent = "Begin Portfolio Discovery ";
-  navigate("portfolio");
+  navigate("portfolio", false);
+  openExperience("mission-control");
 }
 
 function init() {
@@ -469,19 +642,30 @@ function init() {
   renderProducts();
   renderAgents();
   $$('[data-view]').forEach((control) => control.addEventListener("click", () => navigate(control.dataset.view)));
-  $$('[data-view-link]').forEach((link) => link.addEventListener("click", (event) => { event.preventDefault(); navigate(link.dataset.viewLink); }));
+  $$('[data-view-link]').forEach((link) => link.addEventListener("click", (event) => { event.preventDefault(); navigate(link.dataset.viewLink, false); openExperience("mission-control"); }));
+  $$('[data-experience-switch]').forEach((button) => button.addEventListener("click", () => openExperience(button.dataset.experienceSwitch)));
   $("#begin-discovery").addEventListener("click", beginDiscovery);
   $("#continue-assessment").addEventListener("click", continueToAssessment);
   $("#select-capability").addEventListener("click", selectCapability);
   $("#assess-individually").addEventListener("click", assessIndividually);
   $("#assess-initiative").addEventListener("click", assessAsInitiative);
   $("#continue-decision-room").addEventListener("click", continueToDecisionRoom);
+  $("#center-active-case").addEventListener("click", centerActiveCase);
   $("#reset-demo").addEventListener("click", resetDemo);
+  $$('[data-hq-agent]').forEach((persona) => persona.addEventListener("click", () => selectHqAgent(persona.dataset.hqAgent)));
+  $("#hq-context-panel").addEventListener("click", (event) => {
+    const action = event.target.closest("[data-hq-action]");
+    if (action) handleHqAction(action.dataset.hqAction);
+  });
   $(".assessment-agent-field").addEventListener("animationend", (event) => {
     if (event.target === event.currentTarget && event.animationName === "assessment-sequence") completeCapabilityFormation();
   });
-  const initialView = location.hash.slice(1);
-  navigate(["portfolio", "decision", "factory"].includes(initialView) ? initialView : "portfolio", false);
+  $("#hq-floor").addEventListener("animationend", (event) => {
+    if (event.target === event.currentTarget && event.animationName === "hq-sequence") completeHqHandoff();
+  });
+  const initialHash = location.hash.slice(1);
+  navigate(["portfolio", "decision", "factory"].includes(initialHash) ? initialHash : "portfolio", false);
+  openExperience(initialHash === "hq" ? "hq" : "mission-control", { updateHash: false, startHandoff: false });
 }
 
 document.addEventListener("DOMContentLoaded", init);

@@ -6,8 +6,8 @@
     <meta name="description" content="Standalone Modernization AI Lab mission-control prototype.">
     <title>Modernization AI Lab — Mission Control</title>
     <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='4' fill='%230b1720'/%3E%3Cpath d='M7 23V15h4v8m3 0V10h4v13m3 0V6h4v17' stroke='%234bd6c2' stroke-width='2'/%3E%3C/svg%3E">
-    <link rel="stylesheet" href="styles.css">
-    <script src="script.js" defer></script>
+    <link rel="stylesheet" href="styles.css?v=0.4a">
+    <script src="script.js?v=0.4a" defer></script>
   </head>
   <body>
     <svg class="icon-library" aria-hidden="true">
@@ -22,16 +22,21 @@
       <header class="topbar">
         <a class="brand" href="#portfolio" data-view-link="portfolio" aria-label="Mission Control home">
           <span class="brand-mark" aria-hidden="true"><span></span><span></span><span></span></span>
-          <span><strong>MODERNIZATION AI LAB</strong><small>MISSION CONTROL / V0.3</small></span>
+          <span><strong>MODERNIZATION AI LAB</strong><small>CONNECTED EXPERIENCES / V0.4A</small></span>
         </a>
+        <div class="experience-switch" role="group" aria-label="Experience switch">
+          <button class="is-active" type="button" data-experience-switch="mission-control" aria-pressed="true">Mission Control</button>
+          <button type="button" data-experience-switch="hq" aria-pressed="false">Modernization HQ</button>
+        </div>
         <div class="system-status" aria-label="System status">
           <span class="status-dot"></span>
           <span><strong>DEMO SYSTEMS NOMINAL</strong><small>10 PRODUCTS · 8 SPECIALISTS · OFFLINE</small></span>
         </div>
+        <button class="center-case-button" id="center-active-case" type="button" disabled>Center on Active Case</button>
         <button class="reset-button" id="reset-demo" type="button">Reset Demo</button>
       </header>
 
-      <nav class="environment-nav" aria-label="Mission control environments">
+      <nav class="environment-nav" data-experience-panel="mission-control" aria-label="Mission control environments">
         <div class="route-line" aria-hidden="true"><span></span></div>
         <button class="env-control is-active" type="button" data-view="portfolio" aria-current="page">
           <span class="env-index">01</span>
@@ -50,7 +55,7 @@
         </button>
       </nav>
 
-      <main>
+      <main data-experience-panel="mission-control">
         <section class="environment is-visible" id="portfolio-view" data-environment="portfolio" aria-labelledby="portfolio-title">
           <div class="section-heading">
             <div><p class="eyebrow">ENVIRONMENT 01 / PORTFOLIO INTELLIGENCE</p><h1 id="portfolio-title">Portfolio Command Center</h1><p>Survey the synthetic Apex Aerospace estate and select a product to inspect its modernization posture.</p></div>
@@ -221,6 +226,66 @@
           </div>
         </section>
       </main>
+
+      <section class="hq-experience" id="hq-experience" data-experience-panel="hq" aria-labelledby="hq-title" hidden>
+        <header class="hq-header">
+          <div><p class="eyebrow">ALTERNATIVE EXPERIENCE / COLLABORATION FLOOR</p><h1 id="hq-title">Modernization HQ</h1><p>One shared modernization record. Eight specialist workspaces. A visible path from portfolio evidence to governed decision.</p></div>
+          <div class="hq-stage-strip" aria-label="Current HQ workflow context">
+            <span><small>WORKFLOW STAGE</small><strong id="hq-workflow-stage">PORTFOLIO UNVERIFIED</strong></span>
+            <span><small>SELECTED CAPABILITY</small><strong id="hq-selected-capability">AWAITING FORMATION</strong></span>
+            <span><small>ACTIVE SPECIALISTS</small><strong id="hq-active-count">0</strong></span>
+            <span><small>NEXT ACTION</small><strong id="hq-next-action">BEGIN DISCOVERY IN MISSION CONTROL</strong></span>
+          </div>
+        </header>
+
+        <div class="hq-layout">
+          <div class="hq-floor" id="hq-floor" aria-label="Modernization HQ floor plan">
+            <section class="hq-zone zone-portfolio is-open" data-zone="portfolio" aria-labelledby="zone-portfolio-title">
+              <div class="zone-heading"><span>01 / ACTIVE STUDIO</span><h2 id="zone-portfolio-title">Portfolio Intelligence Studio</h2><small>Evidence intake and capability case management</small></div>
+              <button class="hq-persona" type="button" data-hq-agent="agent-01" aria-pressed="false">
+                <span class="persona-figure" aria-hidden="true"><i></i><b></b></span><span class="persona-copy"><strong>Portfolio Intelligence Specialist</strong><small data-hq-role>Evidence steward</small><em data-hq-state>IDLE</em><span data-hq-message>Monitoring the enterprise portfolio.</span></span>
+              </button>
+              <div class="hq-case-file" id="hq-case-file" aria-label="Customer Intelligence Capability case file">
+                <div class="case-file-top"><span>SHARED CASE FILE</span><strong id="hq-case-state">AWAITING ASSESSMENT</strong></div>
+                <h3>Customer Intelligence Capability</h3>
+                <div class="case-products"><span>Customer Service Portal</span><span>Customer Analytics Warehouse</span><span>Product Telemetry Platform</span></div>
+                <div class="case-dependency"><i></i><span>Finance Warehouse</span><small>12 dependent finance reports</small></div>
+                <div class="case-signals"><span><small>EVIDENCE</small><strong>3 / 3 READY</strong></span><span><small>VALUE</small><strong>HIGH</strong></span><span><small>URGENCY</small><strong>HIGH</strong></span><span><small>RISK</small><strong>ELEVATED</strong></span></div>
+                <div class="case-evidence-tokens" aria-hidden="true"><i></i><i></i><i></i></div>
+              </div>
+            </section>
+
+            <section class="hq-zone zone-architecture is-open" data-zone="architecture" aria-labelledby="zone-architecture-title">
+              <div class="zone-heading"><span>02 / ACTIVE STUDIO</span><h2 id="zone-architecture-title">Architecture Studio</h2><small>Target-state design and technical consequence</small></div>
+              <button class="hq-persona" type="button" data-hq-agent="agent-02" aria-pressed="false"><span class="persona-figure architect-figure" aria-hidden="true"><i></i><b></b></span><span class="persona-copy"><strong>Chief Enterprise Architect</strong><small>Architecture authority</small><em data-hq-state>IDLE</em><span data-hq-message>Reviewing platform boundaries.</span></span></button>
+            </section>
+
+            <section class="hq-zone zone-business is-open" data-zone="business" aria-labelledby="zone-business-title">
+              <div class="zone-heading"><span>03 / ACTIVE STUDIO</span><h2 id="zone-business-title">Business Strategy Studio</h2><small>Value framing and initiative outcomes</small></div>
+              <button class="hq-persona" type="button" data-hq-agent="agent-03" aria-pressed="false"><span class="persona-figure business-figure" aria-hidden="true"><i></i><b></b></span><span class="persona-copy"><strong>Business Strategist</strong><small>Value and outcome lead</small><em data-hq-state>IDLE</em><span data-hq-message>Mapping capability outcomes.</span></span></button>
+            </section>
+
+            <section class="hq-zone zone-risk is-open" data-zone="risk" aria-labelledby="zone-risk-title">
+              <div class="zone-heading"><span>04 / ACTIVE CENTER</span><h2 id="zone-risk-title">Risk &amp; Governance Center</h2><small>Decision controls and accountable review</small></div>
+              <button class="hq-persona" type="button" data-hq-agent="agent-04" aria-pressed="false"><span class="persona-figure risk-figure" aria-hidden="true"><i></i><b></b></span><span class="persona-copy"><strong>Risk &amp; Governance Specialist</strong><small>Control and approval lead</small><em data-hq-state>IDLE</em><span data-hq-message>Watching evidence exceptions.</span></span></button>
+            </section>
+
+            <section class="hq-zone zone-decision is-open" data-zone="decision" aria-labelledby="zone-decision-title">
+              <div class="zone-heading"><span>05 / SHARED COLLABORATION SPACE</span><h2 id="zone-decision-title">Shared Decision Room</h2><small>One decision record · multiple governed perspectives</small></div>
+              <div class="decision-table" id="hq-decision-target"><span>ACTIVE CASE POSITION</span><i data-collaboration-target="agent-01"></i><i data-collaboration-target="agent-02"></i><i data-collaboration-target="agent-03"></i><i data-collaboration-target="agent-04"></i></div>
+              <button class="hq-persona wave-persona" type="button" data-hq-agent="agent-05" aria-pressed="false"><span class="persona-figure wave-figure" aria-hidden="true"><i></i><b></b></span><span class="persona-copy"><strong>Wave Planning Specialist</strong><small>Future sequencing lead</small><em data-hq-state>IDLE</em><span data-hq-message>Waiting for the planning stage.</span></span></button>
+            </section>
+
+            <section class="hq-zone zone-codex is-locked" data-zone="codex" aria-labelledby="zone-codex-title"><div class="zone-lock">FUTURE STAGE</div><div class="zone-heading"><span>06 / LOCKED LAB</span><h2 id="zone-codex-title">Codex Engineering Lab</h2><small>Migration asset generation</small></div><button class="hq-persona" type="button" data-hq-agent="agent-06" aria-pressed="false"><span class="persona-figure codex-figure" aria-hidden="true"><i></i><b></b></span><span class="persona-copy"><strong>Codex Modernization Engineer</strong><small>Migration engineering</small><em data-hq-state>LOCKED</em><span data-hq-message>Available in a future stage.</span></span></button></section>
+            <section class="hq-zone zone-validation is-locked" data-zone="validation" aria-labelledby="zone-validation-title"><div class="zone-lock">FUTURE STAGE</div><div class="zone-heading"><span>07 / LOCKED LAB</span><h2 id="zone-validation-title">Validation Lab</h2><small>Controls and reconciliation</small></div><button class="hq-persona" type="button" data-hq-agent="agent-07" aria-pressed="false"><span class="persona-figure validation-figure" aria-hidden="true"><i></i><b></b></span><span class="persona-copy"><strong>Validation Specialist</strong><small>Quality and controls</small><em data-hq-state>LOCKED</em><span data-hq-message>Available in a future stage.</span></span></button></section>
+            <section class="hq-zone zone-executive is-locked" data-zone="executive" aria-labelledby="zone-executive-title"><div class="zone-lock">FUTURE STAGE</div><div class="zone-heading"><span>08 / LOCKED ROOM</span><h2 id="zone-executive-title">Executive Briefing Room</h2><small>Roadmap and executive narrative</small></div><button class="hq-persona" type="button" data-hq-agent="agent-08" aria-pressed="false"><span class="persona-figure executive-figure" aria-hidden="true"><i></i><b></b></span><span class="persona-copy"><strong>Executive Advisor</strong><small>Executive decision support</small><em data-hq-state>LOCKED</em><span data-hq-message>Available in a future stage.</span></span></button></section>
+          </div>
+
+          <aside class="hq-context-panel" id="hq-context-panel" aria-live="polite">
+            <div class="hq-panel-empty"><span class="persona-figure" aria-hidden="true"><i></i><b></b></span><p class="eyebrow">SPECIALIST CONTEXT</p><h2>Select a persona</h2><p>Choose a specialist to inspect its role, current responsibility, evidence, and concern.</p></div>
+          </aside>
+        </div>
+      </section>
 
       <footer class="footer-bar"><span>SYNTHETIC ENTERPRISE DATA · VISUAL PROTOTYPE ONLY</span><span>APEX AEROSPACE / TRACK 3</span></footer>
     </div>
