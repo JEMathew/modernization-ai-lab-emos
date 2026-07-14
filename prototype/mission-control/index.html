@@ -6,8 +6,8 @@
     <meta name="description" content="Standalone Modernization AI Lab mission-control prototype.">
     <title>Modernization AI Lab — Mission Control</title>
     <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='4' fill='%230b1720'/%3E%3Cpath d='M7 23V15h4v8m3 0V10h4v13m3 0V6h4v17' stroke='%234bd6c2' stroke-width='2'/%3E%3C/svg%3E">
-    <link rel="stylesheet" href="styles.css?v=0.8">
-    <script src="script.js?v=0.8" defer></script>
+    <link rel="stylesheet" href="styles.css?v=0.9">
+    <script src="script.js?v=0.9" defer></script>
   </head>
   <body>
     <svg class="icon-library" aria-hidden="true">
@@ -22,7 +22,7 @@
       <header class="topbar">
         <a class="brand" href="#portfolio" data-view-link="portfolio" aria-label="Mission Control home">
           <span class="brand-mark" aria-hidden="true"><span></span><span></span><span></span></span>
-          <span><strong>MODERNIZATION AI LAB</strong><small>CONNECTED EXPERIENCES / V0.8</small></span>
+          <span><strong>MODERNIZATION AI LAB</strong><small>CONNECTED EXPERIENCES / V0.9</small></span>
         </a>
         <div class="experience-switch" role="group" aria-label="Experience switch">
           <button class="is-active" type="button" data-experience-switch="mission-control" aria-pressed="true">Mission Control</button>
@@ -64,6 +64,7 @@
           <div><small>NEXT</small><strong id="mission-case-next">BEGIN DISCOVERY</strong></div>
           <div><small>GENERATED ARTIFACTS</small><strong id="mission-artifact-count">0</strong></div>
           <div><small>PACKAGE VALIDATION</small><strong id="mission-validation-status">NOT RUN</strong></div>
+          <div><small>PORTFOLIO ROADMAP</small><strong id="mission-roadmap-status">NOT PREPARED</strong></div>
           <button type="button" data-case-action="inspect">Inspect Case</button>
           <button type="button" data-case-action="hq">Switch to Modernization HQ</button>
         </section>
@@ -241,7 +242,7 @@
 
       <section class="hq-experience" id="hq-experience" data-experience-panel="hq" aria-labelledby="hq-title" hidden>
         <header class="hq-header">
-          <div><p class="eyebrow">VERSION 0.8 / VALIDATION WORKSPACE</p><h1 id="hq-title">Modernization HQ</h1><p>Watch independent validation turn generated engineering into a trusted package with visible conditions.</p></div>
+          <div><p class="eyebrow">VERSION 0.9 / EXECUTIVE WORKSPACE</p><h1 id="hq-title">Modernization HQ</h1><p>Turn one validated case into an evidence-linked portfolio roadmap and governed Wave 1 decision.</p></div>
           <div class="hq-stage-strip" aria-label="Current HQ workflow context">
             <span><small>WORKFLOW STAGE</small><strong id="hq-workflow-stage">PORTFOLIO UNVERIFIED</strong></span>
             <span><small>SELECTED CAPABILITY</small><strong id="hq-selected-capability">AWAITING FORMATION</strong></span>
@@ -249,6 +250,7 @@
             <span><small>NEXT ACTION</small><strong id="hq-next-action">BEGIN DISCOVERY IN MISSION CONTROL</strong></span>
             <span><small>GENERATED ARTIFACTS</small><strong id="hq-artifact-count">0 / 6</strong></span>
             <span><small>PACKAGE VALIDATION</small><strong id="hq-validation-status">NOT RUN</strong></span>
+            <span><small>PORTFOLIO ROADMAP</small><strong id="hq-roadmap-status">NOT PREPARED</strong></span>
           </div>
         </header>
 
@@ -369,6 +371,27 @@
           <div class="validation-actions" id="validation-actions" aria-label="Validation workspace actions"><button type="button" data-validation-action="contract">Inspect Validation Contract</button><button type="button" data-validation-action="failed">Show Failed Artifact</button><button type="button" data-validation-action="root">Show Root Cause</button><button type="button" data-validation-action="impact">Show Business Impact</button><button type="button" data-validation-action="proposal">Inspect Correction Proposal</button><button type="button" data-validation-action="sql">Compare Original and Corrected SQL</button><button type="button" data-validation-action="regression">Show Regression Test</button><button type="button" data-validation-action="rerun">Inspect Targeted Rerun</button><button type="button" data-validation-action="report">Inspect Validation Report</button><button type="button" data-validation-action="engineering">Return to Engineering Workspace</button><button type="button" data-case-action="mission">Return to Mission Control</button></div>
           <section class="validation-inspector" id="validation-inspector" aria-live="polite"><p class="eyebrow">INDEPENDENT QUALITY GATE / AWAITING AUTHORIZATION</p><h3>Validation has not started</h3><p>Inspect the Validation Contract, then explicitly run the seven deterministic checks.</p></section>
           <section class="executive-handoff" id="executive-handoff" hidden aria-live="polite"><div><p class="eyebrow">VALIDATION COMPLETE / VALIDATED WITH CONDITIONS</p><h3>Executive Advisor now owns DR-CIC-001</h3><p>All seven critical checks pass. Governance ownership remains a condition before cutover.</p></div><button class="primary-action" id="continue-executive" type="button">Continue to Executive Workspace</button><span id="executive-boundary">Version 0.9 prepares the Executive Modernization Roadmap.</span></section>
+        </section>
+
+        <section class="executive-workspace" id="executive-workspace" hidden aria-labelledby="executive-workspace-title">
+          <header class="executive-header"><div><p class="eyebrow">EXECUTIVE BRIEFING ROOM / APEX AEROSPACE</p><h2 id="executive-workspace-title">Evidence-Linked Modernization Roadmap</h2><p>Executive Advisor · one validated case · ten portfolio products · one governed launch decision.</p></div><div class="executive-command"><small>CASE STATUS</small><strong id="executive-status">EXECUTIVE REVIEW</strong><span id="executive-owner">EXECUTIVE ADVISOR</span><button class="primary-action" id="prepare-roadmap" type="button">Prepare Executive Roadmap</button></div></header>
+
+          <section class="executive-evidence" aria-labelledby="executive-evidence-title"><div class="workspace-section-heading"><span>EXECUTIVE EVIDENCE CHAIN</span><strong id="executive-evidence-title">DR-CIC-001 → RECOMMENDATION</strong></div><div id="executive-evidence-chain"></div></section>
+
+          <section class="executive-recommendation" id="executive-recommendation" hidden aria-labelledby="executive-recommendation-title"><div class="workspace-section-heading"><span>PRIMARY EXECUTIVE RECOMMENDATION</span><strong id="executive-recommendation-title">TWO WAVE 1 INITIATIVES</strong></div><div id="executive-recommendation-content"></div></section>
+
+          <section class="portfolio-roadmap" id="portfolio-roadmap" hidden aria-labelledby="portfolio-roadmap-title"><div class="workspace-section-heading"><span>PORTFOLIO ROADMAP</span><strong id="portfolio-roadmap-title">10 PRODUCTS / 3 WAVES</strong></div><div class="simulation-banner" id="simulation-banner" hidden><span>UNAPPROVED CAPACITY SIMULATION</span><strong>Migration capacity reduced by 25%</strong><p>Only Manufacturing Data Mart moves to Wave 3. The approved baseline remains unchanged.</p></div><div id="roadmap-waves"></div></section>
+
+          <section class="supplier-proof" id="supplier-proof" hidden aria-labelledby="supplier-proof-title"><div><p class="eyebrow">SECONDARY APPLICATION PROOF / DIFFERENT MODERNIZATION PATTERN</p><h3 id="supplier-proof-title">Supplier Quality Portal · Incremental refactor</h3><p>Extract the supplier-inspection capability because rehosting preserves tightly coupled bottlenecks while a full rebuild creates unnecessary manufacturing disruption.</p></div><div><span>Capability boundary</span><span>Proposed API contract</span><span>Representative service skeleton</span><span>Compatibility tests</span></div></section>
+
+          <div class="executive-grid"><section class="executive-objects" aria-labelledby="executive-objects-title"><div class="workspace-section-heading"><span>EXECUTIVE WORK OBJECTS</span><strong id="executive-objects-title">ATTACHED TO DR-CIC-001</strong></div><div id="executive-work-objects"></div></section><section class="executive-record" aria-labelledby="executive-record-title"><div class="workspace-section-heading"><span>EXECUTIVE DECISION RECORD</span><strong id="executive-record-title">PENDING APPROVAL</strong></div><div id="executive-record-fields"><p>Wave 1 remains unapproved until the Mission Commander acts.</p></div></section></div>
+
+          <div class="executive-actions" id="executive-actions" aria-label="Executive workspace actions"><button type="button" data-executive-action="recommendation">Inspect Executive Recommendation</button><button type="button" data-executive-action="evidence">Show Evidence Chain</button><button type="button" data-executive-action="history">Show Decision History</button><button type="button" data-executive-action="delta">Show What Changed</button><button type="button" data-executive-action="wave-1">Inspect Wave 1</button><button type="button" data-executive-action="wave-2">Inspect Wave 2</button><button type="button" data-executive-action="wave-3">Inspect Wave 3</button><button type="button" data-executive-action="product">Inspect Product Rationale</button><button type="button" data-executive-action="validation">Inspect Validation Evidence</button><button type="button" data-executive-action="condition">Inspect Remaining Condition</button><button type="button" data-executive-action="strategies">Compare Strategies</button><button type="button" data-executive-action="capacity">Simulate Capacity Reduction</button><button type="button" data-executive-action="validation-return">Return to Validation Workspace</button><button type="button" data-case-action="mission">Return to Mission Control</button></div>
+          <section class="executive-inspector" id="executive-inspector" aria-live="polite"><p class="eyebrow">EXECUTIVE SYNTHESIS / EVIDENCE FIRST</p><h3>Trace the case before preparing the roadmap</h3><p>Every evidence-chain stage is inspectable. Roadmap synthesis requires explicit authorization.</p></section>
+
+          <section class="wave-approval-gate" id="wave-approval-gate" hidden aria-labelledby="wave-approval-title"><div><p class="eyebrow">MISSION COMMANDER / WAVE APPROVAL</p><h3 id="wave-approval-title">Authorize the two Wave 1 initiatives?</h3><p>Customer Analytics Warehouse becomes execution-ready with conditions. Supplier Quality Portal becomes planning-ready.</p></div><div><button type="button" data-wave-decision="approve">Approve Wave 1</button><button type="button" data-wave-decision="revise">Request Revised Roadmap</button><button type="button" data-wave-decision="evidence">Return to Evidence</button></div><span id="wave-decision-status" role="status" aria-live="polite"></span></section>
+
+          <section class="execution-summary" id="execution-summary" hidden aria-live="polite"><div><p class="eyebrow">APEX AEROSPACE / EXECUTION READY WITH CONDITIONS</p><h3>Wave 1 approved by the Mission Commander</h3><div><span><strong>10</strong>products assessed</span><span><strong>2</strong>Wave 1 initiatives</span><span><strong>1</strong>validated migration package</span><span><strong>7 / 7</strong>critical checks passed</span><span><strong>1</strong>governance condition remains</span></div><p>Every recommendation is traceable. Every assumption remains challengeable. Next action: Launch Wave 1.</p></div></section>
         </section>
 
         <div class="hq-layout">

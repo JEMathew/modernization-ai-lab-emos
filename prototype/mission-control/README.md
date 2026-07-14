@@ -1,4 +1,4 @@
-# Modernization AI Lab — Mission Control 0.8
+# Modernization AI Lab — Mission Control 0.9
 
 Mission Control is a standalone visual and interaction prototype for exploring
 the Modernization AI Lab as three connected environments:
@@ -7,9 +7,10 @@ the Modernization AI Lab as three connected environments:
 2. Agent Decision Room
 3. Codex Modernization Factory
 
-Version 0.8 preserves the complete Mission Control, Modernization HQ, Living
+Version 0.9 preserves the complete Mission Control, Modernization HQ, Living
 Workspace, Shared Decision Room, propagation, and Engineering Workspace
-journeys. It extends `DR-CIC-001` with an independent Validation Workspace.
+journeys, including the independent Validation Workspace. It extends
+`DR-CIC-001` with an evidence-linked Executive Workspace.
 
 After Assessment Ready, the user can start a deterministic specialist sequence:
 Portfolio Intelligence hands off evidence, Architecture attaches its review,
@@ -47,8 +48,16 @@ Mission Commander approval is required before it is applied.
 Only Null-Behaviour Equivalence, Aggregate Equivalence, and Representative-Query
 Comparison rerun. The final report records seven of seven critical checks
 passing, a 1.8% to 0.0% aggregate variance correction, High confidence, and a
-Validated with Conditions package status. Version 0.8 does not create the
-executive roadmap.
+Validated with Conditions package status.
+
+The Executive Workspace exposes the complete eleven-stage evidence chain before
+the Executive Advisor can prepare a provider-neutral recommendation and
+three-wave portfolio roadmap. The Mission Commander can inspect all ten product
+assignments, compare the warehouse replatform with a bounded Supplier Quality
+Portal refactor, preview a 25% capacity reduction without changing the baseline,
+and explicitly approve, revise, or return to evidence. Approval attaches the
+Wave 1 Approval and Executive Decision Record, then leaves the case Execution
+Ready with Conditions; this prototype does not deploy or launch workloads.
 
 No recurring timer, continuous loop, backend, or live model call is used.
 

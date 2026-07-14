@@ -126,6 +126,62 @@ const validationWorkObjects = [
   { id: "validation-contract-object", title: "Validation Contract" }, { id: "validation-run-object", title: "Validation Run" }, { id: "validation-finding-object", title: "Validation Finding" }, { id: "failure-investigation-object", title: "Failure Investigation" }, { id: "correction-proposal-object", title: "Correction Proposal" }, { id: "correction-approval-object", title: "Correction Approval" }, { id: "targeted-rerun-object", title: "Targeted Rerun" }, { id: "validation-report-object", title: "Validation Report" }
 ];
 
+const executiveEvidenceChain = [
+  ["portfolio", "Portfolio Evidence", "Ten products assessed; the Customer Intelligence Capability selected."],
+  ["architecture", "Architecture Review", "Oracle-to-BigQuery staged replatforming established."],
+  ["business", "Business Review", "Customer intelligence value and technical urgency confirmed."],
+  ["risk", "Risk Review", "Finance reporting ownership recorded as a governed condition."],
+  ["constraint", "Mission Commander Constraint", "Finance reports must remain unchanged for six months."],
+  ["revised", "Revised Plan", "Timeline moved to seven months; risk reduced by 34%."],
+  ["engineering", "Engineering Package", "Six implementation-ready starter artifacts generated."],
+  ["finding", "Validation Finding", "Quarterly renewal aggregate variance of 1.8% detected."],
+  ["correction", "Correction", "Null-handling correction approved and applied as version 2."],
+  ["report", "Final Validation Report", "Seven of seven critical checks pass with high confidence."],
+  ["recommendation", "Executive Recommendation", "Two complementary Wave 1 initiatives proposed."]
+].map(([id, label, summary], index) => ({ id, label, summary, sequence: String(index + 1).padStart(2, "0") }));
+
+const executiveRecommendation = {
+  id: "ER-DR-CIC-001", caseId: "DR-CIC-001", owner: "Executive Advisor", approvalStatus: "Pending Mission Commander",
+  initiatives: [
+    { productId: "data-01", name: "Customer Analytics Warehouse", strategy: "Staged Oracle-to-BigQuery replatform", rationale: "Removes critical platform urgency while preserving twelve dependent finance reports through compatibility controls." },
+    { productId: "app-01", name: "Supplier Quality Portal", strategy: "Incremental refactor with supplier-inspection extraction", rationale: "Proves a second modernization pattern and releases supplier-quality value without a disruptive full rebuild." }
+  ],
+  rationale: "Launch one validated data-platform migration and one bounded application refactor. Together they demonstrate portfolio momentum while keeping high-consequence dependencies governed."
+};
+
+const roadmapProducts = [
+  ["data-01", "Replatform", 1, "Validated path removes critical Oracle urgency.", "Finance Warehouse reports", "Validated with Conditions", "Execution candidate", "Confirm report ownership", "Launch after Wave 1 approval"],
+  ["app-01", "Incremental refactor", 1, "Bounded extraction delivers supplier-quality value with lower disruption.", "Manufacturing inspection workflow", "Assessed", "Planning Ready", "Capability boundary approval", "Create four starter objects"],
+  ["app-03", "Incremental decouple and replatform", 2, "Customer experience follows the warehouse foundation.", "Customer Analytics Warehouse", "Sequenced After Warehouse", "Architecture Ready", "Protected reporting transition", "Begin after Wave 1 exit"],
+  ["data-03", "Rearchitect", 2, "Establish governed supplier data ownership and product boundaries.", "Product Telemetry Platform", "Evidence Incomplete", "Evidence Pending", "Three downstream owners unconfirmed", "Confirm dependency owners"],
+  ["data-02", "Replatform", 2, "Modernize plant analytics after higher-consequence foundations.", "Production reporting", "Evidence Ready", "Assessment Ready", "Migration capacity", "Confirm Wave 2 capacity"],
+  ["app-02", "Retain and optimize", 3, "Stable operational core does not justify near-term replacement.", "Plant operations controls", "Evidence Ready", "Monitor", "None", "Review optimization backlog"],
+  ["app-04", "Retain", 3, "Controlled viewer remains fit while engineering data boundaries mature.", "Engineering file controls", "Evidence Ready", "Monitor", "Configuration ownership", "Document future interface"],
+  ["app-05", "Rearchitect", 3, "Order capability needs boundary redesign after core data waves.", "Commercial order services", "Evidence Ready", "Assessment Ready", "Future service boundary", "Complete domain assessment"],
+  ["data-04", "Retain and protect", 3, "Financial reporting remains unchanged through the protected transition.", "Twelve dependent finance reports", "Protected Boundary", "Governance Hold", "Ownership and change authority", "Resolve accountable ownership"],
+  ["data-05", "Refactor", 3, "Telemetry modernization follows governed supplier-data dependencies.", "Supplier Data Lake", "Evidence Ready", "Sequenced", "Supplier-data ownership", "Begin after Supplier Data Lake" ]
+].map(([productId, strategy, wave, rationale, dependency, status, readiness, blocker, nextAction]) => ({ productId, strategy, wave, rationale, dependency, status, readiness, blocker, nextAction }));
+
+const portfolioRoadmap = {
+  id: "PR-DR-CIC-001", caseId: "DR-CIC-001", approvalStatus: "Pending Mission Commander",
+  baselineWaves: { 1: ["data-01", "app-01"], 2: ["app-03", "data-03", "data-02"], 3: ["app-02", "app-04", "app-05", "data-04", "data-05"] },
+  productAssignments: roadmapProducts,
+  capacityAssumptions: "Baseline assumes full approved modernization capacity across three governed waves.",
+  sequencingRationale: "Sequence validated high-value work first, preserve finance reporting, then modernize dependent data and application boundaries.",
+  simulationResult: { reduction: "25%", movedProductId: "data-02", fromWave: 2, toWave: 3, rationale: "Manufacturing Data Mart has lower immediate customer consequence than the other Wave 2 dependencies.", protected: ["Customer Service Portal remains Wave 2", "Supplier Data Lake remains Wave 2 because Product Telemetry depends on it", "Wave 1 remains unchanged"] }
+};
+
+const executiveWorkObjects = [
+  ["executive-evidence-pack", "Evidence Pack", "Executive Advisor"], ["executive-recommendation-object", "Executive Recommendation", "Executive Advisor"],
+  ["portfolio-roadmap-object", "Portfolio Roadmap", "Executive Advisor"], ["wave-one-proposal", "Wave 1 Proposal", "Executive Advisor"],
+  ["capacity-simulation", "Capacity Simulation", "Mission Commander"], ["wave-one-approval", "Wave 1 Approval", "Mission Commander"],
+  ["executive-decision-record", "Executive Decision Record", "Mission Commander"]
+].map(([id, title, owner], index) => ({ id, title, owner, sequence: String(index + 1).padStart(2, "0") }));
+
+function createExecutiveDecisionRecord() {
+  return { id: "EDR-DR-CIC-001", caseId: "DR-CIC-001", decision: "Approve Wave 1", approver: "Mission Commander", status: "Execution Ready with Conditions", owner: "Transformation Office", nextAction: "Launch Wave 1", evidenceReference: "Executive Evidence Chain · 11 stages", validationReference: "VC-DR-CIC-001 · 7/7 passed", roadmapReference: "PR-DR-CIC-001 · baseline Wave 1", remainingCondition: "Resolve ownership and change authority for twelve dependent finance reports before cutover" };
+}
+
 const state = {
   view: "portfolio",
   productId: null,
@@ -175,6 +231,15 @@ const state = {
   regressionTestAttached: false,
   rerunStep: -1,
   validationReport: null,
+  executiveEntered: false,
+  executiveStatus: "idle",
+  executivePrepared: false,
+  executiveSelectedEvidence: null,
+  selectedRoadmapProductId: null,
+  roadmapView: "baseline",
+  capacitySimulationActive: false,
+  executiveWorkObjectIds: new Set(),
+  executiveDecisionRecord: null,
   productStates: new Map(),
   agentStates: new Map()
 };
@@ -202,7 +267,9 @@ function stateClass(label) {
     "Assessment Complete": "status-complete",
     "Plan Revised": "status-complete",
     "Sequenced After Warehouse": "status-complete",
-    "Protected Boundary": "status-incomplete"
+    "Protected Boundary": "status-incomplete",
+    "Execution Ready with Conditions": "status-complete",
+    "Planning Ready": "status-ready"
   }[label] || "";
 }
 
@@ -542,6 +609,10 @@ function assessAsInitiative() {
 }
 
 function hqNextAction() {
+  if (state.executiveStatus === "approved") return "LAUNCH WAVE 1";
+  if (state.executivePrepared) return "MISSION COMMANDER WAVE 1 DECISION";
+  if (state.executiveStatus === "preparing") return "PREPARING EXECUTIVE ROADMAP";
+  if (state.executiveEntered) return "PREPARE EXECUTIVE ROADMAP";
   if (state.validationStatus === "complete") return "PREPARE EXECUTIVE MODERNIZATION ROADMAP";
   if (state.validationStatus === "rerunning") return "RERUN IMPACTED VALIDATION";
   if (state.validationStatus === "correction-applied") return "RERUN IMPACTED VALIDATION";
@@ -573,6 +644,10 @@ function hqNextAction() {
 }
 
 function currentCaseSnapshot() {
+  if (state.executiveStatus === "approved") return { stage: "Execution Ready with Conditions", owner: "Transformation Office", ownerId: null, task: "Wave 1 approved", blocker: "Governance ownership prerequisite before cutover", next: "Launch Wave 1", evidence: "11-stage evidence chain · 7 of 7 checks passed", recommendation: "WAVE 1 APPROVED" };
+  if (state.executivePrepared) return { stage: "Executive Decision Pending", owner: "Mission Commander", ownerId: null, task: state.executiveStatus === "revision-requested" ? "Revised roadmap requested" : "Review Wave 1 proposal", blocker: "Mission Commander Wave 1 approval required", next: state.executiveStatus === "revision-requested" ? "Review evidence and revise roadmap" : "Approve Wave 1", evidence: "Executive Recommendation + Portfolio Roadmap", recommendation: "TWO WAVE 1 INITIATIVES" };
+  if (state.executiveStatus === "preparing") return { stage: "Executive Synthesis", owner: "Executive Advisor", ownerId: "agent-08", task: "Prepare Executive Modernization Roadmap", blocker: "None", next: "Publish recommendation for Mission Commander", evidence: "11-stage governed evidence chain", recommendation: "SYNTHESIS IN PROGRESS" };
+  if (state.executiveEntered) return { stage: "Executive Review", owner: "Executive Advisor", ownerId: "agent-08", task: "Trace validation evidence", blocker: "None", next: "Prepare Executive Roadmap", evidence: "Validation Complete · High confidence", recommendation: "EVIDENCE REVIEW" };
   if (state.validationStatus === "complete") return { stage: "Validation Complete", owner: "Executive Advisor", ownerId: "agent-08", task: "Validated with Conditions", blocker: "Governance prerequisite before cutover", next: "Prepare Executive Modernization Roadmap", evidence: "7 of 7 critical checks passed · High confidence", recommendation: "VALIDATED WITH CONDITIONS" };
   if (state.validationStatus === "rerunning") return { stage: "Targeted Rerun", owner: "Validation Specialist", ownerId: "agent-07", task: `Rerun ${validationChecks.find((check) => check.id === ["null", "aggregate", "representative"][state.rerunStep])?.name}`, blocker: "None", next: "Complete impacted checks", evidence: `${state.rerunStep} of 3 impacted checks rerun`, recommendation: "CORRECTION UNDER VALIDATION" };
   if (state.validationStatus === "correction-applied") return { stage: "Correction Applied", owner: "Validation Specialist", ownerId: "agent-07", task: "Correction v2 and regression test attached", blocker: "None", next: "Rerun Impacted Validation", evidence: "Mission Commander approval attached", recommendation: "TARGETED RERUN REQUIRED" };
@@ -622,6 +697,7 @@ function renderMissionCase() {
   $("#mission-case-next").textContent = snapshot.next.toUpperCase();
   $("#mission-artifact-count").textContent = String(state.generatedArtifactIds.size);
   $("#mission-validation-status").textContent = state.migrationPackage.validationStatus.toUpperCase();
+  $("#mission-roadmap-status").textContent = state.executiveStatus === "approved" ? "WAVE 1 APPROVED" : state.capacitySimulationActive ? "SIMULATION PREVIEW" : state.executivePrepared ? "BASELINE READY" : "NOT PREPARED";
   $("#mission-case-dock").classList.toggle("is-blocked", snapshot.blocker !== "None");
 }
 
@@ -638,6 +714,7 @@ function renderWorkObjects() {
   propagationWorkObjects.filter((item) => state.propagationWorkObjectIds.has(item.id)).forEach((item, index) => $("#workspace-work-objects").insertAdjacentHTML("beforeend", `<button class="work-object status-complete" type="button" data-work-object="${item.id}"><span class="work-object-sequence">${String(index + 7).padStart(2, "0")}</span><span><strong>${item.title}</strong><small>${item.owner}</small></span><em>DR-CIC-001</em><b>ATTACHED</b></button>`));
   engineeringWorkObjects.filter((item) => state.engineeringWorkObjectIds.has(item.id)).forEach((item, index) => $("#workspace-work-objects").insertAdjacentHTML("beforeend", `<button class="work-object status-complete" type="button" data-work-object="${item.id}"><span class="work-object-sequence">${String(index + 12).padStart(2, "0")}</span><span><strong>${item.title}</strong><small>${item.id === "engineering-contract" ? "Mission Commander" : "Modernization Engineer"}</small></span><em>DR-CIC-001</em><b>ATTACHED</b></button>`));
   validationWorkObjects.filter((item) => state.validationWorkObjectIds.has(item.id)).forEach((item, index) => $("#workspace-work-objects").insertAdjacentHTML("beforeend", `<button class="work-object status-complete" type="button" data-work-object="${item.id}"><span class="work-object-sequence">${String(index + 21).padStart(2, "0")}</span><span><strong>${item.title}</strong><small>${item.id.includes("correction") ? "Mission Commander" : "Validation Specialist"}</small></span><em>DR-CIC-001</em><b>ATTACHED</b></button>`));
+  executiveWorkObjects.filter((item) => state.executiveWorkObjectIds.has(item.id)).forEach((item, index) => $("#workspace-work-objects").insertAdjacentHTML("beforeend", `<button class="work-object status-complete" type="button" data-work-object="${item.id}"><span class="work-object-sequence">${String(index + 29).padStart(2, "0")}</span><span><strong>${item.title}</strong><small>${item.owner}</small></span><em>DR-CIC-001</em><b>ATTACHED</b></button>`));
 }
 
 function renderWorkQueue() {
@@ -1244,6 +1321,157 @@ function handleValidationAction(action) {
   $$("[data-validation-action]").forEach((button) => button.classList.toggle("is-selected", button.dataset.validationAction === action));
 }
 
+function executiveRoadmapWaves() {
+  const waves = Object.fromEntries(Object.entries(portfolioRoadmap.baselineWaves).map(([wave, ids]) => [wave, [...ids]]));
+  if (state.roadmapView === "simulation") {
+    waves[2] = waves[2].filter((id) => id !== portfolioRoadmap.simulationResult.movedProductId);
+    waves[3] = [...waves[3], portfolioRoadmap.simulationResult.movedProductId];
+  }
+  return waves;
+}
+
+function renderExecutiveEvidence() {
+  $("#executive-evidence-chain").innerHTML = executiveEvidenceChain.map((item) => `<button type="button" data-executive-evidence="${item.id}" class="${state.executiveSelectedEvidence === item.id ? "is-selected" : ""}"><span>${item.sequence}</span><strong>${item.label}</strong><i>✓</i></button>`).join("");
+}
+
+function renderExecutiveRecommendation() {
+  $("#executive-recommendation-content").innerHTML = `<div class="recommendation-initiatives">${executiveRecommendation.initiatives.map((item, index) => `<article><small>WAVE 1 / INITIATIVE ${index + 1}</small><h3>${item.name}</h3><strong>${item.strategy}</strong><p>${item.rationale}</p></article>`).join("")}</div><p class="recommendation-rationale">${executiveRecommendation.rationale}</p>`;
+}
+
+function roadmapProductCard(id) {
+  const product = products.find((item) => item.id === id);
+  const assignment = roadmapProducts.find((item) => item.productId === id);
+  return `<button type="button" data-roadmap-product="${id}" class="roadmap-product${state.selectedRoadmapProductId === id ? " is-selected" : ""}"><span><strong>${product.name}</strong><small>${assignment.strategy}</small></span><em>${assignment.readiness}</em></button>`;
+}
+
+function renderPortfolioRoadmap() {
+  const waves = executiveRoadmapWaves();
+  $("#roadmap-waves").innerHTML = Object.entries(waves).map(([wave, ids]) => `<section class="roadmap-wave"><header><small>PORTFOLIO SEQUENCE</small><h3>Wave ${wave}</h3><span>${ids.length} products</span></header><div>${ids.map(roadmapProductCard).join("")}</div></section>`).join("");
+  $("#simulation-banner").hidden = !state.capacitySimulationActive;
+}
+
+function renderExecutiveObjects() {
+  const attached = executiveWorkObjects.filter((item) => state.executiveWorkObjectIds.has(item.id));
+  $("#executive-work-objects").innerHTML = attached.map((item) => `<button type="button" data-executive-object="${item.id}"><span>${item.sequence}</span><span><strong>${item.title}</strong><small>${item.owner}</small></span><em>ATTACHED</em></button>`).join("") || `<p>Executive work objects are released through explicit synthesis and approval.</p>`;
+  if (!state.executiveDecisionRecord) {
+    $("#executive-record-title").textContent = "PENDING APPROVAL";
+    $("#executive-record-fields").innerHTML = `<p>Wave 1 remains unapproved until the Mission Commander acts.</p>`;
+    return;
+  }
+  $("#executive-record-title").textContent = "APPROVED / TRACE ATTACHED";
+  $("#executive-record-fields").innerHTML = Object.entries(state.executiveDecisionRecord).map(([key, value]) => `<span><small>${key.replaceAll(/([A-Z])/g, " $1").toUpperCase()}</small><strong>${value}</strong></span>`).join("");
+}
+
+function renderExecutiveWorkspace() {
+  $("#executive-workspace").hidden = !state.executiveEntered;
+  if (!state.executiveEntered) return;
+  renderExecutiveEvidence();
+  $("#executive-status").textContent = state.executiveStatus === "approved" ? "EXECUTION READY WITH CONDITIONS" : state.executiveStatus === "preparing" ? "PREPARING ROADMAP" : state.executivePrepared ? "ROADMAP READY" : "EXECUTIVE REVIEW";
+  $("#executive-owner").textContent = state.executiveStatus === "approved" ? "TRANSFORMATION OFFICE" : state.executivePrepared ? "MISSION COMMANDER" : "EXECUTIVE ADVISOR";
+  $("#prepare-roadmap").hidden = state.executivePrepared || state.executiveStatus === "preparing";
+  $("#prepare-roadmap").disabled = state.executiveStatus !== "review";
+  ["#executive-recommendation", "#portfolio-roadmap", "#supplier-proof"].forEach((selector) => { $(selector).hidden = !state.executivePrepared; });
+  if (state.executivePrepared) { renderExecutiveRecommendation(); renderPortfolioRoadmap(); }
+  renderExecutiveObjects();
+  $("#wave-approval-gate").hidden = !state.executivePrepared || state.executiveStatus === "approved";
+  $("#execution-summary").hidden = state.executiveStatus !== "approved";
+  $("#executive-actions").classList.toggle("is-locked", !state.executivePrepared);
+}
+
+function openExecutiveWorkspace() {
+  if (state.validationStatus !== "complete" || state.executiveEntered) return;
+  state.executiveEntered = true;
+  state.executiveStatus = "review";
+  state.executiveWorkObjectIds.add("executive-evidence-pack");
+  state.agentStates.set("agent-08", "Executive Review");
+  $("#executive-boundary").textContent = "Executive Workspace active · evidence review precedes roadmap synthesis.";
+  renderHqState();
+  $("#executive-workspace").scrollIntoView({ behavior: "smooth", block: "start" });
+}
+
+function prepareExecutiveRoadmap() {
+  if (state.executiveStatus !== "review") return;
+  state.executiveStatus = "preparing";
+  state.agentStates.set("agent-08", "Synthesizing");
+  const chain = $("#executive-evidence-chain");
+  chain.classList.remove("is-synthesizing"); void chain.offsetWidth; chain.classList.add("is-synthesizing");
+  renderHqState();
+}
+
+function completeExecutiveSynthesis() {
+  if (state.executiveStatus !== "preparing") return;
+  state.executivePrepared = true;
+  state.executiveStatus = "roadmap-ready";
+  ["executive-recommendation-object", "portfolio-roadmap-object", "wave-one-proposal"].forEach((id) => state.executiveWorkObjectIds.add(id));
+  state.agentStates.set("agent-08", "Recommendation Ready");
+  $("#executive-inspector").innerHTML = `<p class="eyebrow">EXECUTIVE ROADMAP / READY FOR DECISION</p><h3>Two Wave 1 initiatives proposed</h3><p>The validated warehouse replatform and bounded supplier-quality refactor are ready for Mission Commander review. No wave has been approved automatically.</p>`;
+  renderHqState();
+}
+
+function inspectExecutiveEvidence(id) {
+  const item = executiveEvidenceChain.find((entry) => entry.id === id); if (!item) return;
+  state.executiveSelectedEvidence = id;
+  $("#executive-inspector").innerHTML = `<p class="eyebrow">EVIDENCE CHAIN / ${item.sequence} OF 11</p><h3>${item.label}</h3><p>${item.summary}</p><small>Trace: DR-CIC-001 → ${item.label} → ${executiveRecommendation.id}</small>`;
+  renderExecutiveEvidence();
+}
+
+function inspectRoadmapProduct(id) {
+  const product = products.find((item) => item.id === id); const item = roadmapProducts.find((entry) => entry.productId === id); if (!product || !item) return;
+  state.selectedRoadmapProductId = id;
+  const simulatedMove = state.roadmapView === "simulation" && id === "data-02";
+  const nextAction = simulatedMove ? "Reconfirm Wave 3 capacity and production-report prerequisites" : item.nextAction;
+  $("#executive-inspector").innerHTML = `<p class="eyebrow">PORTFOLIO ROADMAP / ${product.id.toUpperCase()}</p><h3>${product.name}</h3><div class="executive-detail-grid"><span><small>STRATEGY</small><strong>${item.strategy}</strong></span><span><small>WAVE</small><strong>Wave ${simulatedMove ? 3 : item.wave}</strong></span><span><small>RATIONALE</small><strong>${item.rationale}${simulatedMove ? " Capacity reduced by 25%; prerequisite confirmation moves with the product." : ""}</strong></span><span><small>DEPENDENCY</small><strong>${item.dependency}</strong></span><span><small>STATUS</small><strong>${item.status}</strong></span><span><small>READINESS</small><strong>${item.readiness}</strong></span><span><small>BLOCKER</small><strong>${item.blocker}</strong></span><span><small>NEXT ACTION</small><strong>${nextAction}</strong></span></div>`;
+  renderPortfolioRoadmap();
+}
+
+function executiveActionContent(action) {
+  const content = {
+    recommendation: ["Executive Recommendation", executiveRecommendation.rationale],
+    evidence: ["Eleven-stage evidence chain", "Every recommendation traces from portfolio evidence through governed correction and final validation."],
+    history: ["Decision history", "Risk objection → Mission Commander six-month constraint → revised staged plan → engineering package → correction approval → validation complete."],
+    delta: ["What changed", "Timeline 4 → 7 months · cost +11% · operational risk −34% · validation variance 1.8% → 0.0% · confidence High."],
+    "wave-1": ["Wave 1", "Customer Analytics Warehouse staged replatform · Supplier Quality Portal incremental refactor."],
+    "wave-2": ["Wave 2", "Customer Service Portal · Supplier Data Lake · Manufacturing Data Mart."],
+    "wave-3": ["Wave 3", "Maintenance System · Engineering Viewer · Dealer Order Management · Finance Warehouse · Product Telemetry Platform."],
+    product: ["Product rationale", "Select any roadmap product to inspect its strategy, dependency, readiness, blocker, and next action."],
+    validation: ["Validation evidence", "Six artifacts generated. One 1.8% aggregate exception was corrected. Seven of seven critical checks now pass."],
+    condition: ["Remaining condition", "Resolve ownership and change authority for twelve dependent finance reports before cutover."],
+    strategies: ["Two modernization strategies", "Customer Analytics Warehouse: staged replatform. Supplier Quality Portal: incremental refactor with supplier-inspection extraction."],
+    "validation-return": ["Validation Workspace", "Final status: Validated with Conditions · High confidence · 7/7 critical checks passed."]
+  };
+  return content[action];
+}
+
+function handleExecutiveAction(action) {
+  if (action === "validation-return") { $("#validation-workspace").scrollIntoView({ behavior: "smooth", block: "start" }); return; }
+  if (!state.executivePrepared) return;
+  if (action === "capacity") {
+    state.capacitySimulationActive = true; state.roadmapView = "simulation"; state.executiveWorkObjectIds.add("capacity-simulation");
+    $("#executive-inspector").innerHTML = `<p class="eyebrow">UNAPPROVED CAPACITY SIMULATION / −25%</p><h3>Only Manufacturing Data Mart moves from Wave 2 to Wave 3</h3><p>Customer Service Portal stays in Wave 2. Supplier Data Lake stays in Wave 2 because Product Telemetry depends on it. Wave 1 is unchanged. ${portfolioRoadmap.simulationResult.rationale}</p><small>The approved baseline has not been overwritten.</small>`;
+    renderHqState(); return;
+  }
+  const item = executiveActionContent(action); if (item) $("#executive-inspector").innerHTML = `<p class="eyebrow">EXECUTIVE INSPECTION</p><h3>${item[0]}</h3><p>${item[1]}</p>`;
+}
+
+function handleWaveDecision(decision) {
+  if (!state.executivePrepared || state.executiveStatus === "approved") return;
+  if (decision === "evidence") { $("#executive-evidence-chain").scrollIntoView({ behavior: "smooth", block: "center" }); $("#wave-decision-status").textContent = "Returned to the evidence chain; approval remains pending."; return; }
+  if (decision === "revise") { state.executiveStatus = "revision-requested"; portfolioRoadmap.approvalStatus = "Revision Requested"; $("#wave-decision-status").textContent = "Revised roadmap requested. The governed baseline and evidence remain attached."; renderHqState(); return; }
+  state.executiveStatus = "approved";
+  portfolioRoadmap.approvalStatus = "Wave 1 Approved";
+  state.executiveDecisionRecord = createExecutiveDecisionRecord();
+  state.executiveWorkObjectIds.add("wave-one-approval"); state.executiveWorkObjectIds.add("executive-decision-record");
+  state.agentStates.set("agent-08", "Complete");
+  setProductState("data-01", "Execution Ready with Conditions"); setProductState("app-01", "Planning Ready");
+  $("#wave-decision-status").textContent = "Wave 1 approved and attached to DR-CIC-001.";
+  renderHqState();
+}
+
+function inspectExecutiveObject(id) {
+  const item = executiveWorkObjects.find((entry) => entry.id === id); if (!item || !state.executiveWorkObjectIds.has(id)) return;
+  $("#executive-inspector").innerHTML = `<p class="eyebrow">EXECUTIVE WORK OBJECT / ${item.sequence}</p><h3>${item.title}</h3><p>Owner: ${item.owner}. Attached to DR-CIC-001 with recommendation, roadmap, validation, approval, and remaining-condition traceability.</p>`;
+}
+
 function hqAgentMessage(id) {
   const snapshot = currentCaseSnapshot();
   if (["contract-review", "running", "exception", "correction-applied", "rerunning"].includes(state.validationStatus) && id === "agent-07") return `${snapshot.task}. Independent results remain attached to VC-DR-CIC-001.`;
@@ -1282,6 +1510,7 @@ function renderHqState() {
   $("#hq-next-action").textContent = hqNextAction();
   $("#hq-artifact-count").textContent = `${state.generatedArtifactIds.size} / 6`;
   $("#hq-validation-status").textContent = state.migrationPackage.validationStatus.toUpperCase();
+  $("#hq-roadmap-status").textContent = state.executiveStatus === "approved" ? "WAVE 1 APPROVED" : state.capacitySimulationActive ? "SIMULATION PREVIEW" : state.executivePrepared ? "BASELINE READY" : "NOT PREPARED";
   $("#center-active-case").disabled = !state.capabilityState;
   const caseState = state.workspaceStage >= 0 ? snapshot.stage.toUpperCase() : state.hqCaseLocation === "decision-room" ? "IN SHARED DECISION ROOM" : state.assessmentReady ? "ASSESSMENT READY" : state.capabilityState ? state.capabilityState.toUpperCase() : "AWAITING ASSESSMENT";
   $("#hq-case-state").textContent = caseState;
@@ -1315,6 +1544,7 @@ function renderHqState() {
   validationZone.classList.toggle("is-open", state.validationEntered);
   $(".zone-lock", validationZone).hidden = state.validationEntered;
   renderWorkspaceState();
+  renderExecutiveWorkspace();
   if (state.selectedHqAgent) renderHqAgentPanel(state.selectedHqAgent);
   else if (state.selectedWorkObjectId) renderWorkObjectPanel(state.selectedWorkObjectId);
 }
@@ -1399,6 +1629,12 @@ function renderWorkObjectPanel(id) {
 }
 
 function selectWorkObject(id) {
+  const executiveObject = executiveWorkObjects.find((item) => item.id === id && state.executiveWorkObjectIds.has(item.id));
+  if (executiveObject) {
+    state.selectedHqAgent = null; state.selectedWorkObjectId = id;
+    $("#hq-context-panel").innerHTML = `<div class="hq-panel-content work-detail"><p class="eyebrow">EXECUTIVE WORK OBJECT / DR-CIC-001</p><div class="work-detail-title"><span>${executiveObject.sequence}</span><div><h2>${executiveObject.title}</h2><p>${executiveObject.owner}</p></div></div><div class="hq-panel-state"><span><small>STATUS</small><strong>ATTACHED</strong></span><span><small>ROADMAP</small><strong>PR-DR-CIC-001</strong></span></div><dl><div><dt>TRACEABILITY</dt><dd>Evidence chain → validation report → executive recommendation → governed Wave 1 decision.</dd></div><div><dt>REMAINING CONDITION</dt><dd>Finance report ownership and change authority before cutover.</dd></div></dl></div>`;
+    renderWorkObjects(); return;
+  }
   const validationObject = validationWorkObjects.find((item) => item.id === id && state.validationWorkObjectIds.has(item.id));
   if (validationObject) {
     state.selectedHqAgent = null; state.selectedWorkObjectId = id;
@@ -1616,6 +1852,16 @@ function resetHqState() {
   state.regressionTestAttached = false;
   state.rerunStep = -1;
   state.validationReport = null;
+  state.executiveEntered = false;
+  state.executiveStatus = "idle";
+  state.executivePrepared = false;
+  state.executiveSelectedEvidence = null;
+  state.selectedRoadmapProductId = null;
+  state.roadmapView = "baseline";
+  state.capacitySimulationActive = false;
+  state.executiveWorkObjectIds = new Set();
+  state.executiveDecisionRecord = null;
+  portfolioRoadmap.approvalStatus = "Pending Mission Commander";
   const floor = $("#hq-floor");
   floor.classList.remove("is-handing-off", "is-handoff-complete", "is-collaboration-ready", "is-workspace-transition");
   floor.removeAttribute("data-workspace-step");
@@ -1667,6 +1913,18 @@ function resetHqState() {
   $("#correction-proposal").hidden = true;
   $("#targeted-rerun").hidden = true;
   $("#executive-handoff").hidden = true;
+  $("#executive-workspace").hidden = true;
+  $("#executive-evidence-chain").classList.remove("is-synthesizing");
+  $("#executive-evidence-chain").innerHTML = "";
+  $("#executive-recommendation").hidden = true;
+  $("#portfolio-roadmap").hidden = true;
+  $("#supplier-proof").hidden = true;
+  $("#wave-approval-gate").hidden = true;
+  $("#execution-summary").hidden = true;
+  $("#executive-work-objects").innerHTML = "";
+  $("#executive-record-fields").innerHTML = `<p>Wave 1 remains unapproved until the Mission Commander acts.</p>`;
+  $("#executive-inspector").innerHTML = `<p class="eyebrow">EXECUTIVE SYNTHESIS / EVIDENCE FIRST</p><h3>Trace the case before preparing the roadmap</h3><p>Every evidence-chain stage is inspectable. Roadmap synthesis requires explicit authorization.</p>`;
+  $("#wave-decision-status").textContent = "";
   $("#validation-inspector").innerHTML = `<p class="eyebrow">INDEPENDENT QUALITY GATE / AWAITING AUTHORIZATION</p><h3>Validation has not started</h3><p>Inspect the Validation Contract, then explicitly run the seven deterministic checks.</p>`;
   $("#correction-decision-status").innerHTML = "";
   $$("[data-validation-action]").forEach((button) => button.classList.remove("is-selected"));
@@ -1743,7 +2001,13 @@ function init() {
   $("#rerun-impacted").addEventListener("click", startTargetedRerun);
   $("#validation-work-objects").addEventListener("click", (event) => { const object = event.target.closest("[data-validation-object]"); if (object) selectWorkObject(object.dataset.validationObject); });
   $("#validation-actions").addEventListener("click", (event) => { const action = event.target.closest("[data-validation-action]"); if (action) handleValidationAction(action.dataset.validationAction); });
-  $("#continue-executive").addEventListener("click", () => { $("#executive-boundary").textContent = "Executive Workspace is the Version 0.9 boundary; no roadmap has been generated."; });
+  $("#continue-executive").addEventListener("click", openExecutiveWorkspace);
+  $("#prepare-roadmap").addEventListener("click", prepareExecutiveRoadmap);
+  $("#executive-evidence-chain").addEventListener("click", (event) => { const item = event.target.closest("[data-executive-evidence]"); if (item) inspectExecutiveEvidence(item.dataset.executiveEvidence); });
+  $("#roadmap-waves").addEventListener("click", (event) => { const item = event.target.closest("[data-roadmap-product]"); if (item) inspectRoadmapProduct(item.dataset.roadmapProduct); });
+  $("#executive-actions").addEventListener("click", (event) => { const action = event.target.closest("[data-executive-action]"); if (action) handleExecutiveAction(action.dataset.executiveAction); });
+  $("#executive-work-objects").addEventListener("click", (event) => { const object = event.target.closest("[data-executive-object]"); if (object) inspectExecutiveObject(object.dataset.executiveObject); });
+  $("#wave-approval-gate").addEventListener("click", (event) => { const decision = event.target.closest("[data-wave-decision]"); if (decision) handleWaveDecision(decision.dataset.waveDecision); });
   $("#reset-demo").addEventListener("click", resetDemo);
   $$('[data-hq-agent]').forEach((persona) => persona.addEventListener("click", () => selectHqAgent(persona.dataset.hqAgent)));
   $("#hq-context-panel").addEventListener("click", (event) => {
@@ -1789,6 +2053,9 @@ function init() {
   $("#validation-check-list").addEventListener("animationend", (event) => {
     if (event.target === event.currentTarget && event.animationName === "validation-check-step") completeValidationStep();
     if (event.target === event.currentTarget && event.animationName === "validation-rerun-step") completeTargetedRerunStep();
+  });
+  $("#executive-evidence-chain").addEventListener("animationend", (event) => {
+    if (event.target === event.currentTarget && event.animationName === "executive-synthesis") completeExecutiveSynthesis();
   });
   const initialHash = location.hash.slice(1);
   navigate(["portfolio", "decision", "factory"].includes(initialHash) ? initialHash : "portfolio", false);
