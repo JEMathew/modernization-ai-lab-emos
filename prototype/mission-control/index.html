@@ -1,0 +1,228 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="Standalone Modernization AI Lab mission-control prototype.">
+    <title>Modernization AI Lab — Mission Control</title>
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='4' fill='%230b1720'/%3E%3Cpath d='M7 23V15h4v8m3 0V10h4v13m3 0V6h4v17' stroke='%234bd6c2' stroke-width='2'/%3E%3C/svg%3E">
+    <link rel="stylesheet" href="styles.css">
+    <script src="script.js" defer></script>
+  </head>
+  <body>
+    <svg class="icon-library" aria-hidden="true">
+      <symbol id="icon-grid" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></symbol>
+      <symbol id="icon-nodes" viewBox="0 0 24 24"><circle cx="5" cy="12" r="2.5"/><circle cx="19" cy="6" r="2.5"/><circle cx="19" cy="18" r="2.5"/><path d="m7.4 11 9.2-4M7.4 13l9.2 4"/></symbol>
+      <symbol id="icon-factory" viewBox="0 0 24 24"><path d="M3 21V10l6 3V9l6 4V5h6v16H3Z"/><path d="M7 17h2m3 0h2m3 0h2"/></symbol>
+      <symbol id="icon-arrow" viewBox="0 0 24 24"><path d="M5 12h14m-5-5 5 5-5 5"/></symbol>
+      <symbol id="icon-close" viewBox="0 0 24 24"><path d="m6 6 12 12M18 6 6 18"/></symbol>
+    </svg>
+
+    <div class="app-shell">
+      <header class="topbar">
+        <a class="brand" href="#portfolio" data-view-link="portfolio" aria-label="Mission Control home">
+          <span class="brand-mark" aria-hidden="true"><span></span><span></span><span></span></span>
+          <span><strong>MODERNIZATION AI LAB</strong><small>MISSION CONTROL / V0.3</small></span>
+        </a>
+        <div class="system-status" aria-label="System status">
+          <span class="status-dot"></span>
+          <span><strong>DEMO SYSTEMS NOMINAL</strong><small>10 PRODUCTS · 8 SPECIALISTS · OFFLINE</small></span>
+        </div>
+        <button class="reset-button" id="reset-demo" type="button">Reset Demo</button>
+      </header>
+
+      <nav class="environment-nav" aria-label="Mission control environments">
+        <div class="route-line" aria-hidden="true"><span></span></div>
+        <button class="env-control is-active" type="button" data-view="portfolio" aria-current="page">
+          <span class="env-index">01</span>
+          <svg aria-hidden="true"><use href="#icon-grid"></use></svg>
+          <span><strong>Portfolio</strong><small>Command Center</small></span>
+        </button>
+        <button class="env-control" type="button" data-view="decision">
+          <span class="env-index">02</span>
+          <svg aria-hidden="true"><use href="#icon-nodes"></use></svg>
+          <span><strong>Decision Room</strong><small>Specialist Council</small></span>
+        </button>
+        <button class="env-control" type="button" data-view="factory">
+          <span class="env-index">03</span>
+          <svg aria-hidden="true"><use href="#icon-factory"></use></svg>
+          <span><strong>Modernization Factory</strong><small>Codex Delivery Floor</small></span>
+        </button>
+      </nav>
+
+      <main>
+        <section class="environment is-visible" id="portfolio-view" data-environment="portfolio" aria-labelledby="portfolio-title">
+          <div class="section-heading">
+            <div><p class="eyebrow">ENVIRONMENT 01 / PORTFOLIO INTELLIGENCE</p><h1 id="portfolio-title">Portfolio Command Center</h1><p>Survey the synthetic Apex Aerospace estate and select a product to inspect its modernization posture.</p></div>
+            <div class="heading-metrics"><span><small>ESTATE</small><strong>10</strong></span><span><small>FOCUS</small><strong>1</strong></span><span><small>DATA AGE</small><strong>LIVE</strong></span></div>
+          </div>
+
+          <div class="discovery-console" id="discovery-console">
+            <div class="discovery-state"><small>PORTFOLIO STATE</small><strong id="portfolio-state">UNVERIFIED</strong></div>
+            <div class="discovery-agents" aria-label="Discovery specialists">
+              <span class="agent-activation" data-activation-agent="agent-01"><i>PD</i><span>Portfolio Discovery Agent<small>STANDBY</small></span></span>
+              <span class="agent-activation" data-activation-agent="agent-04"><i>RG</i><span>Risk &amp; Governance Agent<small>STANDBY</small></span></span>
+            </div>
+            <div class="discovery-action">
+              <span class="discovery-progress" id="discovery-progress" role="status" aria-live="polite">Awaiting discovery authorization</span>
+              <button class="primary-action" id="begin-discovery" type="button">Begin Portfolio Discovery <svg aria-hidden="true"><use href="#icon-arrow"></use></svg></button>
+            </div>
+          </div>
+
+          <div class="portfolio-layout">
+            <div class="portfolio-board">
+              <div class="product-group-heading"><span>APPLICATIONS</span><span>5 PRODUCTS</span></div>
+              <div class="product-grid" id="applications-grid"></div>
+              <div class="dependency-map" id="dependency-map" hidden aria-label="Revealed product dependencies">
+                <div class="dependency-map-heading"><span>DEPENDENCY EVIDENCE</span><span>6 CONNECTIONS REVEALED</span></div>
+                <svg viewBox="0 0 1000 118" role="img" aria-label="Connections from applications to data platforms">
+                  <path d="M75 22 C190 22 210 94 330 94"/><path d="M240 22 C350 22 370 94 500 94"/><path d="M405 22 C520 22 540 94 665 94"/><path d="M570 22 C690 22 710 94 830 94"/><path d="M735 22 C655 22 625 94 500 94"/><path class="dependency-risk" d="M900 22 C820 22 790 94 665 94"/>
+                  <g><circle cx="75" cy="22" r="5"/><circle cx="240" cy="22" r="5"/><circle cx="405" cy="22" r="5"/><circle cx="570" cy="22" r="5"/><circle cx="735" cy="22" r="5"/><circle cx="900" cy="22" r="5"/><circle cx="330" cy="94" r="5"/><circle cx="500" cy="94" r="5"/><circle cx="665" cy="94" r="5"/><circle cx="830" cy="94" r="5"/></g>
+                </svg>
+                <div class="dependency-legend"><span>APPLICATION EVIDENCE</span><span>DATA-PLATFORM DEPENDENCIES</span></div>
+              </div>
+              <div class="product-group-heading data-heading"><span>DATA PLATFORMS</span><span>5 PRODUCTS</span></div>
+              <div class="product-grid" id="data-grid"></div>
+            </div>
+
+            <aside class="detail-panel" id="product-panel" aria-live="polite">
+              <div class="panel-empty">
+                <span class="target-reticle" aria-hidden="true"><i></i></span>
+                <p class="eyebrow">PRODUCT TELEMETRY</p>
+                <h2>Select a product</h2>
+                <p>Choose any portfolio card to reveal platform signals, business context, and an assessment handoff.</p>
+              </div>
+            </aside>
+          </div>
+
+          <section class="discovery-summary" id="discovery-summary" hidden aria-labelledby="discovery-summary-title">
+            <div class="summary-symbol" aria-hidden="true">✓</div>
+            <div><p class="eyebrow">PORTFOLIO DISCOVERY / COMPLETE</p><h2 id="discovery-summary-title">Discovery complete.</h2><p>Three decisions are blocked by missing or conflicting evidence. Seven can proceed.</p></div>
+            <div class="summary-counts"><span><small>CAN PROCEED</small><strong>7</strong></span><span><small>DECISIONS BLOCKED</small><strong>3</strong></span></div>
+            <button class="primary-action continue-action" id="continue-assessment" type="button">Continue to Assessment <svg aria-hidden="true"><use href="#icon-arrow"></use></svg></button>
+          </section>
+
+          <section class="assessment-landscape" id="assessment-landscape" hidden aria-labelledby="assessment-landscape-title">
+            <header class="landscape-header">
+              <div><p class="eyebrow">MODERNIZATION CONSEQUENCE LANDSCAPE</p><h2 id="assessment-landscape-title">Enterprise capability assessment</h2><p>Products are now grouped by shared business consequence—not by application or data-platform category.</p></div>
+              <div class="landscape-state"><small>PORTFOLIO STATE</small><strong id="assessment-portfolio-state">ASSESSMENT RUNNING</strong></div>
+            </header>
+
+            <div class="assessment-agent-field" aria-label="Active assessment agents">
+              <div class="assessment-agent persona-discovery" data-assessment-agent="agent-01"><span>PD</span><div><strong>Portfolio Discovery Agent</strong><small data-persona-state>INVESTIGATING</small></div></div>
+              <div class="assessment-agent persona-architect" data-assessment-agent="agent-02"><span>EA</span><div><strong>Enterprise Architect Agent</strong><small data-persona-state>REASONING</small></div></div>
+              <div class="assessment-agent persona-value" data-assessment-agent="agent-03"><span>BV</span><div><strong>Business Value Agent</strong><small data-persona-state>REASONING</small></div></div>
+              <div class="agent-convergence-label"><span></span>THREE SPECIALISTS FORMING CAPABILITY</div>
+            </div>
+
+            <div class="assessment-canvas">
+              <section class="capability-cluster is-forming" id="customer-intelligence-cluster" aria-labelledby="capability-title">
+                <div class="capability-cluster-header">
+                  <div><span class="cluster-kicker">PRIMARY MODERNIZATION CLUSTER</span><h3 id="capability-title">Customer Intelligence Capability</h3></div>
+                  <span class="capability-state" id="capability-state">FORMING</span>
+                </div>
+                <button class="cluster-select" id="select-capability" type="button" disabled>Inspect Customer Intelligence Capability <svg aria-hidden="true"><use href="#icon-arrow"></use></svg></button>
+                <div class="cluster-product-grid" id="capability-products"></div>
+                <div class="initiative-confirmation" id="initiative-confirmation" hidden><span>ONE MODERNIZATION INITIATIVE</span><strong>Customer Intelligence Capability</strong><small>3 products · shared assessment boundary</small></div>
+              </section>
+
+              <div class="finance-dependency" id="finance-dependency">
+                <svg viewBox="0 0 210 76" preserveAspectRatio="none" aria-hidden="true"><path d="M2 38 C72 38 94 38 208 38"/><circle cx="5" cy="38" r="4"/><circle cx="205" cy="38" r="4"/></svg>
+                <div class="finance-dependency-copy"><span>NEW REPORTING DEPENDENCY</span><p>Finance Warehouse is connected through twelve dependent finance reports.</p></div>
+                <div id="finance-dependency-card"></div>
+              </div>
+            </div>
+
+            <div class="secondary-landscape">
+              <section><div class="secondary-cluster-header"><span>OPERATIONAL CONTINUITY</span><small>3 PRODUCTS</small></div><div class="secondary-product-grid" id="operations-products"></div></section>
+              <section><div class="secondary-cluster-header"><span>PRODUCT &amp; CHANNEL ENABLEMENT</span><small>3 PRODUCTS</small></div><div class="secondary-product-grid" id="enablement-products"></div></section>
+            </div>
+
+            <aside class="capability-inspector" id="capability-inspector" hidden aria-live="polite">
+              <div class="capability-inspector-details">
+                <p class="eyebrow">SELECTED CAPABILITY</p><h2>Customer Intelligence Capability</h2>
+                <div class="capability-facts">
+                  <div><small>INCLUDED PRODUCTS</small><strong>Customer Service Portal<br>Customer Analytics Warehouse<br>Product Telemetry Platform</strong></div>
+                  <div><small>KNOWN DEPENDENCIES</small><strong>Finance Warehouse · 12 finance reports</strong></div>
+                  <div><small>EVIDENCE COVERAGE</small><strong>3 of 3 evidence packages ready</strong></div>
+                  <div><small>COMBINED BUSINESS VALUE</small><strong>High</strong></div>
+                  <div><small>COMBINED MODERNIZATION RISK</small><strong>Elevated</strong></div>
+                </div>
+              </div>
+              <div class="assessment-choice">
+                <p>Assess individual products or assess the Customer Intelligence Capability as one modernization initiative?</p>
+                <div><button class="secondary-action" id="assess-individually" type="button">Assess Individually</button><button class="primary-action" id="assess-initiative" type="button">Assess as One Initiative</button></div>
+                <span id="assessment-choice-status" role="status" aria-live="polite">Choose an assessment boundary.</span>
+              </div>
+            </aside>
+
+            <div class="decision-room-handoff" id="decision-room-handoff" hidden>
+              <div><p class="eyebrow">INITIATIVE / ASSESSMENT READY</p><strong>Customer Intelligence Capability is ready for governed specialist review.</strong></div>
+              <button class="primary-action" id="continue-decision-room" type="button">Continue to Decision Room <svg aria-hidden="true"><use href="#icon-arrow"></use></svg></button>
+            </div>
+          </section>
+        </section>
+
+        <section class="environment" id="decision-view" data-environment="decision" aria-labelledby="decision-title" hidden>
+          <div class="section-heading">
+            <div><p class="eyebrow">ENVIRONMENT 02 / MULTI-AGENT GOVERNANCE</p><h1 id="decision-title">Agent Decision Room</h1><p>Inspect the specialist council that converts portfolio evidence into governed modernization decisions.</p></div>
+            <div class="heading-metrics"><span><small>SPECIALISTS</small><strong>8</strong></span><span><small>ESCALATIONS</small><strong>0</strong></span><span><small>MODE</small><strong>READY</strong></span></div>
+          </div>
+
+          <div class="decision-layout">
+            <div class="agent-room" id="agent-room">
+              <div class="room-orbit orbit-one" aria-hidden="true"></div>
+              <div class="room-orbit orbit-two" aria-hidden="true"></div>
+              <div class="hermes-core">
+                <span class="core-rings" aria-hidden="true"></span>
+                <small>ORCHESTRATION CORE</small><strong>HERMES</strong><span>Evidence in · decisions out</span>
+              </div>
+              <div id="agent-nodes"></div>
+            </div>
+            <aside class="detail-panel agent-detail-panel" id="agent-panel" aria-live="polite">
+              <div class="panel-empty">
+                <span class="target-reticle agent-reticle" aria-hidden="true"><i></i></span>
+                <p class="eyebrow">SPECIALIST CONTEXT</p>
+                <h2>Select an agent</h2>
+                <p>Choose a specialist node to inspect its mandate, evidence responsibility, and governance boundary.</p>
+              </div>
+            </aside>
+          </div>
+        </section>
+
+        <section class="environment" id="factory-view" data-environment="factory" aria-labelledby="factory-title" hidden>
+          <div class="section-heading">
+            <div><p class="eyebrow">ENVIRONMENT 03 / ENGINEERING DELIVERY</p><h1 id="factory-title">Codex Modernization Factory</h1><p>A visual shell for the future Oracle-to-BigQuery delivery flow. Execution controls arrive in a later version.</p></div>
+            <div class="heading-metrics"><span><small>FACTORY CELLS</small><strong>5</strong></span><span><small>ACTIVE JOBS</small><strong>0</strong></span><span><small>STATE</small><strong>STANDBY</strong></span></div>
+          </div>
+
+          <div class="factory-shell">
+            <div class="factory-context">
+              <span class="context-tag">SELECTED MISSION</span>
+              <div><p>ORACLE → BIGQUERY</p><h2>Customer Analytics Warehouse</h2></div>
+              <span class="standby-pill"><i></i> FACTORY STANDBY</span>
+            </div>
+            <div class="factory-track" aria-label="Modernization factory stages">
+              <article class="factory-cell"><span class="cell-index">CELL 01</span><div class="cell-symbol">{ }</div><h3>Discover</h3><p>Inventory schemas, SQL, ETL, lineage, and operational constraints.</p><span class="cell-status">QUEUED</span></article>
+              <svg class="track-arrow" aria-hidden="true"><use href="#icon-arrow"></use></svg>
+              <article class="factory-cell"><span class="cell-index">CELL 02</span><div class="cell-symbol">↯</div><h3>Transform</h3><p>Convert Oracle logic into implementation-ready BigQuery assets.</p><span class="cell-status">QUEUED</span></article>
+              <svg class="track-arrow" aria-hidden="true"><use href="#icon-arrow"></use></svg>
+              <article class="factory-cell"><span class="cell-index">CELL 03</span><div class="cell-symbol">⌁</div><h3>Validate</h3><p>Reconcile structures, control totals, behavior, and exceptions.</p><span class="cell-status">QUEUED</span></article>
+              <svg class="track-arrow" aria-hidden="true"><use href="#icon-arrow"></use></svg>
+              <article class="factory-cell"><span class="cell-index">CELL 04</span><div class="cell-symbol">✓</div><h3>Approve</h3><p>Route high-risk decisions and manual reviews to accountable humans.</p><span class="cell-status">GATED</span></article>
+              <svg class="track-arrow" aria-hidden="true"><use href="#icon-arrow"></use></svg>
+              <article class="factory-cell"><span class="cell-index">CELL 05</span><div class="cell-symbol">▣</div><h3>Package</h3><p>Assemble the starter package, backlog, evidence, and decision log.</p><span class="cell-status">QUEUED</span></article>
+            </div>
+            <div class="factory-footer">
+              <div><span>INPUT BAY</span><strong>Synthetic enterprise evidence</strong></div>
+              <div><span>CONTROL PLANE</span><strong>Deterministic scoring + human gates</strong></div>
+              <div><span>OUTPUT BAY</span><strong>Stored implementation artifacts</strong></div>
+            </div>
+          </div>
+        </section>
+      </main>
+
+      <footer class="footer-bar"><span>SYNTHETIC ENTERPRISE DATA · VISUAL PROTOTYPE ONLY</span><span>APEX AEROSPACE / TRACK 3</span></footer>
+    </div>
+  </body>
+</html>
