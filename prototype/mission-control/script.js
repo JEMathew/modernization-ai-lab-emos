@@ -1647,53 +1647,61 @@ function currentDemoStep() {
   return 1;
 }
 
-function guidedNextAction(step) {
-  if (step === 1) return state.discovery === "running" ? "Observe evidence resolution" : "Begin Portfolio Discovery";
+function guidedActionDescriptor(step) {
+  if (isSupplierCase()) return { label: "Return to Customer Intelligence Case", selector: '[data-program-action="select"][data-case-id="DR-CIC-001"]', status: "The Guided Demo is paused while DR-SQP-002 is active." };
+  if (step === 1) return state.discovery === "running"
+    ? { label: "Evidence Resolution in Progress", waiting: true, status: "Portfolio specialists are resolving ten evidence packages." }
+    : { label: "Begin Portfolio Discovery", selector: "#begin-discovery" };
   if (step === 2) {
-    if (state.portfolioState === "Discovery Complete") return "Continue to Assessment";
-    if (state.portfolioState === "Assessment Running") return "Observe capability formation";
-    if (!$("#capability-inspector").hidden && state.assessmentMode !== "initiative") return "Assess as One Initiative";
-    return "Inspect Customer Intelligence Capability";
+    if (state.portfolioState === "Discovery Complete") return { label: "Continue to Assessment", selector: "#continue-assessment" };
+    if (state.portfolioState === "Assessment Running") return { label: "Capability Formation in Progress", waiting: true, status: "Related products are forming one modernization capability." };
+    if (!$("#capability-inspector").hidden && state.assessmentMode !== "initiative") return { label: "Assess as One Initiative", selector: "#assess-initiative" };
+    return { label: "Inspect Customer Intelligence Capability", selector: "#select-capability" };
   }
   if (step === 3) {
-    if (state.experience !== "hq") return "Continue to Decision Room";
-    if (state.hqTransition === "running") return "Observe the case handoff";
-    if (state.workspaceStatus === "idle") return "Start Workspace Flow";
-    return state.workspaceStatus === "paused" ? "Resume Workspace" : "Observe specialist handoffs";
+    if (state.experience !== "hq") return { label: "Continue to Decision Room", selector: "#continue-decision-room" };
+    if (state.hqTransition === "running") return { label: "Case Handoff in Progress", waiting: true, status: "The shared case and responsible specialists are moving to the Decision Room." };
+    if (state.workspaceStatus === "idle") return { label: "Start Workspace Flow", selector: "#start-workspace" };
+    if (state.workspaceStatus === "paused") return { label: "Resume Workspace", selector: "#resume-workspace" };
+    return { label: "Specialist Reviews in Progress", waiting: true, status: "Evidence, architecture, business, and risk reviews are attaching to the case." };
   }
   if (step === 4) {
-    if (state.decisionStatus === "idle") return "Assemble Decision Positions";
-    if (state.decisionStatus === "assembling") return "Observe specialist positions";
-    if (!state.decisionQuestionOpen) return "Resolve Decision";
-    return "Yes — protect finance reports for six months";
+    if (state.decisionStatus === "idle") return { label: "Assemble Decision Positions", selector: "#assemble-positions" };
+    if (state.decisionStatus === "assembling") return { label: "Decision Positions in Progress", waiting: true, status: "Three governed specialist positions are converging on the shared decision." };
+    if (state.decisionStatus === "waiting-evidence") return { label: "Return to Decision Gate", selector: "#return-decision-gate" };
+    if (!state.decisionQuestionOpen) return { label: "Resolve Decision", selector: '[data-decision-action="resolve"]' };
+    return { label: "Yes — protect finance reports for six months", selector: '[data-commander-decision="yes"]' };
   }
   if (step === 5) {
-    if (state.propagationStatus === "idle") return "Propagate Constraint";
-    if (state.propagationStatus === "running") return "Observe the causal plan changes";
-    return "Approve Revised Plan";
+    if (state.propagationStatus === "idle") return { label: "Propagate Constraint", selector: "#propagate-constraint" };
+    if (state.propagationStatus === "running") return { label: "Constraint Propagation in Progress", waiting: true, status: "Only causally affected plan elements are being revised." };
+    return { label: "Approve Revised Plan", selector: "#approve-revised-plan" };
   }
   if (step === 6) {
-    if (state.engineeringStatus === "idle") return "Continue to Engineering Workspace";
-    if (state.engineeringStatus === "contract-review") return "Generate Migration Starter Package";
-    if (state.engineeringStatus === "generating") return "Observe six linked artifacts";
-    return "Assemble Package";
+    if (state.engineeringStatus === "idle") return { label: "Continue to Engineering Workspace", selector: "#continue-engineering" };
+    if (state.engineeringStatus === "contract-review") return { label: "Generate Migration Starter Package", selector: "#generate-package" };
+    if (state.engineeringStatus === "generating") return { label: "Engineering Generation in Progress", waiting: true, status: "Six governed Oracle-to-BigQuery artifacts are being generated in sequence." };
+    return { label: "Assemble Package", selector: '[data-engineering-action="assemble"]' };
   }
   if (step === 7) {
-    if (!state.validationEntered) return "Continue to Validation Workspace";
-    if (state.validationStatus === "contract-review") return "Run Independent Validation";
-    return "Observe the intentional semantic failure";
+    if (!state.validationEntered) return { label: "Continue to Validation Workspace", selector: "#continue-validation" };
+    if (state.validationStatus === "contract-review") return { label: "Run Independent Validation", selector: "#run-validation" };
+    return { label: "Independent Validation in Progress", waiting: true, status: "Seven deterministic checks are running; generated output is not yet trusted." };
   }
   if (step === 8) {
-    if (state.validationStatus === "exception") return "Investigate Failure";
-    if (["correction-proposed", "evidence-requested", "correction-rejected"].includes(state.validationStatus)) return "Approve Correction and Rerun";
-    if (state.validationStatus === "correction-applied") return "Rerun Impacted Validation";
-    return "Observe three targeted checks";
+    if (state.validationStatus === "exception") return { label: "Investigate Failure", selector: "#investigate-failure" };
+    if (["correction-proposed", "evidence-requested", "correction-rejected"].includes(state.validationStatus)) return { label: "Approve Correction and Rerun", selector: '[data-correction-decision="approve"]' };
+    if (state.validationStatus === "correction-applied") return { label: "Rerun Impacted Validation", selector: "#rerun-impacted" };
+    return { label: "Targeted Validation in Progress", waiting: true, status: "Only the three impacted checks are rerunning." };
   }
-  if (!state.executiveEntered) return "Continue to Executive Workspace";
-  if (!state.executivePrepared) return "Prepare Executive Roadmap";
-  if (state.executiveStatus !== "approved") return "Approve Wave 1";
-  return "Inspect Decision Lineage or Replay Demo";
+  if (!state.executiveEntered) return { label: "Continue to Executive Workspace", selector: "#continue-executive" };
+  if (state.executiveStatus === "preparing") return { label: "Executive Roadmap in Progress", waiting: true, status: "The Executive Advisor is synthesizing the governed evidence chain." };
+  if (!state.executivePrepared) return { label: "Prepare Executive Roadmap", selector: "#prepare-roadmap" };
+  if (state.executiveStatus !== "approved") return { label: "Approve Wave 1", selector: '[data-wave-decision="approve"]' };
+  return { label: "Inspect Decision Lineage", selector: "#inspect-decision-lineage", status: "Guided journey complete · Execution Ready with Conditions." };
 }
+
+function guidedNextAction(step) { return guidedActionDescriptor(step).label; }
 
 function demoStateIsReliable() {
   const artifacts = state.migrationPackage.generatedArtifacts;
@@ -1707,33 +1715,80 @@ function demoStateIsReliable() {
     && (state.correctedArtifactVersion !== "v2" || state.correctionProposal.approvalStatus === "Approved by Mission Commander");
 }
 
-function syncGuidedDiscoveryAction(step) {
-  const button = $("#begin-discovery");
-  const guidedSlot = $("#guided-discovery-action");
-  const standardSlot = $(".discovery-action");
-  const isGuidedDiscoveryReady = state.guidedDemo && step === 1 && state.discovery === "unverified";
+let guidedActionSourceState = null;
 
-  guidedSlot.hidden = !isGuidedDiscoveryReady;
-  if (isGuidedDiscoveryReady) {
-    guidedSlot.append(button);
-  } else if (!standardSlot.contains(button)) {
-    standardSlot.append(button);
+function restoreGuidedActionSource() {
+  if (!guidedActionSourceState) return;
+  const { element, ariaHidden, tabIndex } = guidedActionSourceState;
+  if (element.isConnected) {
+    element.classList.remove("is-guided-action-source");
+    if (ariaHidden === null) element.removeAttribute("aria-hidden"); else element.setAttribute("aria-hidden", ariaHidden);
+    if (tabIndex === null) element.removeAttribute("tabindex"); else element.setAttribute("tabindex", tabIndex);
   }
+  guidedActionSourceState = null;
+}
+
+function syncGuidedActionControl(descriptor) {
+  const guideButton = $("#guided-primary-action");
+  restoreGuidedActionSource();
+  guideButton.textContent = descriptor.label;
+  guideButton.disabled = !state.guidedDemo || Boolean(descriptor.waiting);
+  $("#guided-action-status").textContent = descriptor.status || (descriptor.waiting ? "Work is progressing. The next action will appear automatically." : "Ready for Mission Commander authorization.");
+  if (!state.guidedDemo || descriptor.waiting || !descriptor.selector) return;
+  const source = document.querySelector(descriptor.selector);
+  if (!source) {
+    guideButton.disabled = true;
+    $("#guided-action-status").textContent = "The workflow control is not currently available.";
+    return;
+  }
+  guidedActionSourceState = { element: source, ariaHidden: source.getAttribute("aria-hidden"), tabIndex: source.getAttribute("tabindex") };
+  source.classList.add("is-guided-action-source");
+  source.setAttribute("aria-hidden", "true");
+  source.setAttribute("tabindex", "-1");
+  guideButton.disabled = source.disabled;
+}
+
+function guidedLifecycleState(index, step, snapshot, pausedForCase) {
+  if (index < step - 1) return "complete";
+  if (index > step - 1) return "pending";
+  if (pausedForCase || (snapshot.blocker !== "None" && /Pending|Waiting|Exception/.test(snapshot.stage))) return "blocked";
+  return "current";
 }
 
 function renderGuidedDemo() {
   const step = currentDemoStep();
   const definition = guidedDemoSteps[step - 1];
+  const activeId = activeCaseId();
+  const activeDefinition = programIntelligence.cases[activeId];
+  const snapshot = currentCaseSnapshot(activeId);
+  const descriptor = guidedActionDescriptor(step);
+  const pausedForCase = activeId !== "DR-CIC-001";
   const cue = $("#guided-cue");
   cue.hidden = !state.guidedDemo;
   cue.dataset.reliable = String(demoStateIsReliable());
   $("#guided-demo-toggle").checked = state.guidedDemo;
-  syncGuidedDiscoveryAction(step);
+  syncGuidedActionControl(descriptor);
   if (!state.guidedDemo) return;
   $("#guided-step-count").textContent = `STEP ${step} OF 9`;
   $("#guided-step-title").textContent = definition.title;
   $("#guided-objective").textContent = definition.objective;
+  $("#guided-initiative").textContent = enterpriseContext.getLevel("initiative").name;
+  $("#guided-program").textContent = enterpriseContext.getLevel("program").name;
+  $("#guided-case-name").textContent = activeDefinition.name;
+  $("#guided-case-id").textContent = `CASE ID · ${activeId}`;
+  $("#guided-current-stage").textContent = snapshot.stage;
+  $("#guided-current-status").textContent = pausedForCase ? "Guided path paused for this case" : descriptor.waiting ? "Work in progress" : state.executiveStatus === "approved" ? "Journey complete" : "Ready for action";
+  $("#guided-current-owner").textContent = snapshot.owner;
+  $("#guided-current-work-object").textContent = snapshot.task;
+  $("#guided-current-blocker").textContent = snapshot.blocker;
   $("#guided-next-action").textContent = guidedNextAction(step);
+  $("#guided-previous-stage").textContent = step === 1 ? "Not started" : `${guidedDemoSteps[step - 2].title} — Complete`;
+  $("#guided-upcoming-stage").textContent = step === guidedDemoSteps.length ? (state.executiveStatus === "approved" ? "Execution Ready with Conditions" : "Execution Ready") : guidedDemoSteps[step].title;
+  $("#guided-lifecycle").innerHTML = guidedDemoSteps.map((item, index) => {
+    const lifecycleState = guidedLifecycleState(index, step, snapshot, pausedForCase);
+    const statusLabel = { complete: "Complete", current: "Current", pending: "Pending", blocked: "Blocked" }[lifecycleState];
+    return `<li class="is-${lifecycleState}" ${index === step - 1 ? 'aria-current="step"' : ""}><i>${index + 1}</i><span><strong>${item.title}</strong><small>${statusLabel}</small></span></li>`;
+  }).join("");
   $("#guided-presenter-cue").textContent = `“${definition.presenter}”`;
   $("#guided-duration").textContent = `${definition.duration} seconds`;
   const progress = state.executiveStatus === "approved" ? 100 : Math.round(((step - 1) / 9) * 100);
@@ -2344,6 +2399,14 @@ function init() {
   $$('[data-view-link]').forEach((link) => link.addEventListener("click", (event) => { event.preventDefault(); navigate(link.dataset.viewLink, false); openExperience("mission-control"); }));
   $$('[data-experience-switch]').forEach((button) => button.addEventListener("click", () => openExperience(button.dataset.experienceSwitch)));
   $("#guided-demo-toggle").addEventListener("change", (event) => setGuidedDemo(event.target.checked));
+  $("#guided-primary-action").addEventListener("click", () => {
+    const descriptor = guidedActionDescriptor(currentDemoStep());
+    if (descriptor.waiting || !descriptor.selector) return;
+    const source = document.querySelector(descriptor.selector);
+    if (!source || source.disabled) return;
+    source.click();
+    renderGuidedDemo();
+  });
   $$('[data-demo-pace]').forEach((button) => button.addEventListener("click", () => setDemoPace(button.dataset.demoPace)));
   $("#simulation-info").addEventListener("click", () => toggleDemoInfo());
   $("#close-demo-info").addEventListener("click", () => toggleDemoInfo(false));

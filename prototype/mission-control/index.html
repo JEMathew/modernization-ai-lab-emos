@@ -6,11 +6,11 @@
     <meta name="description" content="Standalone Modernization AI Lab mission-control prototype.">
     <title>Modernization AI Lab — Mission Control</title>
     <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='4' fill='%230b1720'/%3E%3Cpath d='M7 23V15h4v8m3 0V10h4v13m3 0V6h4v17' stroke='%234bd6c2' stroke-width='2'/%3E%3C/svg%3E">
-    <link rel="stylesheet" href="styles.css?v=1.4.1">
+    <link rel="stylesheet" href="styles.css?v=1.4.3">
     <script src="portfolio-lab.js?v=1.0.1-stable3" defer></script>
     <script src="enterprise-context.js?v=1.1" defer></script>
     <script src="program-intelligence.js?v=1.3" defer></script>
-    <script src="script.js?v=1.3.1" defer></script>
+    <script src="script.js?v=1.3.2" defer></script>
     <script src="portfolio-lab-ui.js?v=1.0.1-stable6" defer></script>
   </head>
   <body>
@@ -102,13 +102,17 @@
 
       <section class="uploaded-journey-context" id="uploaded-journey-context" hidden aria-live="polite"><div><small>EXPERIMENTAL PORTFOLIO HANDOFF</small><strong id="uploaded-journey-title">Uploaded modernization case</strong></div><div><small>PRIMARY CANDIDATE</small><strong id="uploaded-candidate-name">—</strong></div><div><small>VALIDATED UNITS</small><strong id="uploaded-unit-count">0</strong></div><div><small>BOUNDARY</small><strong>STANDARD GUIDED JOURNEY · METADATA ONLY</strong></div><button type="button" id="return-upload-lab">Return to Analysis</button></section>
 
-      <aside class="guided-cue" id="guided-cue" hidden aria-live="polite" aria-label="Guided demo cue">
-        <div><small id="guided-step-count">STEP 1 OF 9</small><strong id="guided-step-title">Portfolio Discovery</strong><span id="guided-progress-label">0% COMPLETE</span></div>
+      <aside class="guided-cue" id="guided-cue" hidden aria-live="polite" aria-label="Guided modernization journey">
+        <header class="guided-journey-header"><div><small>GUIDED MODERNIZATION JOURNEY</small><strong id="guided-step-title">Portfolio Discovery</strong></div><div><span id="guided-step-count">STEP 1 OF 9</span><strong id="guided-progress-label">0% COMPLETE</strong></div></header>
+        <section class="guided-context" aria-label="Active enterprise context"><span><small>BUSINESS INITIATIVE</small><strong id="guided-initiative">Connected Customer Growth</strong></span><span><small>MODERNIZATION PROGRAM</small><strong id="guided-program">Customer Intelligence Modernization Program</strong></span><span class="guided-case-context"><small>ACTIVE MODERNIZATION CASE</small><strong id="guided-case-name">Customer Intelligence Capability</strong><em id="guided-case-id">CASE ID · DR-CIC-001</em></span></section>
+        <section class="guided-status-grid" aria-label="Current guided status"><span><small>CURRENT STAGE</small><strong id="guided-current-stage">Unverified</strong></span><span><small>CURRENT STATUS</small><strong id="guided-current-status">Awaiting discovery authorization</strong></span><span><small>CURRENT OWNER</small><strong id="guided-current-owner">Portfolio Intelligence Specialist</strong></span><span><small>CURRENT WORK OBJECT</small><strong id="guided-current-work-object">Portfolio Evidence</strong></span><span class="guided-blocker"><small>CURRENT BLOCKER</small><strong id="guided-current-blocker">None</strong></span></section>
         <p id="guided-objective">Reveal evidence quality and portfolio dependencies.</p>
-        <dl><div><dt>NEXT</dt><dd id="guided-next-action">Begin Portfolio Discovery</dd></div><div><dt>PRESENTER CUE</dt><dd id="guided-presenter-cue">“Start with evidence, not opinions.”</dd></div><div><dt>TIME</dt><dd id="guided-duration">15 seconds</dd></div></dl>
-        <div class="guided-primary-action" id="guided-discovery-action" hidden></div>
-        <div class="guided-progress"><i id="guided-progress-bar"></i></div>
-        <div><button type="button" id="restart-guided-demo">Restart Guided Demo</button><button type="button" id="disable-guided-demo">Turn Off</button></div>
+        <section class="guided-action-panel" aria-labelledby="guided-next-action"><small>IMMEDIATE NEXT ACTION</small><strong id="guided-next-action">Begin Portfolio Discovery</strong><button class="primary-action" id="guided-primary-action" type="button" aria-describedby="guided-action-status">Begin Portfolio Discovery</button><span id="guided-action-status" role="status">Ready for Mission Commander authorization.</span></section>
+        <ol class="guided-lifecycle" id="guided-lifecycle" aria-label="Guided journey lifecycle"></ol>
+        <dl class="guided-orientation"><div><dt>PREVIOUS STAGE</dt><dd id="guided-previous-stage">Not started</dd></div><div><dt>UPCOMING STAGE</dt><dd id="guided-upcoming-stage">Capability Formation</dd></div><div><dt>TIME</dt><dd id="guided-duration">15 seconds</dd></div></dl>
+        <div class="guided-progress" aria-hidden="true"><i id="guided-progress-bar"></i></div>
+        <details class="guided-presenter"><summary>Presenter cue</summary><p id="guided-presenter-cue">“Start with evidence, not opinions.”</p></details>
+        <footer class="guided-footer"><button type="button" id="restart-guided-demo">Restart Guided Demo</button><button type="button" id="disable-guided-demo">Turn Off</button></footer>
       </aside>
 
       <nav class="environment-nav" data-experience-panel="mission-control" aria-label="Mission control environments">

@@ -138,6 +138,16 @@ The Modernization Priority Score is calculated locally from Technical Urgency (3
 
 An uploaded candidate can progress through capability formation and portfolio assessment only. The lab then enforces an engineering evidence gate requiring **Representative SQL**, **Source Schema**, and **Target Platform**. Metadata-only portfolios stop with **Engineering Journey requires additional engineering metadata.** The upload lab never enters the Apex Engineering, Validation, or Executive workspaces and never generates Apex artifacts for arbitrary uploads. Use **Run Guided Demo** for the complete synthetic Apex Aerospace journey.
 
+## Guided Demo controller
+
+**Run Guided Demo** is the recommended first-time-user path. Its persistent journey controller identifies the active business initiative, modernization program, modernization case, and case ID. It also shows the current stage, status, owner, work object, blocker, immediate next action, previous stage, upcoming stage, and overall progress.
+
+The nine-stage lifecycle distinguishes **Complete**, **Current**, **Pending**, and **Blocked** states using text and shape as well as colour. The active stage exposes `aria-current="step"`. At every decision point, the controller presents one keyboard-accessible primary action. That action activates the existing workflow control; it does not create a separate workflow or duplicate execution. During deterministic work movement, the action becomes a disabled in-progress status until the next supported control is ready.
+
+The complete Guided Demo is intentionally bound to **Customer Intelligence Capability — DR-CIC-001**. If Supplier Quality Portal Modernization is selected, the controller pauses and offers **Return to Customer Intelligence Case**. DR-SQP-002 remains independently usable through its application-led path and stops at Decision Pending.
+
+Use **Restart Guided Demo** to return directly to Step 1. **Reset Current Stage** reconstructs the current stage’s supported entry state and restores its action. Case and program resets remain scoped to their existing state boundaries, while **Reset Full Demo** restores the initial enterprise context, DR-CIC-001, the Unverified portfolio, Step 1, and the visible **Begin Portfolio Discovery** action.
+
 ## Three-minute demo path
 
 | Step | Objective | Recommended action | Expected visual outcome | Presenter cue | Time |
@@ -188,7 +198,9 @@ The **Demo Simulation** badge opens the same disclosure inside the product.
 
 - **Reset Current Stage** reconstructs only the active milestone’s expected entry state while preserving the logically completed upstream path.
 - **Restart Guided Demo** enables the guide and returns to Step 1.
-- **Reset Full Demo** returns all products and workspaces to the initial Unverified state.
+- **Reset Current Case** restores only the selected program case and preserves program governance.
+- **Reset Program Decision** clears the program decision and its propagated impacts without replaying completed case work.
+- **Reset Full Demo** returns all products, program decisions, cases, workspaces, and Guided Demo orientation to the initial Unverified Step 1 state.
 - **Replay Demo** is available in the final completion summary.
 
 ## Browser requirements
