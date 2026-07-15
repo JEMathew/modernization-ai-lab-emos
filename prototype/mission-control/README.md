@@ -1,4 +1,4 @@
-# Modernization AI Lab — Mission Control 1.2
+# Modernization AI Lab — Mission Control 1.3
 
 Turn a synthetic legacy portfolio into a traceable, human-approved modernization roadmap and implementation-ready migration starter package in under three minutes.
 
@@ -17,6 +17,7 @@ Mission Control is a standalone HTML, CSS, and JavaScript prototype created for 
 - An evidence-linked three-wave portfolio roadmap and explicit Wave 1 approval.
 - An experimental Portfolio Upload Lab with local CSV/JSON validation, dependency checks, transparent scoring, and synthetic industry samples.
 - Multi-Case Program Intelligence with two isolated modernization cases, a shared program dependency, and evidence-led sequencing.
+- A governed Supplier Master API constraint with differentiated case impacts, Mission Commander approval, and selective propagation.
 
 ## Screenshots
 
@@ -53,7 +54,7 @@ Connected Customer Growth / BI-CX-2026-01
 - `styles.css` provides responsive enterprise presentation, one-shot motion, Fast pace, and reduced-motion support.
 - `script.js` contains mocked data, deterministic workflow state, provider-neutral contracts, validation results, judge-mode cues, and reset reconstruction.
 - `enterprise-context.js` defines and validates the provider-neutral Initiative, Portfolio, Program, and Case lineage.
-- `program-intelligence.js` defines the two-case program, reusable case workflow, keyed state, case-scoped work objects, decision history, shared dependency, and sequencing rationale.
+- `program-intelligence.js` defines the two-case program, reusable case workflow, keyed case state, program constraints and decisions, case-impact records, selective propagation, shared dependencies, provider-neutral work objects, and sequencing rationale.
 - `portfolio-lab.js` contains the standalone parser, schema validation, dependency checks, ten-unit limit, and deterministic scoring engine.
 - `portfolio-lab-ui.js` connects that engine to upload, mapping, validation, sample, scoring, capability-formation, assessment, and engineering-evidence-gate views.
 
@@ -99,7 +100,7 @@ The hierarchy above the active case answers why the modernization exists, which 
 
 Both experiences render the same hierarchy and case status. The case owner and next responsibility update from the existing workflow state; no second workflow or duplicate case record is created. All hierarchy names and references are synthetic.
 
-## Multi-Case Program Intelligence
+## Multi-Case Program Intelligence and governed coordination
 
 The program view coordinates two synthetic cases without changing the established Guided Demo:
 
@@ -108,7 +109,18 @@ The program view coordinates two synthetic cases without changing the establishe
 
 Select either case from Mission Control or Modernization HQ. The selected case, current owner, blocker, next action, evidence, dependencies, work objects, and lineage remain synchronized across both experiences. Case progress is keyed by case ID: advancing or resetting Supplier Quality does not mutate Customer Intelligence, and switching views does not replay completed work. **Reset Current Stage** resets only the selected Supplier Quality case when it is active; **Reset Full Demo** resets both cases and restores DR-CIC-001 as the Guided Demo focus.
 
-The Supplier Master API is represented once as a program-level dependency and linked directly to DR-SQP-002. Program sequencing recommends the evidence-mature DR-CIC-001 first, followed by DR-SQP-002 after its application reviews and shared API ownership are governed. V1.2 does not add engineering generation, validation, live AI, or unlimited case creation for the second case.
+The Supplier Master API is represented once as a program-level dependency. It directly supports DR-SQP-002 and has a limited reference-data relationship to DR-CIC-001. Program sequencing initially recommends the evidence-mature DR-CIC-001 first, followed by DR-SQP-002 after its application reviews and shared API ownership are governed.
+
+V1.3 makes a program-level constraint explicit: the Supplier Master API must not introduce a breaking interface change for six months. The constraint records its rationale, evidence, owner, duration, affected cases, impact summary, and downstream obligations. A cross-case assessment distinguishes the consequences:
+
+- **DR-SQP-002 receives direct impact.** Approval adds a protected-interface architecture constraint, compatibility-control work object, revised blocker and next action, and program-decision lineage.
+- **DR-CIC-001 receives indirect, limited impact.** Approval adds only a reference-data governance annotation. Completed reviews, propagation, six generated artifacts, validation results, and executive approval remain valid and do not replay.
+
+The Mission Commander can **Approve Protected Interface Boundary**, **Request More Evidence**, or **Reject Program Constraint**. None of these choices silently propagate. Approval releases a separate propagation action; evidence requests and rejection preserve both case states. Propagation is idempotent, updates the shared dependency to **Protected Boundary**, records two differentiated case impacts, and revises program sequencing once.
+
+Program Constraint, Cross-Case Impact Assessment, Program Decision Record, Compatibility Control, Case Impact Record, and Program Sequencing Update are provider-neutral work objects with ownership, evidence, source decision, dependency, lifecycle, next action, and lineage. **Reset Current Case** does not clear program governance. **Reset Program Decision** clears only the program decision and its impacts. **Reset Full Demo** clears program and case state.
+
+V1.3 does not add arbitrary constraints, unlimited cases, second-case engineering or validation, live AI, persistence, connectors, authentication, or deployment execution.
 
 ## Portfolio Upload Lab
 
@@ -187,6 +199,7 @@ Use a current desktop version of Chrome, Edge, Firefox, or Safari with JavaScrip
 
 - No live GPT-5.6 or Codex API execution.
 - No persistence after browser refresh.
+- Program decision timestamps use a deterministic sequence marker rather than wall-clock persistence.
 - No deployment, authentication, collaboration, enterprise connectors, persistence, or large-portfolio analysis.
 - Portfolio Upload Lab is capped at ten units and 2 MB per primary file. It does not parse documents, repositories, images, source code, or architecture diagrams.
 - Uploaded portfolios end at assessment in this release; arbitrary engineering, validation, and executive execution are intentionally unavailable.

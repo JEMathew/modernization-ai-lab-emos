@@ -61,7 +61,7 @@
   }
 
   function clearWorkbench() {
-    ["mapping-panel", "validation-report", "unit-limit-panel", "analysis-results", "portfolio-assessment"].forEach((id) => { document.querySelector(`#${id}`).hidden = true; });
+    ["mapping-panel", "upload-validation-report", "unit-limit-panel", "analysis-results", "portfolio-assessment"].forEach((id) => { document.querySelector(`#${id}`).hidden = true; });
     document.querySelector("#upload-lab-empty").hidden = false;
     document.querySelector("#unit-selector").hidden = true;
     document.querySelector("#analyze-selected").hidden = true;
@@ -181,7 +181,7 @@
   function renderValidation() {
     clearWorkbench();
     document.querySelector("#upload-lab-empty").hidden = true;
-    document.querySelector("#validation-report").hidden = false;
+    document.querySelector("#upload-validation-report").hidden = false;
     const errors = labState.validation.issues.filter((issue) => issue.severity === "error").length;
     const warnings = labState.validation.issues.filter((issue) => issue.severity === "warning").length;
     document.querySelector("#upload-validation-summary").innerHTML = `<span><small>SOURCE RECORDS</small><strong>${labState.validation.sourceCount}</strong></span><span><small>ACCEPTED</small><strong>${labState.validation.accepted.length}</strong></span><span><small>REJECTED</small><strong>${labState.validation.rejectedCount}</strong></span><span><small>ISSUES</small><strong>${errors} ERROR · ${warnings} WARN</strong></span>`;

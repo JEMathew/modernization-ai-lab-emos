@@ -6,12 +6,12 @@
     <meta name="description" content="Standalone Modernization AI Lab mission-control prototype.">
     <title>Modernization AI Lab — Mission Control</title>
     <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='4' fill='%230b1720'/%3E%3Cpath d='M7 23V15h4v8m3 0V10h4v13m3 0V6h4v17' stroke='%234bd6c2' stroke-width='2'/%3E%3C/svg%3E">
-    <link rel="stylesheet" href="styles.css?v=1.3">
+    <link rel="stylesheet" href="styles.css?v=1.4">
     <script src="portfolio-lab.js?v=1.0.1-stable3" defer></script>
     <script src="enterprise-context.js?v=1.1" defer></script>
-    <script src="program-intelligence.js?v=1.2" defer></script>
-    <script src="script.js?v=1.2" defer></script>
-    <script src="portfolio-lab-ui.js?v=1.0.1-stable5" defer></script>
+    <script src="program-intelligence.js?v=1.3" defer></script>
+    <script src="script.js?v=1.3" defer></script>
+    <script src="portfolio-lab-ui.js?v=1.0.1-stable6" defer></script>
   </head>
   <body>
     <svg class="icon-library" aria-hidden="true">
@@ -26,7 +26,7 @@
       <header class="topbar">
         <a class="brand" href="#portfolio" data-view-link="portfolio" aria-label="Mission Control home">
           <span class="brand-mark" aria-hidden="true"><span></span><span></span><span></span></span>
-          <span><strong>MODERNIZATION AI LAB</strong><small>ENTERPRISE CONTEXT / V1.1</small></span>
+          <span><strong>MODERNIZATION AI LAB</strong><small>PROGRAM INTELLIGENCE / V1.3</small></span>
         </a>
         <div class="experience-switch" role="group" aria-label="Experience switch">
           <button class="is-active" type="button" data-experience-switch="mission-control" aria-pressed="true">Mission Control</button>
@@ -91,7 +91,7 @@
             <section class="lab-workbench" aria-live="polite">
               <div class="lab-empty" id="upload-lab-empty"><span class="target-reticle" aria-hidden="true"><i></i></span><p class="eyebrow">AWAITING PORTFOLIO</p><h2>Validation begins immediately</h2><p>Choose a supported portfolio artifact or load a synthetic sample to inspect schema, dependencies, evidence quality, and candidate scores.</p></div>
               <section class="mapping-panel" id="mapping-panel" hidden aria-labelledby="mapping-title"><div class="lab-step-heading"><span>02</span><div><small>COLUMN MAPPING</small><h2 id="mapping-title">Map source columns</h2></div></div><p>Confirm how source columns map to the required portfolio schema.</p><div id="mapping-fields"></div><button type="button" id="apply-column-mapping">Apply Mapping</button></section>
-              <section class="validation-report" id="validation-report" hidden aria-labelledby="validation-report-title"><div class="lab-step-heading"><span>03</span><div><small>VALIDATION REPORT</small><h2 id="validation-report-title">Portfolio validation</h2></div></div><div class="validation-summary" id="upload-validation-summary"></div><div class="validation-issues" id="upload-validation-issues"></div><div class="empty-portfolio-actions" id="empty-portfolio-actions" hidden><button type="button" id="retry-upload">Retry Upload</button><button type="button" id="load-empty-sample">Load Sample Portfolio</button><button type="button" id="download-template">Download Template</button></div><div class="validation-actions"><button type="button" id="continue-accepted">Continue with Accepted Records</button><button type="button" id="cancel-validation">Cancel</button></div></section>
+              <section class="validation-report" id="upload-validation-report" hidden aria-labelledby="upload-validation-report-title"><div class="lab-step-heading"><span>03</span><div><small>VALIDATION REPORT</small><h2 id="upload-validation-report-title">Portfolio validation</h2></div></div><div class="validation-summary" id="upload-validation-summary"></div><div class="validation-issues" id="upload-validation-issues"></div><div class="empty-portfolio-actions" id="empty-portfolio-actions" hidden><button type="button" id="retry-upload">Retry Upload</button><button type="button" id="load-empty-sample">Load Sample Portfolio</button><button type="button" id="download-template">Download Template</button></div><div class="validation-actions"><button type="button" id="continue-accepted">Continue with Accepted Records</button><button type="button" id="cancel-validation">Cancel</button></div></section>
               <section class="unit-limit-panel" id="unit-limit-panel" hidden aria-labelledby="unit-limit-title"><div class="lab-step-heading"><span>04</span><div><small>PORTFOLIO LIMIT</small><h2 id="unit-limit-title">Choose ten modernization units</h2></div></div><p>This sandbox analyzes a maximum of ten units.</p><div class="limit-actions"><button type="button" id="analyze-first-ten">Analyze First 10</button><button type="button" id="select-ten">Select 10</button></div><div id="unit-selector" hidden></div><button type="button" id="analyze-selected" hidden>Analyze Selected Units</button></section>
               <section class="analysis-results" id="analysis-results" hidden aria-labelledby="analysis-title"><div class="lab-step-heading"><span>05</span><div><small>DETERMINISTIC ANALYSIS</small><h2 id="analysis-title">Modernization Priority Scores</h2></div></div><div class="scoring-legend"><span>30% Technical Urgency</span><span>25% Business Value</span><span>15% Operating Cost</span><span>15% Dependency Readiness</span><span>10% Risk Reduction</span><span>5% Evidence Confidence</span></div><div id="candidate-recommendation"></div><div class="score-table" id="score-table"></div><div class="journey-boundary"><strong>Portfolio Intelligence ends at governed assessment.</strong><span>Engineering requires representative SQL, source schema, and target-platform evidence. The Apex Guided Demo remains the complete engineering experience.</span></div><button class="primary-action" type="button" id="start-uploaded-journey">Start Modernization Journey <svg aria-hidden="true"><use href="#icon-arrow"></use></svg></button></section>
               <section class="portfolio-assessment" id="portfolio-assessment" hidden aria-labelledby="portfolio-assessment-title"><div class="lab-step-heading"><span>06</span><div><small>CAPABILITY FORMATION / ASSESSMENT</small><h2 id="portfolio-assessment-title">Portfolio assessment complete</h2></div></div><div class="assessment-grid"><div><small>PRIMARY CANDIDATE</small><strong id="assessment-candidate">—</strong></div><div><small>MODERNIZATION CAPABILITY</small><strong id="assessment-capability">—</strong></div><div><small>CAPABILITY UNITS</small><strong id="assessment-units">—</strong></div><div><small>DECLARED DEPENDENCIES</small><strong id="assessment-dependencies">—</strong></div></div><div class="engineering-metadata-gate" id="engineering-metadata-gate"></div><button type="button" id="return-to-scores">Return to Portfolio Scores</button></section>
@@ -324,7 +324,7 @@
 
       <section class="hq-experience" id="hq-experience" data-experience-panel="hq" aria-labelledby="hq-title" hidden>
         <header class="hq-header">
-          <div><p class="eyebrow">VERSION 1.1 / ENTERPRISE CONTEXT</p><h1 id="hq-title">Modernization HQ</h1><p>Follow one traceable case from portfolio evidence to a governed Wave 1 decision.</p></div>
+          <div><p class="eyebrow">VERSION 1.3 / GOVERNED PROGRAM COORDINATION</p><h1 id="hq-title">Modernization HQ</h1><p>Follow shared constraints and selective consequences across two governed modernization cases.</p></div>
           <div class="hq-stage-strip" aria-label="Current HQ workflow context">
             <span><small>WORKFLOW STAGE</small><strong id="hq-workflow-stage">PORTFOLIO UNVERIFIED</strong></span>
             <span><small>SELECTED CAPABILITY</small><strong id="hq-selected-capability">AWAITING FORMATION</strong></span>
