@@ -1,6 +1,10 @@
 "use strict";
 
 const enterpriseContext = globalThis.EnterpriseContext;
+const programIntelligence = globalThis.ProgramIntelligence;
+
+function activeCaseId() { return programIntelligence?.state.activeCaseId || "DR-CIC-001"; }
+function isSupplierCase() { return activeCaseId() === "DR-SQP-002"; }
 
 const products = [
   { id: "app-01", group: "applications", name: "Supplier Quality Portal", platform: "Java / Oracle", owner: "Supply Chain", criticality: "High", age: "12 years", disposition: "Replatform", summary: "Coordinates supplier nonconformance cases and corrective actions across the production network." },
@@ -660,7 +664,11 @@ function hqNextAction() {
   return "BEGIN DISCOVERY IN MISSION CONTROL";
 }
 
-function currentCaseSnapshot() {
+function currentCaseSnapshot(caseId = activeCaseId()) {
+  if (caseId === "DR-SQP-002") {
+    const snapshot = programIntelligence.caseSnapshot(caseId);
+    return { ...snapshot, ownerId: { "Chief Enterprise Architect": "agent-02", "Business Strategist": "agent-03", "Risk & Governance Specialist": "agent-04" }[snapshot.owner] || null, recommendation: snapshot.recommendation.toUpperCase() };
+  }
   if (state.executiveStatus === "approved") return { stage: "Execution Ready with Conditions", owner: "Transformation Office", ownerId: null, task: "Wave 1 approved", blocker: "Governance ownership prerequisite before cutover", next: "Launch Wave 1", evidence: "11-stage evidence chain · 7 of 7 checks passed", recommendation: "WAVE 1 APPROVED" };
   if (state.executivePrepared) return { stage: "Executive Decision Pending", owner: "Mission Commander", ownerId: null, task: state.executiveStatus === "revision-requested" ? "Revised roadmap requested" : "Review Wave 1 proposal", blocker: "Mission Commander Wave 1 approval required", next: state.executiveStatus === "revision-requested" ? "Review evidence and revise roadmap" : "Approve Wave 1", evidence: "Executive Recommendation + Portfolio Roadmap", recommendation: "TWO WAVE 1 INITIATIVES" };
   if (state.executiveStatus === "preparing") return { stage: "Executive Synthesis", owner: "Executive Advisor", ownerId: "agent-08", task: "Prepare Executive Modernization Roadmap", blocker: "None", next: "Publish recommendation for Mission Commander", evidence: "11-stage governed evidence chain", recommendation: "SYNTHESIS IN PROGRESS" };
@@ -743,6 +751,45 @@ function renderEnterpriseContext() {
   });
 }
 
+function renderProgramIntelligence() {
+  if (!programIntelligence?.validateModel()) return;
+  const summary = programIntelligence.programSummary();
+  const active = programIntelligence.caseSnapshot();
+  const objects = programIntelligence.workObjectsForCase();
+  $$('[data-program-intelligence]').forEach((panel) => {
+    panel.innerHTML = `<header><div><small>V1.2 / MULTI-CASE PROGRAM</small><strong>${summary.name}</strong></div><span>${summary.caseCount} GOVERNED CASES</span></header>
+      <div class="program-overview"><div><small>PROGRAM OWNER</small><strong>${summary.owner}</strong></div><div><small>READINESS</small><strong>${summary.readiness}</strong></div><div><small>PROGRAM BLOCKER</small><strong>${summary.blocker}</strong></div></div>
+      <div class="program-case-grid">${Object.values(programIntelligence.cases).map((item) => { const snapshot = currentCaseSnapshot(item.id); const selected = item.id === active.id; return `<article class="program-case${selected ? " is-selected" : ""}" data-program-case-card="${item.id}"><div><small>${item.type.toUpperCase()} / ${item.id}</small><h3>${item.name}</h3></div><p>${item.purpose}</p><dl><div><dt>STATUS</dt><dd>${snapshot.stage}</dd></div><div><dt>OWNER</dt><dd>${snapshot.owner}</dd></div><div><dt>BLOCKER</dt><dd>${snapshot.blocker}</dd></div><div><dt>NEXT</dt><dd>${snapshot.next}</dd></div></dl><button type="button" data-program-action="select" data-case-id="${item.id}" ${selected ? "disabled" : ""}>${selected ? "Selected Case" : "Select Case"}</button><button type="button" data-program-action="inspect" data-case-id="${item.id}">Inspect Case</button></article>`; }).join("")}</div>
+      <section class="active-case-work"><header><div><small>ACTIVE CASE / ${active.id}</small><strong>${active.name}</strong></div><span>${active.stage.toUpperCase()}</span></header><div class="case-work-facts"><button type="button" data-program-action="inspect-owner"><small>CURRENT OWNER</small><strong>${active.owner}</strong></button><button type="button" data-program-action="inspect-blocker"><small>CURRENT BLOCKER</small><strong>${active.blocker}</strong></button><button type="button" data-program-action="inspect-next"><small>NEXT ACTION</small><strong>${active.next}</strong></button></div>
+      <div class="program-workflow">${programIntelligence.WORKFLOW.map((stage, index) => `<span class="${index < active.stageIndex ? "is-complete" : index === active.stageIndex ? "is-active" : ""}"><i>${index + 1}</i><strong>${stage.stage}</strong></span>`).join("")}</div>
+      <div class="program-work-objects">${objects.map((object) => `<button type="button" data-program-action="inspect-object" data-object-id="${object.id}" ${object.lifecycle === "locked" ? "disabled" : ""}><small>${object.caseId} · ${object.lifecycle.toUpperCase()}</small><strong>${object.title}</strong><span>${object.owner}</span></button>`).join("")}</div>
+      <div class="program-actions"><button type="button" data-program-action="return-program">Return to Program</button>${isSupplierCase() ? `<button type="button" data-program-action="advance" ${active.stage === "Decision Pending" || active.paused ? "disabled" : ""}>${active.stageIndex === 0 ? "Start Supplier Quality Journey" : "Complete Current Review"}</button><button type="button" data-program-action="pause" ${active.paused || active.stage === "Decision Pending" ? "disabled" : ""}>Pause Case</button><button type="button" data-program-action="resume" ${active.paused ? "" : "disabled"}>Resume Case</button><button type="button" data-program-action="reset">Reset Current Case</button>` : ""}</div>
+      <div class="program-inspector" data-program-inspector hidden aria-live="polite"></div></section>
+      <footer><strong>PROGRAM SEQUENCE</strong><span>${summary.sequence.join(" → ")}</span><p>${summary.rationale}</p><div><small>SHARED DEPENDENCY · REPRESENTED ONCE</small><strong>${summary.sharedDependencies[0].name}</strong><span>Direct: Supplier Quality Portal Modernization · ${summary.sharedDependencies[0].status}</span></div></footer>`;
+  });
+}
+
+function inspectProgramItem(title, body) {
+  $$('[data-program-inspector]').forEach((panel) => { panel.hidden = false; panel.innerHTML = `<small>PROGRAM INSPECTION</small><h3>${title}</h3><p>${body}</p>`; });
+}
+
+function handleProgramAction(button) {
+  const action = button.dataset.programAction;
+  const caseId = button.dataset.caseId;
+  if (action === "select") { programIntelligence.selectCase(caseId); state.selectedWorkObjectId = null; renderHqState(); return; }
+  if (action === "inspect") { const item = programIntelligence.cases[caseId]; inspectProgramItem(`${item.name} / ${item.id}`, `${item.purpose} Application owner: ${item.applicationOwner}. Technical owner: ${item.technicalOwner}. Dependencies: ${item.dependencies.join(", ")}. Evidence lineage: ${item.lineage.join(" → ")}.`); return; }
+  const snapshot = programIntelligence.caseSnapshot();
+  if (action === "inspect-owner") inspectProgramItem(`Current owner · ${snapshot.owner}`, snapshot.task);
+  if (action === "inspect-blocker") inspectProgramItem(`Current blocker · ${snapshot.blocker}`, snapshot.blocker === "None" ? "No blocker prevents the next governed review." : "The blocker remains attached only to this case.");
+  if (action === "inspect-next") inspectProgramItem(`Next action · ${snapshot.next}`, `Current evidence: ${snapshot.evidence}.`);
+  if (action === "inspect-object") { const object = programIntelligence.workObjectsForCase().find((item) => item.id === button.dataset.objectId); inspectProgramItem(`${object.title} · ${object.lifecycle}`, `Owner: ${object.owner}. Evidence: ${object.evidence}. Dependencies: ${object.dependencies.join(", ")}. Next: ${object.next}.`); }
+  if (action === "advance") { programIntelligence.advanceCase(); renderHqState(); }
+  if (action === "pause") { programIntelligence.pauseCase(); renderHqState(); }
+  if (action === "resume") { programIntelligence.resumeCase(); renderHqState(); }
+  if (action === "reset") { programIntelligence.resetCase(); renderHqState(); }
+  if (action === "return-program") { inspectProgramItem("Program coordination", programIntelligence.programSummary().rationale); }
+}
+
 function selectEnterpriseContext(id) {
   if (!enterpriseContext?.getLevel(id)) return;
   state.selectedEnterpriseContextId = state.selectedEnterpriseContextId === id ? null : id;
@@ -751,6 +798,7 @@ function selectEnterpriseContext(id) {
 
 function renderMissionCase() {
   const snapshot = currentCaseSnapshot();
+  $(".mission-case-identity strong").textContent = programIntelligence?.cases[activeCaseId()]?.name || "Customer Intelligence Capability";
   $("#mission-case-stage").textContent = snapshot.stage.toUpperCase();
   $("#mission-case-owner").textContent = snapshot.owner.toUpperCase();
   $("#mission-case-blocker").textContent = snapshot.blocker.toUpperCase();
@@ -760,9 +808,15 @@ function renderMissionCase() {
   $("#mission-roadmap-status").textContent = state.executiveStatus === "approved" ? "WAVE 1 APPROVED" : state.capacitySimulationActive ? "SIMULATION PREVIEW" : state.executivePrepared ? "BASELINE READY" : "NOT PREPARED";
   $("#mission-case-dock").classList.toggle("is-blocked", snapshot.blocker !== "None");
   renderEnterpriseContext();
+  renderProgramIntelligence();
 }
 
 function renderWorkObjects() {
+  if (isSupplierCase()) {
+    const objects = programIntelligence.workObjectsForCase();
+    $("#workspace-work-objects").innerHTML = objects.filter((item) => item.lifecycle !== "locked").map((item, index) => `<button class="work-object status-${item.lifecycle}" type="button" data-program-action="inspect-object" data-object-id="${item.id}"><span class="work-object-sequence">${String(index + 1).padStart(2, "0")}</span><span><strong>${item.title}</strong><small>${item.owner}</small></span><em>${item.caseId}</em><b>${item.lifecycle.toUpperCase()}</b></button>`).join("");
+    return;
+  }
   const availableThrough = state.workspaceStage >= 0 ? state.workspaceStage : state.assessmentReady ? 0 : -1;
   const availableWorkObjects = workspaceWorkObjects.slice(0, availableThrough + 1);
   $("#workspace-work-objects").innerHTML = availableWorkObjects.length ? availableWorkObjects.map((workObject) => {
@@ -780,6 +834,13 @@ function renderWorkObjects() {
 
 function renderWorkQueue() {
   const statuses = ["Incoming", "In Review", "Waiting", "Blocked", "Complete"];
+  if (isSupplierCase()) {
+    const snapshot = programIntelligence.caseSnapshot();
+    const lane = snapshot.stage === "Decision Pending" ? "Waiting" : snapshot.paused ? "Waiting" : snapshot.stageIndex === 0 ? "Incoming" : "In Review";
+    const objects = programIntelligence.workObjectsForCase();
+    $("#workspace-queue").innerHTML = statuses.map((status) => `<div class="queue-lane status-${status.toLowerCase().replaceAll(" ", "-")}${status === lane ? " is-current" : ""}"><span><strong>${status}</strong><small>${objects.filter((item) => item.lifecycle.toLowerCase().replace("-", " ") === status.toLowerCase()).length}</small></span>${status === lane ? `<div class="queue-case-chip"><i></i><span>${snapshot.name}<small>${snapshot.stage}</small></span></div>` : ""}<div class="queue-items">${objects.filter((item) => item.lifecycle === (status === "In Review" ? "in-review" : status.toLowerCase())).map((item) => `<small>${item.title}</small>`).join("") || "<small>NO WORK OBJECTS</small>"}</div></div>`).join("");
+    return;
+  }
   const activeQueue = state.validationStatus === "complete" ? "Complete" : state.validationStatus === "exception" ? "Blocked" : ["correction-proposed", "evidence-requested", "correction-rejected"].includes(state.validationStatus) ? "Waiting" : ["running", "rerunning"].includes(state.validationStatus) ? "In Review" : ["contract-review", "correction-applied"].includes(state.validationStatus) ? "Incoming" : state.engineeringStatus === "validation-ready" ? "Complete" : state.engineeringStatus === "package-generated" ? "Waiting" : state.engineeringStatus === "generating" ? "In Review" : state.engineeringStatus === "contract-review" ? "Incoming" : state.propagationStatus === "approved" ? "Complete" : state.propagationStatus === "complete" ? "Waiting" : state.propagationStatus === "running" ? "In Review" : state.decisionStatus === "ready-replanning" ? "Incoming" : state.decisionStatus === "waiting-evidence" ? "Waiting" : state.workspaceStatus === "blocked" ? "Blocked" : state.workspaceStatus === "paused" ? "Waiting" : state.workspaceStatus === "running" ? "In Review" : "Incoming";
   $("#workspace-queue").innerHTML = statuses.map((status) => {
     const items = workspaceWorkObjects.filter((_, index) => workObjectStatus(index) === status);
@@ -790,6 +851,22 @@ function renderWorkQueue() {
 
 function renderWorkspaceState() {
   const snapshot = currentCaseSnapshot();
+  if (isSupplierCase()) {
+    $$('[data-workflow-stage]').forEach((node) => { const index = Number(node.dataset.workflowStage); node.classList.toggle("is-complete", index < snapshot.stageIndex); node.classList.toggle("is-active", index === snapshot.stageIndex); node.classList.toggle("is-blocked", index === 4); });
+    $("#workspace-observatory-title").textContent = snapshot.name;
+    $("#case-progress-marker").style.setProperty("--case-stage", String(snapshot.stageIndex));
+    $("#case-progress-marker").classList.toggle("is-blocked", snapshot.stage === "Decision Pending");
+    $("#case-progress-label").textContent = snapshot.stage.toUpperCase();
+    $("#workspace-status-line").textContent = snapshot.stage === "Decision Pending" ? "Decision Pending · Waiting for Mission Commander." : `${snapshot.owner} · ${snapshot.task}.`;
+    $("#start-workspace").disabled = snapshot.stageIndex > 0 || snapshot.paused;
+    $("#start-workspace").textContent = "Start Supplier Quality Journey";
+    $("#pause-workspace").disabled = snapshot.paused || snapshot.stage === "Decision Pending";
+    $("#resume-workspace").disabled = !snapshot.paused;
+    renderWorkObjects(); renderWorkQueue(); renderMissionCase();
+    return;
+  }
+  $("#workspace-observatory-title").textContent = "Customer Intelligence Capability";
+  $("#start-workspace").textContent = "Start Workspace Flow";
   const decisionBlocked = state.workspaceStatus === "blocked" && !["ready-replanning", "waiting-evidence"].includes(state.decisionStatus);
   const stageForRail = state.workspaceStage;
   $$("[data-workflow-stage]").forEach((node) => {
@@ -1681,7 +1758,10 @@ function resetToGuidedStep(targetStep) {
   return demoStateIsReliable();
 }
 
-function resetCurrentStage() { resetToGuidedStep(currentDemoStep()); }
+function resetCurrentStage() {
+  if (isSupplierCase()) { programIntelligence.resetCase(); renderHqState(); return; }
+  resetToGuidedStep(currentDemoStep());
+}
 function restartGuidedDemo() { setGuidedDemo(true); resetToGuidedStep(1); }
 
 function toggleDemoInfo(force) {
@@ -1728,16 +1808,18 @@ function hqAgentMessage(id) {
 
 function renderHqState() {
   const snapshot = currentCaseSnapshot();
+  $("#hq-experience").dataset.activeCase = activeCaseId();
+  $("#reset-current-stage").textContent = isSupplierCase() ? "Reset Current Case" : "Reset Current Stage";
   const workflow = state.workspaceStage >= 0 ? snapshot.stage : state.portfolioState || "Unverified";
   $("#hq-workflow-stage").textContent = workflow.toUpperCase();
-  $("#hq-selected-capability").textContent = state.capabilityState ? "CUSTOMER INTELLIGENCE" : "AWAITING FORMATION";
+  $("#hq-selected-capability").textContent = isSupplierCase() ? "SUPPLIER QUALITY PORTAL" : state.capabilityState ? "CUSTOMER INTELLIGENCE" : "AWAITING FORMATION";
   const activeCount = ["agent-01", "agent-02", "agent-03", "agent-04", "agent-05", "agent-08"].filter((id) => ["Working", "Investigating", "Reasoning", "Propagating", "Updating"].includes(state.agentStates.get(id))).length;
   $("#hq-active-count").textContent = String(activeCount);
   $("#hq-next-action").textContent = hqNextAction();
   $("#hq-artifact-count").textContent = `${state.generatedArtifactIds.size} / 6`;
   $("#hq-validation-status").textContent = state.migrationPackage.validationStatus.toUpperCase();
   $("#hq-roadmap-status").textContent = state.executiveStatus === "approved" ? "WAVE 1 APPROVED" : state.capacitySimulationActive ? "SIMULATION PREVIEW" : state.executivePrepared ? "BASELINE READY" : "NOT PREPARED";
-  $("#center-active-case").disabled = !state.capabilityState;
+  $("#center-active-case").disabled = isSupplierCase() ? false : !state.capabilityState;
   const caseState = state.workspaceStage >= 0 ? snapshot.stage.toUpperCase() : state.hqCaseLocation === "decision-room" ? "IN SHARED DECISION ROOM" : state.assessmentReady ? "ASSESSMENT READY" : state.capabilityState ? state.capabilityState.toUpperCase() : "AWAITING ASSESSMENT";
   $("#hq-case-state").textContent = caseState;
   $("#hq-case-owner").textContent = snapshot.owner.toUpperCase();
@@ -1746,7 +1828,18 @@ function renderHqState() {
   $("#hq-case-next").textContent = snapshot.next.toUpperCase();
   $("#hq-case-current-evidence").textContent = snapshot.evidence.toUpperCase();
   $("#hq-case-recommendation").textContent = `RECOMMENDATION / ${snapshot.recommendation}`;
-  $("#hq-case-file").classList.toggle("is-dormant", !state.capabilityState);
+  const caseDefinition = programIntelligence?.cases[activeCaseId()];
+  $("#hq-active-case-name").textContent = caseDefinition.name;
+  $("#hq-active-case-id").textContent = caseDefinition.id;
+  $("#hq-case-file").setAttribute("aria-label", `Inspect ${caseDefinition.name} modernization case`);
+  if (isSupplierCase()) {
+    $("#hq-active-case-products").innerHTML = `<span>Supplier Quality Portal</span>`;
+    $("#hq-active-case-dependency").innerHTML = `<i></i><span>Supplier Master API</span><small>Shared program dependency</small>`;
+  } else {
+    $("#hq-active-case-products").innerHTML = `<span>Customer Service Portal</span><span>Customer Analytics Warehouse</span><span>Product Telemetry Platform</span>`;
+    $("#hq-active-case-dependency").innerHTML = `<i></i><span>Finance Warehouse</span><small>12 dependent finance reports</small>`;
+  }
+  $("#hq-case-file").classList.toggle("is-dormant", !isSupplierCase() && !state.capabilityState);
   $$("[data-hq-agent]").forEach((persona) => {
     const id = persona.dataset.hqAgent;
     const specialist = hqSpecialists[id];
@@ -1901,6 +1994,7 @@ function selectWorkObject(id) {
 
 function renderCasePanel(focus = "summary") {
   const snapshot = currentCaseSnapshot();
+  const definition = programIntelligence.cases[activeCaseId()];
   const focused = {
     owner: `<strong>${snapshot.owner}</strong> currently owns <strong>${snapshot.task}</strong>.`,
     blocker: snapshot.blocker === "None" ? "No active blocker is attached to the case." : `<strong>${snapshot.blocker}.</strong> The case is waiting for accountable human action.`,
@@ -1909,7 +2003,7 @@ function renderCasePanel(focus = "summary") {
   state.selectedHqAgent = null;
   state.selectedWorkObjectId = null;
   state.selectedEnterpriseContextId = null;
-  $("#hq-context-panel").innerHTML = `<div class="hq-panel-content case-detail"><p class="eyebrow">MODERNIZATION CASE / DR-CIC-001</p><h2>Customer Intelligence Capability</h2><p class="panel-summary">One shared record for three products and the external Finance Warehouse dependency.</p><div class="hq-panel-state"><span><small>CURRENT STAGE</small><strong>${snapshot.stage.toUpperCase()}</strong></span><span><small>CURRENT OWNER</small><strong>${snapshot.owner.toUpperCase()}</strong></span></div><div class="case-detail-actions"><button type="button" data-case-detail="owner">Inspect Current Owner</button><button type="button" data-case-detail="blocker">Show Blocker</button><button type="button" data-case-detail="next">Show Next Action</button></div><div class="hq-agent-response" id="case-detail-response">${focused}</div><div class="case-detail-products"><span>Customer Analytics Warehouse</span><span>Customer Service Portal</span><span>Product Telemetry Platform</span><span class="is-dependency">Finance Warehouse / external dependency</span></div></div>`;
+  $("#hq-context-panel").innerHTML = `<div class="hq-panel-content case-detail"><p class="eyebrow">MODERNIZATION CASE / ${definition.id}</p><h2>${definition.name}</h2><p class="panel-summary">${definition.purpose}</p><div class="hq-panel-state"><span><small>CURRENT STAGE</small><strong>${snapshot.stage.toUpperCase()}</strong></span><span><small>CURRENT OWNER</small><strong>${snapshot.owner.toUpperCase()}</strong></span></div><div class="case-detail-actions"><button type="button" data-case-detail="owner">Inspect Current Owner</button><button type="button" data-case-detail="blocker">Show Blocker</button><button type="button" data-case-detail="next">Show Next Action</button></div><div class="hq-agent-response" id="case-detail-response">${focused}</div><div class="case-detail-products">${definition.dependencies.map((item) => `<span class="is-dependency">${item}</span>`).join("")}</div></div>`;
 }
 
 function handleCaseAction(action) {
@@ -1939,6 +2033,7 @@ function startWorkspaceTransition() {
 }
 
 function startWorkspaceFlow() {
+  if (isSupplierCase()) { programIntelligence.advanceCase(); renderHqState(); return; }
   if (!state.assessmentReady || state.hqTransition !== "complete" || state.workspaceStatus !== "idle") return;
   state.workspaceStage = 0;
   state.workspaceStatus = "running";
@@ -1947,6 +2042,7 @@ function startWorkspaceFlow() {
 }
 
 function pauseWorkspace() {
+  if (isSupplierCase()) { programIntelligence.pauseCase(); renderHqState(); return; }
   if (state.workspaceStatus !== "running") return;
   state.workspacePauseRequested = true;
   if (!state.workspaceTransition) state.workspaceStatus = "paused";
@@ -1954,6 +2050,7 @@ function pauseWorkspace() {
 }
 
 function resumeWorkspace() {
+  if (isSupplierCase()) { programIntelligence.resumeCase(); renderHqState(); return; }
   if (state.workspaceStatus !== "paused") return;
   state.workspaceStatus = "running";
   state.workspacePauseRequested = false;
@@ -1999,7 +2096,7 @@ function handleHqAction(action) {
 
 function centerActiveCase() {
   openExperience("hq");
-  const target = state.assessmentReady ? $("#hq-decision-target") : $("#hq-case-file");
+  const target = !isSupplierCase() && state.assessmentReady ? $("#hq-decision-target") : $("#hq-case-file");
   target.scrollIntoView({ behavior: "smooth", block: "center" });
 }
 
@@ -2160,6 +2257,7 @@ function resetHqState() {
 }
 
 function resetDemo() {
+  if (programIntelligence) programIntelligence.resetAll();
   state.discovery = "unverified";
   state.portfolioState = "Unverified";
   state.capabilityState = null;
@@ -2197,6 +2295,10 @@ function init() {
   $$('[data-enterprise-context]').forEach((context) => context.addEventListener("click", (event) => {
     const node = event.target.closest('[data-enterprise-context-id]');
     if (node) selectEnterpriseContext(node.dataset.enterpriseContextId);
+  }));
+  $$('[data-program-intelligence]').forEach((panel) => panel.addEventListener("click", (event) => {
+    const action = event.target.closest('[data-program-action]');
+    if (action) handleProgramAction(action);
   }));
   $$('[data-view]').forEach((control) => control.addEventListener("click", () => navigate(control.dataset.view)));
   $$('[data-view-link]').forEach((link) => link.addEventListener("click", (event) => { event.preventDefault(); navigate(link.dataset.viewLink, false); openExperience("mission-control"); }));
@@ -2261,6 +2363,8 @@ function init() {
     if (caseDetail) handleCaseDetail(caseDetail.dataset.caseDetail);
   });
   $("#workspace-work-objects").addEventListener("click", (event) => {
+    const programAction = event.target.closest('[data-program-action]');
+    if (programAction) { handleProgramAction(programAction); return; }
     const workObject = event.target.closest("[data-work-object]");
     if (workObject) selectWorkObject(workObject.dataset.workObject);
   });

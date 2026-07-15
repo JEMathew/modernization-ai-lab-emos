@@ -36,8 +36,8 @@
       owner: "Transformation Office",
       purpose: "Coordinate governed modernization of customer intelligence without disrupting finance reporting.",
       outcome: "A sequenced, validated modernization roadmap with accountable delivery boundaries.",
-      relationship: "Owns DR-CIC-001 and translates the portfolio priority into governed work.",
-      nextResponsibility: "Coordinate the active case and preserve shared constraints across future cases."
+      relationship: "Owns DR-CIC-001 and DR-SQP-002 and translates portfolio priorities into governed work.",
+      nextResponsibility: "Coordinate both cases and preserve shared dependencies without duplicating them."
     }),
     Object.freeze({
       id: "case",
@@ -57,8 +57,9 @@
   }
 
   function lineageForCase(reference) {
-    if (reference !== "DR-CIC-001") return [];
-    return levels.map((level) => level.reference);
+    if (reference === "DR-CIC-001") return levels.map((level) => level.reference);
+    if (reference === "DR-SQP-002") return levels.slice(0, -1).map((level) => level.reference).concat(reference);
+    return [];
   }
 
   function validateHierarchy() {

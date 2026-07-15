@@ -8,6 +8,7 @@ const enterpriseContext = require("../enterprise-context.js");
 assert.equal(enterpriseContext.validateHierarchy(), true, "enterprise work hierarchy is complete and ordered");
 assert.deepEqual(enterpriseContext.levels.map((level) => level.id), ["initiative", "portfolio", "program", "case"], "context follows Initiative to Portfolio to Program to Case");
 assert.deepEqual(enterpriseContext.lineageForCase("DR-CIC-001"), ["BI-CX-2026-01", "PF-APEX-TECH-01", "MP-CI-01", "DR-CIC-001"], "active case preserves complete enterprise lineage");
+assert.deepEqual(enterpriseContext.lineageForCase("DR-SQP-002"), ["BI-CX-2026-01", "PF-APEX-TECH-01", "MP-CI-01", "DR-SQP-002"], "second case preserves the same governed program lineage");
 assert.deepEqual(enterpriseContext.lineageForCase("UNKNOWN"), [], "unknown cases cannot inherit synthetic lineage");
 assert.equal(enterpriseContext.getLevel("program").owner, "Transformation Office", "program ownership is explicit");
 assert.equal(enterpriseContext.getLevel("unknown"), null, "unknown context levels are rejected");

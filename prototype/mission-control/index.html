@@ -6,10 +6,11 @@
     <meta name="description" content="Standalone Modernization AI Lab mission-control prototype.">
     <title>Modernization AI Lab — Mission Control</title>
     <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='4' fill='%230b1720'/%3E%3Cpath d='M7 23V15h4v8m3 0V10h4v13m3 0V6h4v17' stroke='%234bd6c2' stroke-width='2'/%3E%3C/svg%3E">
-    <link rel="stylesheet" href="styles.css?v=1.2">
+    <link rel="stylesheet" href="styles.css?v=1.3">
     <script src="portfolio-lab.js?v=1.0.1-stable3" defer></script>
     <script src="enterprise-context.js?v=1.1" defer></script>
-    <script src="script.js?v=1.1" defer></script>
+    <script src="program-intelligence.js?v=1.2" defer></script>
+    <script src="script.js?v=1.2" defer></script>
     <script src="portfolio-lab-ui.js?v=1.0.1-stable5" defer></script>
   </head>
   <body>
@@ -134,6 +135,8 @@
           <div class="enterprise-context-rail" data-enterprise-context-rail></div>
           <div class="enterprise-context-detail" data-enterprise-context-detail hidden aria-live="polite"></div>
         </section>
+
+        <section class="program-intelligence" data-program-intelligence aria-label="Multi-case program intelligence"></section>
 
         <section class="mission-case-dock" id="mission-case-dock" aria-label="Active modernization case">
           <div class="mission-case-identity"><span class="case-live-dot" aria-hidden="true"></span><span><small>ACTIVE MODERNIZATION CASE</small><strong>Customer Intelligence Capability</strong></span></div>
@@ -333,11 +336,12 @@
           </div>
         </header>
 
-        <section class="enterprise-context" data-enterprise-context aria-label="Enterprise modernization context">
+          <section class="enterprise-context" data-enterprise-context aria-label="Enterprise modernization context">
           <header><div><small>ENTERPRISE WORK HIERARCHY</small><strong>Shared context for the active workspace</strong></div><span>ONE TRACEABLE LINEAGE</span></header>
           <div class="enterprise-context-rail" data-enterprise-context-rail></div>
           <div class="enterprise-context-detail" data-enterprise-context-detail hidden aria-live="polite"></div>
         </section>
+        <section class="program-intelligence" data-program-intelligence aria-label="Multi-case program intelligence"></section>
 
         <section class="workspace-observatory" id="workspace-observatory" aria-labelledby="workspace-observatory-title">
           <div class="workspace-commandbar">
@@ -488,12 +492,12 @@
               </button>
               <div class="hq-case-file" id="hq-case-file" role="button" tabindex="0" aria-label="Inspect Customer Intelligence Capability modernization case">
                 <div class="case-file-top"><span>SHARED CASE FILE</span><strong id="hq-case-state">AWAITING ASSESSMENT</strong></div>
-                <h3>Customer Intelligence Capability</h3>
-                <div class="case-products"><span>Customer Service Portal</span><span>Customer Analytics Warehouse</span><span>Product Telemetry Platform</span></div>
-                <div class="case-dependency"><i></i><span>Finance Warehouse</span><small>12 dependent finance reports</small></div>
+                <h3 id="hq-active-case-name">Customer Intelligence Capability</h3>
+                <div class="case-products" id="hq-active-case-products"><span>Customer Service Portal</span><span>Customer Analytics Warehouse</span><span>Product Telemetry Platform</span></div>
+                <div class="case-dependency" id="hq-active-case-dependency"><i></i><span>Finance Warehouse</span><small>12 dependent finance reports</small></div>
                 <div class="case-signals"><span><small>EVIDENCE</small><strong>3 / 3 READY</strong></span><span><small>VALUE</small><strong>HIGH</strong></span><span><small>URGENCY</small><strong>HIGH</strong></span><span><small>RISK</small><strong>ELEVATED</strong></span></div>
                 <div class="case-operations"><span class="case-operation-link" data-case-detail="owner" role="button" tabindex="0"><small>CURRENT OWNER</small><strong id="hq-case-owner">PORTFOLIO INTELLIGENCE</strong></span><span><small>CURRENT TASK</small><strong id="hq-case-task">FORM CAPABILITY</strong></span><span class="case-operation-link" data-case-detail="blocker" role="button" tabindex="0"><small>CURRENT BLOCKER</small><strong id="hq-case-blocker">NONE</strong></span><span class="case-operation-link" data-case-detail="next" role="button" tabindex="0"><small>NEXT ACTION</small><strong id="hq-case-next">BEGIN DISCOVERY</strong></span><span><small>CURRENT EVIDENCE</small><strong id="hq-case-current-evidence">PORTFOLIO INVENTORY</strong></span></div>
-                <div class="case-record"><span>DECISION RECORD</span><strong>DR-CIC-001</strong><small id="hq-case-recommendation">RECOMMENDATION / PENDING SPECIALIST REVIEW</small></div>
+                <div class="case-record"><span>DECISION RECORD</span><strong id="hq-active-case-id">DR-CIC-001</strong><small id="hq-case-recommendation">RECOMMENDATION / PENDING SPECIALIST REVIEW</small></div>
                 <div class="case-evidence-tokens" aria-hidden="true"><i></i><i></i><i></i></div>
               </div>
             </section>

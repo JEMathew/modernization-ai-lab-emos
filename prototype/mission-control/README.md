@@ -1,4 +1,4 @@
-# Modernization AI Lab — Mission Control 1.1
+# Modernization AI Lab — Mission Control 1.2
 
 Turn a synthetic legacy portfolio into a traceable, human-approved modernization roadmap and implementation-ready migration starter package in under three minutes.
 
@@ -16,6 +16,7 @@ Mission Control is a standalone HTML, CSS, and JavaScript prototype created for 
 - Independent validation that intentionally finds a semantic failure, applies an approved correction, and reruns only three impacted checks.
 - An evidence-linked three-wave portfolio roadmap and explicit Wave 1 approval.
 - An experimental Portfolio Upload Lab with local CSV/JSON validation, dependency checks, transparent scoring, and synthetic industry samples.
+- Multi-Case Program Intelligence with two isolated modernization cases, a shared program dependency, and evidence-led sequencing.
 
 ## Screenshots
 
@@ -34,7 +35,7 @@ The prototype has one shared in-memory case state rendered through two synchroni
 Connected Customer Growth / BI-CX-2026-01
   └─ Apex Enterprise Technology Portfolio / PF-APEX-TECH-01
       └─ Customer Intelligence Modernization Program / MP-CI-01
-          └─ Shared Modernization Case / DR-CIC-001
+          ├─ Customer Intelligence Capability / DR-CIC-001
               ├─ Mission Control rendering
               ├─ Modernization HQ rendering
               ├─ Evidence and specialist decisions
@@ -42,12 +43,17 @@ Connected Customer Growth / BI-CX-2026-01
               ├─ Mocked engineering artifacts
               ├─ Deterministic validation results
               └─ Executive roadmap and approval record
+          └─ Supplier Quality Portal Modernization / DR-SQP-002
+              ├─ Application architecture and shared dependency evidence
+              ├─ Isolated five-stage case workflow
+              └─ Decision Record placeholder
 ```
 
 - `index.html` contains semantic structure and inline SVG symbols.
 - `styles.css` provides responsive enterprise presentation, one-shot motion, Fast pace, and reduced-motion support.
 - `script.js` contains mocked data, deterministic workflow state, provider-neutral contracts, validation results, judge-mode cues, and reset reconstruction.
 - `enterprise-context.js` defines and validates the provider-neutral Initiative, Portfolio, Program, and Case lineage.
+- `program-intelligence.js` defines the two-case program, reusable case workflow, keyed state, case-scoped work objects, decision history, shared dependency, and sequencing rationale.
 - `portfolio-lab.js` contains the standalone parser, schema validation, dependency checks, ten-unit limit, and deterministic scoring engine.
 - `portfolio-lab-ui.js` connects that engine to upload, mapping, validation, sample, scoring, capability-formation, assessment, and engineering-evidence-gate views.
 
@@ -92,6 +98,17 @@ Guided Demo reads the existing shared workflow state. It does not create, skip, 
 The hierarchy above the active case answers why the modernization exists, which portfolio supplies the evidence, which program owns coordinated delivery, and which case currently carries the work. Select any hierarchy level in Mission Control or Modernization HQ to inspect its reference, accountable owner, purpose, expected business outcome, relationship, live status, and next responsibility.
 
 Both experiences render the same hierarchy and case status. The case owner and next responsibility update from the existing workflow state; no second workflow or duplicate case record is created. All hierarchy names and references are synthetic.
+
+## Multi-Case Program Intelligence
+
+The program view coordinates two synthetic cases without changing the established Guided Demo:
+
+- **DR-CIC-001 — Customer Intelligence Capability** preserves the complete data-platform-led Oracle-to-BigQuery journey and all existing engineering, validation, and executive behavior.
+- **DR-SQP-002 — Supplier Quality Portal Modernization** is an application-led case addressing technical debt, fragile integrations, slow releases, and the shared Supplier Master API. It progresses through Assessment Ready, Architecture Review, Business Review, Risk Review, and Decision Pending, where it stops for the Mission Commander.
+
+Select either case from Mission Control or Modernization HQ. The selected case, current owner, blocker, next action, evidence, dependencies, work objects, and lineage remain synchronized across both experiences. Case progress is keyed by case ID: advancing or resetting Supplier Quality does not mutate Customer Intelligence, and switching views does not replay completed work. **Reset Current Stage** resets only the selected Supplier Quality case when it is active; **Reset Full Demo** resets both cases and restores DR-CIC-001 as the Guided Demo focus.
+
+The Supplier Master API is represented once as a program-level dependency and linked directly to DR-SQP-002. Program sequencing recommends the evidence-mature DR-CIC-001 first, followed by DR-SQP-002 after its application reviews and shared API ownership are governed. V1.2 does not add engineering generation, validation, live AI, or unlimited case creation for the second case.
 
 ## Portfolio Upload Lab
 
