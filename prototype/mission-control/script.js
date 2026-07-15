@@ -1707,6 +1707,20 @@ function demoStateIsReliable() {
     && (state.correctedArtifactVersion !== "v2" || state.correctionProposal.approvalStatus === "Approved by Mission Commander");
 }
 
+function syncGuidedDiscoveryAction(step) {
+  const button = $("#begin-discovery");
+  const guidedSlot = $("#guided-discovery-action");
+  const standardSlot = $(".discovery-action");
+  const isGuidedDiscoveryReady = state.guidedDemo && step === 1 && state.discovery === "unverified";
+
+  guidedSlot.hidden = !isGuidedDiscoveryReady;
+  if (isGuidedDiscoveryReady) {
+    guidedSlot.append(button);
+  } else if (!standardSlot.contains(button)) {
+    standardSlot.append(button);
+  }
+}
+
 function renderGuidedDemo() {
   const step = currentDemoStep();
   const definition = guidedDemoSteps[step - 1];
@@ -1714,6 +1728,7 @@ function renderGuidedDemo() {
   cue.hidden = !state.guidedDemo;
   cue.dataset.reliable = String(demoStateIsReliable());
   $("#guided-demo-toggle").checked = state.guidedDemo;
+  syncGuidedDiscoveryAction(step);
   if (!state.guidedDemo) return;
   $("#guided-step-count").textContent = `STEP ${step} OF 9`;
   $("#guided-step-title").textContent = definition.title;

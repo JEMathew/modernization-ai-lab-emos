@@ -304,6 +304,8 @@ h1 { margin-bottom: 9px; font-size: clamp(2rem, 3.3vw, 3.7rem); line-height: .98
 @media (max-width:820px) { .enterprise-context-rail { grid-template-columns:1fr;gap:5px; }.enterprise-context-rail>i { width:auto;height:12px;transform:rotate(90deg); }.enterprise-context-rail>button { min-height:0; }.enterprise-context-detail-grid { grid-template-columns:1fr; }.enterprise-context>header,.enterprise-context-detail-heading { align-items:flex-start;flex-direction:column; }.enterprise-context>header>span { white-space:normal; } }
 .enterprise-context-rail>i,.guided-cue { pointer-events:none; }
 .guided-cue button { pointer-events:auto; }
+.guided-primary-action { margin:10px 0 2px;pointer-events:auto; }
+.guided-primary-action .primary-action { width:100%;justify-content:center; }
 
 .program-intelligence { margin:18px 0;border:1px solid #31505a;background:linear-gradient(145deg,rgba(18,43,52,.96),rgba(7,22,29,.98));box-shadow:var(--shadow); }
 .program-intelligence>header,.active-case-work>header { display:flex;justify-content:space-between;align-items:center;gap:16px;padding:14px 16px;border-bottom:1px solid var(--line); }
