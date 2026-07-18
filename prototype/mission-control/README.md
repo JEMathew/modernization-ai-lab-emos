@@ -8,6 +8,8 @@ Mission Control is a standalone HTML, CSS, and JavaScript prototype created for 
 
 - Portfolio discovery across ten synthetic applications and data platforms.
 - A visible Business Initiative → Enterprise Portfolio → Modernization Program → Modernization Case hierarchy with accountable ownership and expected outcomes.
+- A business-led Enterprise DNA operating model connecting strategy, initiatives, outcomes, capabilities, digital products, technology, teams, risks, readiness and the active Journey case.
+- A deterministic Enterprise Intelligence finding explaining why DR-CIC-001 was recommended from traceable enterprise evidence.
 - Formation of the Customer Intelligence Capability around shared consequence.
 - A Living Workspace where specialist ownership and work-object movement are visible.
 - Human resolution of conflicting specialist recommendations.
@@ -53,12 +55,30 @@ Connected Customer Growth / BI-CX-2026-01
 - `index.html` contains semantic structure and inline SVG symbols.
 - `styles.css` provides responsive enterprise presentation, one-shot motion, Fast pace, and reduced-motion support.
 - `script.js` contains mocked data, deterministic workflow state, provider-neutral contracts, validation results, judge-mode cues, and reset reconstruction.
+- `enterprise-dna.js` defines the central business-and-technology operating model, controlled contracts, provenance rules, indexed relationships, bounded queries, stable legacy mappings, read-only Journey projections, and deterministic Enterprise Intelligence findings.
 - `enterprise-context.js` defines and validates the provider-neutral Initiative, Portfolio, Program, and Case lineage.
 - `program-intelligence.js` defines the two-case program, reusable case workflow, keyed case state, program constraints and decisions, case-impact records, selective propagation, shared dependencies, provider-neutral work objects, and sequencing rationale.
 - `portfolio-lab.js` contains the standalone parser, schema validation, dependency checks, ten-unit limit, and deterministic scoring engine.
 - `portfolio-lab-ui.js` connects that engine to upload, mapping, validation, sample, scoring, capability-formation, assessment, and engineering-evidence-gate views.
 
 No React, Streamlit, npm, TypeScript, external library, API, or backend is used by this standalone prototype.
+
+## Enterprise DNA foundation
+
+Enterprise DNA is the authoritative business-and-technology context for the Apex Customer Intelligence slice. It begins with the **Connected Customer Growth** strategy and **Customer Intelligence Transformation** initiative, then connects five measurable outcomes to five business capabilities and the durable **Customer Intelligence** digital product. That product is related to the Customer Service Portal, Customer Service API, Customer 360 data product, Customer Analytics Warehouse, Product Telemetry Platform, Finance Warehouse, databases, pipelines, infrastructure, owners, engineering teams, risks, technical debt, and readiness assessments.
+
+The model contains controlled object and relationship vocabularies, stable IDs, evidence references, provenance, confidence and lifecycle fields. Directed relationships are represented once; incoming and outgoing indexes provide reverse navigation. Traversal is cycle-safe and capped at a depth of six and 250 results. The current synthetic slice contains 39 objects and 76 relationships.
+
+Enterprise Intelligence is deliberately lightweight in this increment. One deterministic finding answers **Why was DR-CIC-001 recommended?** by tracing strategy → initiative → outcomes → capabilities → digital product → supporting assets → Finance Warehouse dependency → ownership risk → modernization recommendation. It does not call an LLM or invent numeric scores.
+
+State authority remains explicit:
+
+- Enterprise DNA owns confirmed enterprise facts and relationships.
+- Enterprise Intelligence owns traceable findings derived from those facts.
+- The existing Journey owns stage, current task, specialist assignment, blocker, approvals, handoffs, artifacts, validation and execution checkpoints.
+- Mission Control, Modernization HQ, the Decision Room, Engineering, Validation and the Executive Roadmap consume read-only projections combining Enterprise DNA with the existing Journey snapshot.
+
+Enterprise DNA does not contain a workflow stage, active-case selector, Journey owner, approval status, validation state, engineering artifacts or a second modernization lifecycle. Full Reset reconstructs Journey state while the underlying enterprise operating model remains available. This is an in-memory synthetic foundation, not production-scale persistence, ingestion, temporal storage or multi-tenant infrastructure.
 
 ## Launch
 

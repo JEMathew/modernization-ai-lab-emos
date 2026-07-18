@@ -2,6 +2,7 @@
 
 const enterpriseContext = globalThis.EnterpriseContext;
 const programIntelligence = globalThis.ProgramIntelligence;
+const enterpriseDna = globalThis.EnterpriseDNA;
 
 function activeCaseId() { return programIntelligence?.state.activeCaseId || "DR-CIC-001"; }
 function isSupplierCase() { return activeCaseId() === "DR-SQP-002"; }
@@ -294,6 +295,50 @@ function stateClass(label) {
   }[label] || "";
 }
 
+function dnaObjectNames(items, limit = 4) {
+  const names = (items || []).slice(0, limit).map((item) => item.name);
+  return `${names.join(" · ")}${(items || []).length > limit ? ` · +${items.length - limit} more` : ""}`;
+}
+
+function activeDnaProjection() {
+  if (!enterpriseDna || activeCaseId() !== "DR-CIC-001") return null;
+  return enterpriseDna.projectionForCase("DR-CIC-001", currentCaseSnapshot());
+}
+
+function renderEnterpriseDnaContext() {
+  const container = $("#enterprise-dna-context");
+  if (!container) return;
+  const detailWasExpanded = $("#enterprise-dna-disclosure")?.getAttribute("aria-expanded") === "true";
+  const projection = activeDnaProjection();
+  container.hidden = !projection;
+  if (!projection) { container.innerHTML = ""; return; }
+  container.innerHTML = `<header><div><small>ENTERPRISE DNA / BUSINESS-LED CONTEXT</small><h2 id="enterprise-dna-title">${projection.strategy.name}</h2><p>${projection.initiative.name} connects strategy to the active modernization case.</p></div><span>ENTERPRISE INTELLIGENCE · ${Math.round(projection.finding.confidence * 100)}% CONFIDENCE</span></header>
+    <div class="enterprise-dna-summary"><span><small>BUSINESS CAPABILITY</small><strong>Customer Intelligence</strong></span><span><small>DIGITAL PRODUCT</small><strong>${projection.digitalProduct.name}</strong></span><span><small>ACCOUNTABLE OWNER</small><strong>${projection.digitalProduct.attributes.productOwner}</strong></span><span><small>KEY DEPENDENCY</small><strong>${projection.primaryDependency.name}</strong></span><span><small>PRIMARY RISK</small><strong>${projection.primaryRisk.name}</strong></span><span><small>EXPECTED VALUE</small><strong>${projection.expectedValue}</strong></span></div>
+    <button class="enterprise-dna-disclosure" id="enterprise-dna-disclosure" type="button" aria-expanded="${detailWasExpanded}" aria-controls="enterprise-dna-detail">Inspect strategy-to-outcome reasoning</button><div class="enterprise-dna-detail" id="enterprise-dna-detail"${detailWasExpanded ? "" : " hidden"}><div><small>TARGET BUSINESS OUTCOMES</small><strong>${dnaObjectNames(projection.outcomes, 5)}</strong></div><div><small>AFFECTED ASSETS</small><strong>${dnaObjectNames(projection.affectedAssets, 5)}</strong></div><div><small>RESPONSIBLE TEAMS</small><strong>${dnaObjectNames(projection.teams, 4)}</strong></div><div><small>WHY THIS CASE</small><strong>${projection.finding.conclusion}</strong></div><div><small>RECOMMENDED ACTION</small><strong>${projection.finding.recommendedAction}</strong></div></div>`;
+  $("#enterprise-dna-disclosure").onclick = toggleEnterpriseDnaDetail;
+}
+
+function toggleEnterpriseDnaDetail() {
+  const disclosure = $("#enterprise-dna-disclosure");
+  const detail = $("#enterprise-dna-detail");
+  if (!disclosure || !detail) return;
+  const expanded = disclosure.getAttribute("aria-expanded") === "true";
+  disclosure.setAttribute("aria-expanded", String(!expanded));
+  detail.hidden = expanded;
+}
+
+function dnaProductContext(legacyId) {
+  if (!enterpriseDna) return "";
+  const object = enterpriseDna.getObject(legacyId);
+  if (!object) return "";
+  const relationships = enterpriseDna.getRelationships(object.id, "both");
+  const related = relationships.map((link) => enterpriseDna.getObject(link.sourceId === object.id ? link.targetId : link.sourceId)).filter(Boolean);
+  const capabilities = related.filter((item) => item.kind === "Business Capability");
+  const teams = related.filter((item) => item.kind === "Engineering Team");
+  const owners = related.filter((item) => item.kind === "Owner");
+  return `<div class="dna-inspector-context"><small>ENTERPRISE DNA CONTEXT</small><strong>${object.kind} · ${object.id}</strong><span>${capabilities.length ? `Capabilities: ${dnaObjectNames(capabilities)}` : "Customer Intelligence digital-product boundary"}</span><span>${owners.length ? `Owner: ${dnaObjectNames(owners)}` : "Ownership inherited through the Customer Intelligence product"}</span><span>${teams.length ? `Team: ${dnaObjectNames(teams)}` : "Team relationships available through the active case"}</span><span>Evidence: ${object.evidenceReferences.join(" · ")} · Confidence ${Math.round(object.confidence * 100)}%</span></div>`;
+}
+
 function productCard(product, index) {
   const number = String(index + 1).padStart(2, "0");
   return `<button class="product-card${product.priority ? " is-priority" : ""}" type="button" data-product-id="${product.id}" aria-pressed="false">
@@ -344,7 +389,7 @@ function selectProduct(id) {
     <div class="panel-kicker"><span>${product.group === "data" ? "DATA PLATFORM" : "APPLICATION"} / ${product.id.toUpperCase()}</span><button class="panel-close" type="button" aria-label="Close product detail"><svg aria-hidden="true"><use href="#icon-close"></use></svg></button></div>
     <h2>${product.name}</h2><p class="panel-subtitle">${product.platform} · ${product.owner}</p>
     <div class="signal-grid"><div><small>CRITICALITY</small><strong>${product.criticality}</strong></div><div><small>PLATFORM AGE</small><strong>${product.age}</strong></div><div><small>6R SIGNAL</small><strong>${product.disposition}</strong></div><div><small>CURRENT STATE</small><strong>${currentState}</strong></div></div>
-    <span class="panel-section-label">BUSINESS CONTEXT</span><p class="panel-summary">${product.summary}</p>${evidenceMessage}
+    <span class="panel-section-label">BUSINESS CONTEXT</span><p class="panel-summary">${product.summary}</p>${dnaProductContext(id)}${evidenceMessage}
   </div>`;
   $("#product-panel .panel-close").addEventListener("click", clearProduct);
 }
@@ -832,6 +877,7 @@ function renderMissionCase() {
   $("#mission-validation-status").textContent = state.migrationPackage.validationStatus.toUpperCase();
   $("#mission-roadmap-status").textContent = state.executiveStatus === "approved" ? "WAVE 1 APPROVED" : state.capacitySimulationActive ? "SIMULATION PREVIEW" : state.executivePrepared ? "BASELINE READY" : "NOT PREPARED";
   $("#mission-case-dock").classList.toggle("is-blocked", snapshot.blocker !== "None");
+  renderEnterpriseDnaContext();
   renderEnterpriseContext();
   renderProgramIntelligence();
 }
@@ -939,10 +985,12 @@ function decisionComparison() {
 }
 
 function decisionActionContent(action) {
+  const dna = enterpriseDna?.workspaceProjection("decision", "DR-CIC-001", currentCaseSnapshot());
+  const dnaShared = dna ? `<div class="dna-inspector-context"><small>ENTERPRISE DNA / BUSINESS CONSEQUENCE</small><strong>${dna.strategy.name} → ${dna.digitalProduct.name}</strong><span>Affected outcomes: ${dnaObjectNames(dna.outcomes, 5)}</span><span>Accountable owners: ${dnaObjectNames(dna.accountableOwners, 4)}</span><span>Responsible teams: ${dnaObjectNames(dna.responsibleTeams, 4)}</span></div>` : "";
   const content = {
     compare: decisionComparison(),
-    shared: `<p class="eyebrow">SHARED EVIDENCE</p><h3>Evidence all three positions accept</h3><p>Customer Analytics Warehouse has high technical urgency; customer intelligence is fragmented; twelve Finance Warehouse-dependent reports cross the modernization boundary; and action delayed increases obsolescence.</p>`,
-    conflict: `<p class="eyebrow">CONFLICTING EVIDENCE</p><h3>Finance dependency is technically visible but not governable yet</h3><p>Two sources conflict on report ownership, change authority is incomplete, and executive-metric sensitivity is confirmed. The evidence supports modernization, but not an unqualified transition choice.</p>`,
+    shared: `<p class="eyebrow">SHARED EVIDENCE</p><h3>Evidence all three positions accept</h3><p>Customer Analytics Warehouse has high technical urgency; customer intelligence is fragmented; twelve Finance Warehouse-dependent reports cross the modernization boundary; and action delayed increases obsolescence.</p>${dnaShared}`,
+    conflict: `<p class="eyebrow">CONFLICTING EVIDENCE</p><h3>Finance dependency is technically visible but not governable yet</h3><p>Two sources conflict on report ownership, change authority is incomplete, and executive-metric sensitivity is confirmed. The evidence supports modernization, but not an unqualified transition choice.</p>${dna ? `<div class="dna-inspector-context"><small>ENTERPRISE INTELLIGENCE / WHY THE DECISION EXISTS</small><strong>${dna.dependency.name} threatens measurable business outcomes</strong><span>${dna.primaryRisk.description}</span><span>Alternatives: ${dna.alternatives.join(" · ")}</span><span>Recommendation: ${dna.recommendation}</span></div>` : ""}`,
     assumptions: `<p class="eyebrow">KEY ASSUMPTIONS</p><h3>The conflict is about tolerance for change</h3><p><strong>Business:</strong> coordinated semantic change is tolerable. <strong>Architecture:</strong> compatibility can be preserved. <strong>Risk:</strong> reports cannot safely change without confirmed authority.</p>`,
     change: `<p class="eyebrow">WHAT WOULD CHANGE THEIR MINDS?</p><h3>Targeted evidence, not another broad assessment</h3><p>Business needs proof that a staged path will not fragment customer outcomes. Architecture needs compatibility-test failures to reject staging. Risk needs confirmed ownership, change authority, and reconciliation controls to permit approval.</p>`,
     challenge: `<p class="eyebrow">GOVERNED CHALLENGE / ATTACHED TO DR-CIC-001</p><h3>Risk Specialist challenges the Chief Enterprise Architect</h3><blockquote><strong>Risk:</strong> The staged replatform recommendation depends on preserving twelve Finance Warehouse-dependent reports, but ownership and change authority are unresolved.</blockquote><blockquote><strong>Architect:</strong> The strategy remains feasible if the reports are protected through compatibility views, dual-run reconciliation, and an explicit six-month freeze.</blockquote>`,
@@ -1157,8 +1205,9 @@ function approveRevisedPlan() {
 }
 
 function renderEngineeringContract() {
+  const dna = enterpriseDna?.workspaceProjection("engineering", "DR-CIC-001", currentCaseSnapshot());
   const fields = [
-    ["CASE ID", engineeringContract.caseId], ["MODERNIZATION STRATEGY", engineeringContract.approvedStrategy], ["SOURCE PLATFORM", engineeringContract.sourcePlatform], ["TARGET PLATFORM", engineeringContract.targetPlatform], ["MIGRATION STAGES", engineeringContract.migrationStages.join(" · ")], ["HUMAN CONSTRAINT", engineeringContract.humanConstraints.join(" · ")], ["PROTECTED DEPENDENCY", engineeringContract.protectedDependencies.join(" · ")], ["REQUIRED CONTROLS", engineeringContract.engineeringControls.join(" · ")], ["VALIDATION EXPECTATIONS", engineeringContract.validationExpectations.join(" · ")], ["REMAINING GOVERNANCE ACTION", engineeringContract.governanceActions.join(" · ")], ["APPROVAL REFERENCE", engineeringContract.approvalReference]
+    ["CASE ID", engineeringContract.caseId], ["DIGITAL PRODUCT", dna?.digitalProduct.name || "Customer Intelligence"], ["ENTERPRISE DNA CHANGES", dna ? dnaObjectNames(dna.changedObjects, 4) : "Customer Intelligence assets"], ["BUSINESS OUTCOMES", dna ? dnaObjectNames(dna.outcomes, 5) : "Customer insight and reliability"], ["MODERNIZATION STRATEGY", engineeringContract.approvedStrategy], ["SOURCE PLATFORM", engineeringContract.sourcePlatform], ["TARGET PLATFORM", engineeringContract.targetPlatform], ["MIGRATION STAGES", engineeringContract.migrationStages.join(" · ")], ["HUMAN CONSTRAINT", engineeringContract.humanConstraints.join(" · ")], ["PROTECTED DEPENDENCY", engineeringContract.protectedDependencies.join(" · ")], ["REQUIRED CONTROLS", engineeringContract.engineeringControls.join(" · ")], ["VALIDATION EXPECTATIONS", engineeringContract.validationExpectations.join(" · ")], ["REMAINING GOVERNANCE ACTION", engineeringContract.governanceActions.join(" · ")], ["APPROVAL REFERENCE", engineeringContract.approvalReference]
   ];
   $("#engineering-contract-fields").innerHTML = fields.map(([label, value]) => `<span><small>${label}</small><strong>${value}</strong></span>`).join("");
 }
@@ -1302,7 +1351,8 @@ function finalizeMigrationPackage() {
 }
 
 function renderValidationContract() {
-  const fields = [["CASE ID", validationContract.caseId], ["PACKAGE", validationContract.packageId], ["SOURCE", validationContract.sourcePlatform], ["TARGET", validationContract.targetPlatform], ["ARTIFACTS", "6"], ["VALIDATION EXPECTATIONS", engineeringContract.validationExpectations.join(" · ")], ["HUMAN CONSTRAINT", validationContract.constraints[0]], ["REQUIRED CONTROL", validationContract.constraints[1]], ["GOVERNANCE PREREQUISITE", validationContract.governancePrerequisites[0]], ["VALIDATION AUTHORITY", validationContract.validationAuthority]];
+  const dna = enterpriseDna?.workspaceProjection("validation", "DR-CIC-001", currentCaseSnapshot());
+  const fields = [["CASE ID", validationContract.caseId], ["PACKAGE", validationContract.packageId], ["BUSINESS OUTCOMES", dna ? dnaObjectNames(dna.outcomes, 5) : "Customer insight and reliability"], ["VALIDATED ENTERPRISE DNA OBJECTS", dna ? dnaObjectNames(dna.validatedObjects, 4) : "Customer Intelligence assets"], ["TECHNICAL CONDITIONS", dna ? dnaObjectNames(dna.conditions, 3) : "Finance reporting ownership"], ["SOURCE", validationContract.sourcePlatform], ["TARGET", validationContract.targetPlatform], ["ARTIFACTS", "6"], ["VALIDATION EXPECTATIONS", engineeringContract.validationExpectations.join(" · ")], ["HUMAN CONSTRAINT", validationContract.constraints[0]], ["REQUIRED CONTROL", validationContract.constraints[1]], ["GOVERNANCE PREREQUISITE", validationContract.governancePrerequisites[0]], ["VALIDATION AUTHORITY", validationContract.validationAuthority]];
   $("#validation-contract-fields").innerHTML = fields.map(([label, value]) => `<span><small>${label}</small><strong>${value}</strong></span>`).join("");
 }
 
@@ -1498,7 +1548,9 @@ function renderExecutiveEvidence() {
 }
 
 function renderExecutiveRecommendation() {
-  $("#executive-recommendation-content").innerHTML = `<div class="recommendation-initiatives">${executiveRecommendation.initiatives.map((item, index) => `<article><small>WAVE 1 / INITIATIVE ${index + 1}</small><h3>${item.name}</h3><strong>${item.strategy}</strong><p>${item.rationale}</p></article>`).join("")}</div><p class="recommendation-rationale">${executiveRecommendation.rationale}</p>`;
+  const dna = enterpriseDna?.workspaceProjection("executive", "DR-CIC-001", currentCaseSnapshot());
+  const strategyTrace = dna ? `<div class="executive-dna-trace"><small>ENTERPRISE DNA / STRATEGY-TO-OUTCOME TRACE</small><strong>${dna.strategy.name} → ${dna.initiative.name} → ${dna.digitalProduct.name}</strong><span>Outcomes: ${dnaObjectNames(dna.outcomes, 5)}</span><span>Capabilities: ${dnaObjectNames(dna.capabilities, 5)}</span><span>Expected value: ${dna.expectedValue}</span><span>Remaining risk: ${dnaObjectNames(dna.remainingRisks, 2)}</span></div>` : "";
+  $("#executive-recommendation-content").innerHTML = `${strategyTrace}<div class="recommendation-initiatives">${executiveRecommendation.initiatives.map((item, index) => `<article><small>WAVE 1 / INITIATIVE ${index + 1}</small><h3>${item.name}</h3><strong>${item.strategy}</strong><p>${item.rationale}</p></article>`).join("")}</div><p class="recommendation-rationale">${executiveRecommendation.rationale}</p>`;
 }
 
 function roadmapProductCard(id) {
@@ -2090,6 +2142,7 @@ function selectWorkObject(id) {
 function renderCasePanel(focus = "summary") {
   const snapshot = currentCaseSnapshot();
   const definition = programIntelligence.cases[activeCaseId()];
+  const dna = activeDnaProjection();
   const focused = {
     owner: `<strong>${snapshot.owner}</strong> currently owns <strong>${snapshot.task}</strong>.`,
     blocker: snapshot.blocker === "None" ? "No active blocker is attached to the case." : `<strong>${snapshot.blocker}.</strong> The case is waiting for accountable human action.`,
@@ -2098,7 +2151,8 @@ function renderCasePanel(focus = "summary") {
   state.selectedHqAgent = null;
   state.selectedWorkObjectId = null;
   state.selectedEnterpriseContextId = null;
-  $("#hq-context-panel").innerHTML = `<div class="hq-panel-content case-detail"><p class="eyebrow">MODERNIZATION CASE / ${definition.id}</p><h2>${definition.name}</h2><p class="panel-summary">${definition.purpose}</p><div class="hq-panel-state"><span><small>CURRENT STAGE</small><strong>${snapshot.stage.toUpperCase()}</strong></span><span><small>CURRENT OWNER</small><strong>${snapshot.owner.toUpperCase()}</strong></span></div><div class="case-detail-actions"><button type="button" data-case-detail="owner">Inspect Current Owner</button><button type="button" data-case-detail="blocker">Show Blocker</button><button type="button" data-case-detail="next">Show Next Action</button></div><div class="hq-agent-response" id="case-detail-response">${focused}</div><div class="case-detail-products">${definition.dependencies.map((item) => `<span class="is-dependency">${item}</span>`).join("")}</div></div>`;
+  const dnaContext = dna ? `<div class="dna-inspector-context"><small>ENTERPRISE DNA / ${dna.strategy.name.toUpperCase()}</small><strong>${dna.digitalProduct.name} digital product</strong><span>Capabilities: ${dnaObjectNames(dna.capabilities, 5)}</span><span>Outcomes: ${dnaObjectNames(dna.outcomes, 5)}</span><span>Teams: ${dnaObjectNames(dna.teams, 4)}</span><span>Risk: ${dna.primaryRisk.name} · ${Math.round(dna.primaryRisk.confidence * 100)}% confidence</span></div>` : "";
+  $("#hq-context-panel").innerHTML = `<div class="hq-panel-content case-detail"><p class="eyebrow">MODERNIZATION CASE / ${definition.id}</p><h2>${definition.name}</h2><p class="panel-summary">${definition.purpose}</p><div class="hq-panel-state"><span><small>CURRENT STAGE</small><strong>${snapshot.stage.toUpperCase()}</strong></span><span><small>CURRENT OWNER</small><strong>${snapshot.owner.toUpperCase()}</strong></span></div>${dnaContext}<div class="case-detail-actions"><button type="button" data-case-detail="owner">Inspect Current Owner</button><button type="button" data-case-detail="blocker">Show Blocker</button><button type="button" data-case-detail="next">Show Next Action</button></div><div class="hq-agent-response" id="case-detail-response">${focused}</div><div class="case-detail-products">${definition.dependencies.map((item) => `<span class="is-dependency">${item}</span>`).join("")}</div></div>`;
 }
 
 function handleCaseAction(action) {
