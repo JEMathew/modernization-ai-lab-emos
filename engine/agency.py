@@ -20,6 +20,13 @@ AGENT_SEQUENCE = [
     "Engineering Specialist",
     "Validation Specialist",
 ]
+PENDING_APPROVAL_STATUS = "Pending Human Approval"
+
+
+def approval_status() -> str:
+    """Return the shared current approval state for the engagement."""
+
+    return PENDING_APPROVAL_STATUS
 
 
 def load_business_constraints(path: str | Path) -> dict[str, object]:
