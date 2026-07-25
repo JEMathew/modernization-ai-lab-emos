@@ -441,6 +441,8 @@ def test_resource_reference_rejects_oversized_or_unsafe_values(
 
 
 def test_ports_are_structural_and_existing_engine_import_is_preserved() -> None:
+    from engine.workflow import run_assessment as workflow_run_assessment
+
     class CommandAdapter:
         def submit(self, context, command):
             raise NotImplementedError
@@ -460,3 +462,4 @@ def test_ports_are_structural_and_existing_engine_import_is_preserved() -> None:
     assert isinstance(QueryAdapter(), RuntimeQueryPort)
     assert context.tenant_id == start_command().tenant_id
     assert callable(run_assessment)
+    assert run_assessment is workflow_run_assessment

@@ -32,6 +32,7 @@ from .engineering import (
     generate_implementation_package,
     package_bytes,
 )
+from .workflow import run_assessment
 
 __all__ = [
     "AGENT_SEQUENCE",
@@ -55,6 +56,7 @@ __all__ = [
     "package_bytes",
     "recommend_6r",
     "replan_for_constraints",
+    "run_assessment",
     "select_modernization_candidate",
     "store_assessment_artifact",
     "store_replan_artifact",
