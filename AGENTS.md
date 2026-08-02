@@ -59,3 +59,16 @@ After each packet, create a report in work_results containing:
 - acceptance criteria met
 - known issues
 - demo steps
+
+## Permanent engineering workspace
+
+Before starting an approved work packet, read
+`docs/engineering/README.md` and the authorities it routes to. Use the official
+slice and release identifiers in `docs/backlog/VERTICAL_SLICE_REGISTRY.md` and
+`docs/releases/RELEASE_REGISTRY.md`. A registry entry records planning state; it
+does not authorize implementation.
+
+Every implementation packet must define its objective, acceptance criteria,
+dependencies, exclusions, validation, and completion report before scope is
+expanded. Architecture decisions that meet an ADR trigger use the template in
+`docs/adr/0000-template.md`.
