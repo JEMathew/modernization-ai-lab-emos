@@ -4,6 +4,19 @@ RS-02 exposes types only. Importing this package does not initialize a runtime,
 change workflow state, or activate any new execution path.
 """
 
+from .config import (
+    CONFIG_SCHEMA_VERSION,
+    ArtifactAdapter,
+    DeploymentEnvironment,
+    ExecutionMode,
+    QueueAdapter,
+    RelationalAdapter,
+    RuntimeConfiguration,
+    RuntimeConfigurationError,
+    RuntimeFeatureFlag,
+    RuntimeLimits,
+    load_runtime_configuration,
+)
 from .contracts import (
     CURRENT_CONTRACT_VERSION,
     SUPPORTED_CONTRACT_VERSIONS,
@@ -54,8 +67,10 @@ from .contracts import (
 )
 
 __all__ = [
+    "CONFIG_SCHEMA_VERSION",
     "CURRENT_CONTRACT_VERSION",
     "SUPPORTED_CONTRACT_VERSIONS",
+    "ArtifactAdapter",
     "ArtifactId",
     "CancelWorkflowCommand",
     "CancelWorkflowPayload",
@@ -66,15 +81,19 @@ __all__ = [
     "CommandResult",
     "ContractVersion",
     "CorrelationId",
+    "DeploymentEnvironment",
     "DnaSnapshotId",
     "EventEnvelope",
     "EventId",
     "EvidenceId",
+    "ExecutionMode",
     "IdempotencyKey",
     "MessageId",
     "PauseWorkflowCommand",
     "PendingWorkItem",
+    "QueueAdapter",
     "ReasonPayload",
+    "RelationalAdapter",
     "ResourceReference",
     "ResumeWorkflowCommand",
     "RetryTaskCommand",
@@ -82,7 +101,11 @@ __all__ = [
     "RunId",
     "RuntimeCommand",
     "RuntimeCommandPort",
+    "RuntimeConfiguration",
+    "RuntimeConfigurationError",
+    "RuntimeFeatureFlag",
     "RuntimeIdentifier",
+    "RuntimeLimits",
     "RuntimeQueryPort",
     "SafeError",
     "SafeErrorCode",
@@ -99,5 +122,6 @@ __all__ = [
     "WorkflowId",
     "WorkflowStatusQuery",
     "WorkflowView",
+    "load_runtime_configuration",
     "supports_contract_version",
 ]
