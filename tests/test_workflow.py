@@ -1,7 +1,14 @@
 from datetime import datetime, timezone
+import json
 from pathlib import Path
 
 import pytest
+
+from engine.assessment import assessment_artifact_payload
+from engine.persistence import (
+    TrustedAssessmentPersistenceError,
+    TrustedAssessmentStore,
+)
 
 from engine.workflow import (
     apply_budget_reduction,
@@ -148,3 +155,179 @@ def test_replan_request_uses_one_shared_state_flag() -> None:
 
     complete_replan_request(state)
     assert state["agency_replan_requested"] is False
+
+
+def test_trusted_assessment_artifact_and_database_metadata_agree(
+    tmp_path: Path,
+) -> None:
+    intake = load_demo_engagement(APEX_DATA_DIR)
+    database_path = tmp_path / "trusted.db"
+    result = run_assessment(
+        intake.portfolio,
+        tmp_path / "assessments",
+        intake.enterprise_profile.enterprise_id,
+        database_path=database_path,
+    )
+
+    payload = json.loads(result.artifact_path.read_text(encoding="utf-8"))
+    stored = TrustedAssessmentStore(database_path).get_run(result.run.run_id)
+
+    assert stored is not None
+    assert payload["schema_version"] == "1.0"
+    assert payload["run_id"] == stored["run_id"]
+    assert payload["definition_hash"] == stored["definition_hash"]
+    assert payload["evidence_snapshot_id"] == stored["snapshot_id"]
+    assert payload["evidence_snapshot_hash"] == stored["snapshot_hash"]
+    assert payload["evidence_completeness"] == stored["evidence_completeness"]
+    assert payload["calculation_owner"] == stored["calculation_owner"]
+    assert len(payload["criterion_results"]) == 56
+
+
+def test_trusted_assessment_replay_is_reproducible(tmp_path: Path) -> None:
+    intake = load_demo_engagement(APEX_DATA_DIR)
+    first = run_assessment(
+        intake.portfolio,
+        tmp_path / "first",
+        intake.enterprise_profile.enterprise_id,
+        database_path=tmp_path / "trusted.db",
+    )
+    second = run_assessment(
+        intake.portfolio,
+        tmp_path / "second",
+        intake.enterprise_profile.enterprise_id,
+        database_path=tmp_path / "trusted.db",
+    )
+
+    assert first.run.run_id != second.run.run_id
+    assert first.run.evidence_snapshot_id == second.run.evidence_snapshot_id
+    assert first.run.evidence_snapshot_hash == second.run.evidence_snapshot_hash
+    assert first.run.definition_hash == second.run.definition_hash
+    assert first.run.result_hash == second.run.result_hash
+    assert first.run.criterion_results == second.run.criterion_results
+    assert first.candidate["platform_name"] == "Oracle Customer Analytics Warehouse"
+    assert first.candidate["six_r_recommendation"] == "Replatform"
+    assert first.candidate["migration_wave"] == "Wave 1"
+
+
+def test_persistence_transaction_rolls_back_when_artifact_write_fails(
+    tmp_path: Path,
+) -> None:
+    intake = load_demo_engagement(APEX_DATA_DIR)
+    source = run_assessment(
+        intake.portfolio,
+        tmp_path / "source",
+        intake.enterprise_profile.enterprise_id,
+        database_path=tmp_path / "source.db",
+    )
+    store = TrustedAssessmentStore(tmp_path / "rollback.db")
+    artifact_path = tmp_path / "rolled-back.json"
+
+    def failing_writer(path: Path, payload: dict[str, object]) -> Path:
+        raise RuntimeError("Unable to store assessment artifact.")
+
+    with pytest.raises(RuntimeError, match="Unable to store assessment artifact"):
+        store.persist_assessment_bundle(
+            source.evidence_snapshot,
+            source.definition,
+            source.run,
+            artifact_path,
+            assessment_artifact_payload(source.run),
+            failing_writer,
+        )
+
+    assert store.count_runs() == 0
+    assert not artifact_path.exists()
+
+
+def test_artifact_write_failure_is_controlled_and_rolls_back_database(
+    tmp_path: Path,
+) -> None:
+    intake = load_demo_engagement(APEX_DATA_DIR)
+    blocked_output = tmp_path / "not-a-directory"
+    blocked_output.write_text("file", encoding="utf-8")
+    database_path = tmp_path / "artifact-failure.db"
+
+    with pytest.raises(RuntimeError, match="Unable to store assessment artifact"):
+        run_assessment(
+            intake.portfolio,
+            blocked_output,
+            intake.enterprise_profile.enterprise_id,
+            database_path=database_path,
+        )
+
+    assert TrustedAssessmentStore(database_path).count_runs() == 0
+
+
+def test_database_failure_is_controlled_without_creating_artifact(
+    tmp_path: Path,
+) -> None:
+    intake = load_demo_engagement(APEX_DATA_DIR)
+    database_directory = tmp_path / "database-directory"
+    database_directory.mkdir()
+    output_directory = tmp_path / "assessments"
+
+    with pytest.raises(
+        TrustedAssessmentPersistenceError, match="database is unavailable"
+    ):
+        run_assessment(
+            intake.portfolio,
+            output_directory,
+            intake.enterprise_profile.enterprise_id,
+            database_path=database_directory,
+        )
+
+    assert not output_directory.exists()
+
+
+def test_store_assessment_exposes_trust_metadata_in_shared_state(
+    tmp_path: Path,
+) -> None:
+    intake = load_demo_engagement(APEX_DATA_DIR)
+    result = run_assessment(
+        intake.portfolio,
+        tmp_path / "assessments",
+        intake.enterprise_profile.enterprise_id,
+    )
+    state: dict[str, object] = {}
+
+    store_assessment(state, result)
+
+    trust = state["assessment_trust"]
+    assert trust["definition_version"] == "1.0.0"
+    assert trust["evidence_snapshot_id"].startswith("DNA-SNAPSHOT-")
+    assert trust["evidence_completeness"] == 100.0
+    assert trust["evidence_complete"] is True
+    assert trust["trust_status"] == "Blocked"
+    assert trust["missing_requirement_count"] == 3
+    assert trust["conflict_count"] == 1
+    assert state["assessment_run"] is result.run
+    assert state["assessment_evidence_snapshot"] is result.evidence_snapshot
+
+
+def test_workflow_persists_qualified_run_when_criterion_evidence_is_missing(
+    tmp_path: Path,
+) -> None:
+    intake = load_demo_engagement(APEX_DATA_DIR)
+    registry = json.loads(
+        (APEX_DATA_DIR / "evidence_registry.json").read_text(encoding="utf-8")
+    )
+    registry["records"][0]["criterion_references"].remove("business_value")
+    registry_path = tmp_path / "qualified-registry.json"
+    registry_path.write_text(json.dumps(registry), encoding="utf-8")
+
+    result = run_assessment(
+        intake.portfolio,
+        tmp_path / "assessments",
+        intake.enterprise_profile.enterprise_id,
+        evidence_registry_path=registry_path,
+        database_path=tmp_path / "trusted.db",
+    )
+    payload = json.loads(result.artifact_path.read_text(encoding="utf-8"))
+    missing = [item for item in payload["criterion_results"] if not item["supported"]]
+
+    assert result.run.evidence_complete is False
+    assert result.run.evidence_completeness == 98.2
+    assert len(missing) == 1
+    assert missing[0]["asset_id"] == "APX-PLT-001"
+    assert missing[0]["criterion_id"] == "business_value"
+    assert result.candidate["priority_score"] == 64.4

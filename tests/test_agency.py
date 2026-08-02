@@ -96,7 +96,9 @@ def test_replan_artifact_is_stored(assessment: pd.DataFrame, tmp_path: Path) -> 
 
 
 def test_executive_delivery_chain_requires_human_approval() -> None:
-    chain = executive_delivery_chain("package.zip")
+    chain = executive_delivery_chain(
+        "package.zip", "Oracle Customer Analytics Warehouse"
+    )
     assert chain["Stage"].tolist() == [
         "Executive Recommendation",
         "Recommended Candidate",

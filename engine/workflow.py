@@ -11,6 +11,7 @@ from dataclasses import dataclass
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Mapping, MutableMapping
+from uuid import uuid4
 
 import pandas as pd
 
@@ -22,23 +23,38 @@ from .agency import (
     store_replan_artifact,
 )
 from .assessment import (
+    assessment_artifact_payload,
     assess_portfolio,
+    build_assessment_run,
     consulting_recommendation,
+    current_assessment_definition,
     select_modernization_candidate,
-    store_assessment_artifact,
+    write_assessment_artifact,
 )
+from .assessment_models import AssessmentDefinition, AssessmentRun
 from .data_loader import EnterpriseProfile, load_enterprise_profile, load_portfolio
+from .evidence import (
+    EvidenceSnapshot,
+    create_evidence_snapshot,
+    load_evidence_registry,
+    portfolio_from_snapshot,
+)
 from .engineering import (
     build_engineering_engagement,
     generate_implementation_package,
     package_bytes,
 )
+from .persistence import TrustedAssessmentStore
 
 
 ASSESSMENT_STATE_KEYS = (
     "assessment",
     "assessment_artifact",
     "assessment_recommendation",
+    "assessment_trust",
+    "assessment_run",
+    "assessment_evidence_snapshot",
+    "assessment_definition",
 )
 ENGINEERING_STATE_KEYS = ("engineering_engagement", "implementation_package")
 REPLAN_STATE_KEYS = ("agency_replan", "agency_replan_artifact")
@@ -57,6 +73,10 @@ class AssessmentResult:
     candidate: pd.Series
     recommendation: str
     artifact_path: Path
+    definition: AssessmentDefinition
+    evidence_snapshot: EvidenceSnapshot
+    run: AssessmentRun
+    database_path: Path
 
 
 @dataclass(frozen=True)
@@ -103,16 +123,60 @@ def run_assessment(
     portfolio: pd.DataFrame,
     output_directory: str | Path,
     enterprise_id: str,
+    evidence_registry_path: str | Path | None = None,
+    database_path: str | Path | None = None,
 ) -> AssessmentResult:
-    """Assess, select, explain, and persist through one engine workflow."""
+    """Snapshot, assess, trace, and persist through one trusted operation."""
 
-    assessment = assess_portfolio(portfolio)
+    repository_root = Path(__file__).resolve().parents[1]
+    registry_path = Path(evidence_registry_path) if evidence_registry_path else (
+        repository_root / "demo_data" / "apex_aerospace" / "evidence_registry.json"
+    )
+    output_directory = Path(output_directory)
+    trusted_database = Path(database_path) if database_path else (
+        output_directory.parent / "trusted_assessments.db"
+    )
+    evidence = load_evidence_registry(registry_path, enterprise_id)
+    snapshot = create_evidence_snapshot(
+        evidence,
+        enterprise_id,
+        portfolio["platform_id"].astype(str).tolist(),
+    )
+    assessment_input = portfolio_from_snapshot(snapshot)
+    definition = current_assessment_definition()
+    assessment = assess_portfolio(assessment_input)
     candidate = select_modernization_candidate(assessment)
     recommendation = consulting_recommendation(candidate)
-    artifact_path = store_assessment_artifact(
-        assessment, output_directory, enterprise_id
+    generated_at = datetime.now(timezone.utc)
+    run_id = f"ASSESS-{generated_at:%Y%m%dT%H%M%SZ}-{uuid4().hex[:8]}"
+    artifact_path = output_directory / f"{run_id}.json"
+    run = build_assessment_run(
+        assessment,
+        snapshot,
+        definition,
+        run_id,
+        generated_at,
+        f"artifact://local/assessments/{artifact_path.name}",
     )
-    return AssessmentResult(assessment, candidate, recommendation, artifact_path)
+    store = TrustedAssessmentStore(trusted_database)
+    store.persist_assessment_bundle(
+        snapshot,
+        definition,
+        run,
+        artifact_path,
+        assessment_artifact_payload(run),
+        write_assessment_artifact,
+    )
+    return AssessmentResult(
+        assessment,
+        candidate,
+        recommendation,
+        artifact_path,
+        definition,
+        snapshot,
+        run,
+        trusted_database,
+    )
 
 
 def selected_candidate(assessment: pd.DataFrame) -> pd.Series:
@@ -221,6 +285,51 @@ def store_assessment(state: MutableMapping[str, object], result: AssessmentResul
     state["assessment"] = result.assessment
     state["assessment_artifact"] = str(result.artifact_path)
     state["assessment_recommendation"] = result.recommendation
+    state["assessment_run"] = result.run
+    state["assessment_evidence_snapshot"] = result.evidence_snapshot
+    state["assessment_definition"] = result.definition
+    evidence_health = result.run.evidence_health
+    state["assessment_trust"] = {
+        "run_id": result.run.run_id,
+        "definition_id": result.run.definition_id,
+        "definition_version": result.run.definition_version,
+        "definition_hash": result.run.definition_hash,
+        "evidence_snapshot_id": result.run.evidence_snapshot_id,
+        "evidence_snapshot_hash": result.run.evidence_snapshot_hash,
+        "evidence_completeness": result.run.evidence_completeness,
+        "evidence_complete": result.run.evidence_complete,
+        "calculation_owner": result.run.calculation_owner,
+        "engine_version": result.run.engine_version,
+        "result_hash": result.run.result_hash,
+        "trust_status": (
+            evidence_health.trust_status if evidence_health is not None else "Unavailable"
+        ),
+        "quality_completeness": (
+            evidence_health.evidence_completeness if evidence_health is not None else None
+        ),
+        "current_evidence_percentage": (
+            evidence_health.current_evidence_percentage
+            if evidence_health is not None
+            else None
+        ),
+        "stale_evidence_count": (
+            evidence_health.stale_evidence_count if evidence_health is not None else 0
+        ),
+        "missing_requirement_count": (
+            evidence_health.missing_requirement_count if evidence_health is not None else 0
+        ),
+        "conflict_count": (
+            evidence_health.conflict_count if evidence_health is not None else 0
+        ),
+        "low_confidence_evidence_count": (
+            evidence_health.low_confidence_evidence_count
+            if evidence_health is not None
+            else 0
+        ),
+        "evidence_health_explanation": (
+            evidence_health.explanation if evidence_health is not None else None
+        ),
+    }
     _remove_keys(state, ENGINEERING_STATE_KEYS + REPLAN_STATE_KEYS)
 
 

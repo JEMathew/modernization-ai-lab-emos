@@ -7,6 +7,7 @@ from engine.assessment import (
     SCORE_COLUMNS,
     assess_portfolio,
     consulting_recommendation,
+    load_assessment_artifact,
     recommend_6r,
     select_modernization_candidate,
     store_assessment_artifact,
@@ -87,6 +88,28 @@ def test_oracle_is_selected_candidate(assessment: pd.DataFrame) -> None:
     assert candidate["migration_wave"] == "Wave 1"
 
 
+def test_apex_golden_oracle_scores_and_disposition_are_preserved(
+    assessment: pd.DataFrame,
+) -> None:
+    oracle = assessment[assessment["platform_id"] == "APX-PLT-001"].iloc[0]
+
+    assert oracle.to_dict() == {
+        "priority_rank": 1,
+        "platform_id": "APX-PLT-001",
+        "platform_name": "Oracle Customer Analytics Warehouse",
+        "business_value": 98.0,
+        "technical_debt": 80.0,
+        "cloud_readiness": 68.3,
+        "ai_readiness": 91.0,
+        "complexity": 55.2,
+        "migration_risk": 70.8,
+        "operating_cost_usd": 2_850_000.0,
+        "priority_score": 64.4,
+        "six_r_recommendation": "Replatform",
+        "migration_wave": "Wave 1",
+    }
+
+
 def test_hermes_recommendation_uses_assessment_evidence(assessment: pd.DataFrame) -> None:
     candidate = select_modernization_candidate(assessment)
     recommendation = consulting_recommendation(candidate)
@@ -104,6 +127,19 @@ def test_assessment_artifact_is_stored(
     assert '"calculation_owner": "Python deterministic assessment engine"' in (
         artifact.read_text(encoding="utf-8")
     )
+
+
+def test_historical_artifact_without_schema_is_read_as_legacy_v0(
+    assessment: pd.DataFrame, tmp_path: Path
+) -> None:
+    artifact = store_assessment_artifact(assessment, tmp_path, "APEX-AERO-001")
+
+    loaded = load_assessment_artifact(artifact)
+
+    assert loaded["schema_version"] == "0"
+    assert loaded["legacy"] is True
+    assert "definition_hash" not in loaded
+    assert "evidence_snapshot_hash" not in loaded
 
 
 def test_empty_portfolio_is_rejected() -> None:

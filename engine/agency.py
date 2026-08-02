@@ -110,14 +110,14 @@ def manager_timeline(start_time: datetime, replanned: bool = False) -> pd.DataFr
     )
 
 
-def executive_delivery_chain(package_name: str) -> pd.DataFrame:
+def executive_delivery_chain(package_name: str, candidate_name: str) -> pd.DataFrame:
     return pd.DataFrame(
         [
             {"Stage": "Executive Recommendation", "Outcome": "Proceed with controlled Oracle-to-BigQuery modernization", "Status": "Issued"},
-            {"Stage": "Recommended Candidate", "Outcome": "Oracle Customer Analytics Warehouse", "Status": "Selected"},
+            {"Stage": "Recommended Candidate", "Outcome": candidate_name, "Status": "Selected"},
             {"Stage": "Migration Package", "Outcome": package_name, "Status": "Generated"},
             {"Stage": "Deployment Readiness", "Outcome": "Engineering starter package validated; cutover evidence outstanding", "Status": "Conditionally Ready"},
-            {"Stage": "Approval Status", "Outcome": "Executive sponsor and platform owner decision required", "Status": "Pending Human Approval"},
+            {"Stage": "Approval Status", "Outcome": "Executive sponsor and platform owner decision required", "Status": approval_status()},
         ]
     )
 

@@ -1,6 +1,6 @@
 """Streamlit entry point for the Modernization AI Lab consulting engagement."""
 
-from datetime import datetime, timezone
+from datetime import datetime
 from html import escape
 from pathlib import Path
 import sys
@@ -16,24 +16,34 @@ from dotenv import load_dotenv
 from engine.agency import (
     agent_timeline,
     build_agent_operations,
-    create_plan,
     executive_delivery_chain,
-    load_business_constraints,
     manager_timeline,
-    replan_for_constraints,
-    store_replan_artifact,
 )
-from engine.assessment import (
-    assess_portfolio,
-    consulting_recommendation,
-    select_modernization_candidate,
-    store_assessment_artifact,
-)
-from engine.data_loader import DataLoadError, load_enterprise_profile, load_portfolio
-from engine.engineering import (
-    build_engineering_engagement,
-    generate_implementation_package,
-    package_bytes,
+from engine.data_loader import DataLoadError
+from engine.workflow import (
+    apply_budget_reduction,
+    clear_assessment,
+    clear_engineering,
+    clear_intake,
+    clear_replan,
+    complete_replan_request,
+    download_package,
+    initialize_agency_state,
+    load_agency_context,
+    load_demo_engagement,
+    original_plan,
+    portfolio_summary,
+    recommendation_for_assessment,
+    request_replan,
+    run_assessment,
+    run_engineering,
+    run_replan,
+    selected_candidate,
+    store_assessment,
+    store_engineering,
+    store_intake,
+    store_replan,
+    workflow_stage,
 )
 
 
@@ -45,14 +55,11 @@ REPLAN_OUTPUT_DIR = ROOT_DIR / "generated_packages" / "replans"
 
 
 def request_agency_replan() -> None:
-    st.session_state["agency_replan_requested"] = True
+    request_replan(st.session_state)
 
 
 def apply_thirty_percent_reduction() -> None:
-    st.session_state["agency_budget"] = round(
-        float(st.session_state["agency_original_budget"]) * 0.70, 2
-    )
-    st.session_state["agency_replan_requested"] = True
+    apply_budget_reduction(st.session_state, reduction_percent=30.0)
 
 
 def render_agent_cards(operations) -> None:
@@ -248,25 +255,16 @@ if intake_choice == "Upload Enterprise Package":
 else:
     if st.button("Load Apex Aerospace Demo", type="primary"):
         try:
-            st.session_state["enterprise_profile"] = load_enterprise_profile(
-                APEX_DATA_DIR / "enterprise_profile.json"
-            )
-            st.session_state["portfolio"] = load_portfolio(APEX_DATA_DIR / "portfolio.csv")
-            st.session_state.pop("assessment", None)
-            st.session_state.pop("assessment_artifact", None)
-            st.session_state.pop("engineering_engagement", None)
-            st.session_state.pop("implementation_package", None)
-            st.session_state.pop("agency_replan", None)
-            st.session_state.pop("agency_replan_artifact", None)
+            store_intake(st.session_state, load_demo_engagement(APEX_DATA_DIR))
             st.rerun()
         except DataLoadError as exc:
-            st.session_state.pop("enterprise_profile", None)
-            st.session_state.pop("portfolio", None)
+            clear_intake(st.session_state)
             st.error(f"Apex demo could not be loaded. {exc}")
 
 if "enterprise_profile" in st.session_state and "portfolio" in st.session_state:
     profile = st.session_state["enterprise_profile"]
     portfolio = st.session_state["portfolio"]
+    summary = st.session_state.get("portfolio_summary", portfolio_summary(portfolio))
 
     st.success("Apex Aerospace demo loaded successfully.")
     st.subheader(profile.enterprise_name)
@@ -274,13 +272,14 @@ if "enterprise_profile" in st.session_state and "portfolio" in st.session_state:
     st.write(f"**Modernization objective:** {profile.modernization_objective}")
 
     metric_columns = st.columns(3)
-    metric_columns[0].metric("Platforms", f"{len(portfolio):,}")
+    metric_columns[0].metric("Platforms", f"{summary['platform_count']:,}")
     metric_columns[1].metric(
         "Total annual platform cost",
-        f"${portfolio['annual_cost_usd'].sum():,.0f}",
+        f"${summary['annual_platform_cost']:,.0f}",
     )
-    critical_count = portfolio["criticality"].str.casefold().eq("critical").sum()
-    metric_columns[2].metric("Critical platforms", f"{critical_count:,}")
+    metric_columns[2].metric(
+        "Critical platforms", f"{summary['critical_platform_count']:,}"
+    )
 
     st.subheader("Enterprise Platform Portfolio")
     st.dataframe(
@@ -309,32 +308,239 @@ if "enterprise_profile" in st.session_state and "portfolio" in st.session_state:
 
     if st.button("Run Modernization Assessment", type="primary"):
         try:
-            assessment = assess_portfolio(portfolio)
-            artifact_path = store_assessment_artifact(
-                assessment,
+            assessment_result = run_assessment(
+                portfolio,
                 ASSESSMENT_OUTPUT_DIR,
                 profile.enterprise_id,
             )
-            st.session_state["assessment"] = assessment
-            st.session_state["assessment_artifact"] = str(artifact_path)
-            st.session_state.pop("engineering_engagement", None)
-            st.session_state.pop("implementation_package", None)
-            st.session_state.pop("agency_replan", None)
-            st.session_state.pop("agency_replan_artifact", None)
+            store_assessment(st.session_state, assessment_result)
             st.rerun()
         except (RuntimeError, ValueError) as exc:
-            st.session_state.pop("assessment", None)
-            st.session_state.pop("assessment_artifact", None)
+            clear_assessment(st.session_state)
             st.error(f"The consulting assessment could not be completed. {exc}")
 
 if "assessment" in st.session_state:
     assessment = st.session_state["assessment"]
-    candidate = select_modernization_candidate(assessment)
+    assessment_trust = st.session_state.get("assessment_trust", {})
+    candidate = selected_candidate(assessment)
+    candidate_name = str(candidate["platform_name"])
 
     st.success(
         "Consulting assessment completed and stored as "
         f"`{Path(st.session_state['assessment_artifact']).name}`."
     )
+
+    if assessment_trust:
+        st.subheader("Assessment Trust & Evidence Health")
+        trust_status = str(assessment_trust.get("trust_status", "Unavailable"))
+        trust_icons = {
+            "Ready": "✓ Ready",
+            "ReadyWithWarnings": "△ Ready With Warnings",
+            "NeedsEvidence": "◇ Needs Evidence",
+            "Blocked": "✕ Blocked",
+        }
+        trust_columns = st.columns(4)
+        trust_columns[0].metric(
+            "Assessment trust", trust_icons.get(trust_status, "— Unavailable")
+        )
+        trust_columns[1].metric(
+            "Evidence completeness",
+            f"{float(assessment_trust.get('quality_completeness') or 0):.1f}%",
+            help="Evidence quality is reported separately and never changes the calculated modernization score.",
+        )
+        trust_columns[2].metric(
+            "Current evidence",
+            f"{float(assessment_trust.get('current_evidence_percentage') or 0):.1f}%",
+        )
+        trust_columns[3].metric(
+            "Missing requirements",
+            int(assessment_trust.get("missing_requirement_count", 0)),
+        )
+        risk_columns = st.columns(3)
+        risk_columns[0].metric(
+            "Stale evidence", int(assessment_trust.get("stale_evidence_count", 0))
+        )
+        risk_columns[1].metric(
+            "Evidence conflicts", int(assessment_trust.get("conflict_count", 0))
+        )
+        risk_columns[2].metric(
+            "Low-confidence evidence",
+            int(assessment_trust.get("low_confidence_evidence_count", 0)),
+        )
+        if assessment_trust.get("evidence_health_explanation"):
+            if trust_status == "Blocked":
+                st.error(str(assessment_trust["evidence_health_explanation"]))
+            elif trust_status in {"NeedsEvidence", "ReadyWithWarnings"}:
+                st.warning(str(assessment_trust["evidence_health_explanation"]))
+            else:
+                st.success(str(assessment_trust["evidence_health_explanation"]))
+        if not assessment_trust["evidence_complete"]:
+            st.warning(
+                "Required evidence is missing for one or more criteria. Affected "
+                "results are explicitly qualified in the stored artifact."
+            )
+        with st.expander("Inspect calculation ownership and reproducibility hashes"):
+            st.write(
+                "**Calculated score owner:** Python deterministic assessment engine. "
+                "Evidence quality qualifies confidence; it does not rewrite scores."
+            )
+            st.write(f"**Definition version:** `{assessment_trust['definition_version']}`")
+            st.write(f"**Run ID:** `{assessment_trust['run_id']}`")
+            st.write(f"**Definition ID:** `{assessment_trust['definition_id']}`")
+            st.write(f"**Definition hash:** `{assessment_trust['definition_hash']}`")
+            st.write(
+                f"**Evidence snapshot ID:** `{assessment_trust['evidence_snapshot_id']}`"
+            )
+            st.write(
+                f"**Evidence snapshot hash:** `{assessment_trust['evidence_snapshot_hash']}`"
+            )
+            st.write(f"**Result hash:** `{assessment_trust['result_hash']}`")
+            st.write(f"**Engine version:** `{assessment_trust['engine_version']}`")
+
+        assessment_run = st.session_state.get("assessment_run")
+        evidence_snapshot = st.session_state.get("assessment_evidence_snapshot")
+        assessment_definition = st.session_state.get("assessment_definition")
+        if assessment_run and evidence_snapshot and assessment_definition:
+            severe_findings = [
+                finding
+                for finding in assessment_run.findings
+                if finding.severity in {"Critical", "High"}
+            ]
+            if severe_findings:
+                st.markdown("**Key evidence risks**")
+                for finding in severe_findings[:4]:
+                    st.write(
+                        f"- **{finding.severity} · {finding.title}** — "
+                        f"{finding.remediation}"
+                    )
+
+            st.subheader("Dimension & Criterion Evidence Review")
+            st.caption(
+                "Observed = source fact · Derived = deterministic rule result · "
+                "Inferred = bounded interpretation · Assumed = explicit assumption · "
+                "Recommended = remediation or next action."
+            )
+            platform_ids = assessment["platform_id"].astype(str).tolist()
+            platform_names = assessment["platform_name"].astype(str).tolist()
+            selected_platform_name = st.selectbox(
+                "Inspect evidence for platform",
+                platform_names,
+                index=platform_names.index(candidate_name),
+                key="assessment_evidence_platform",
+            )
+            selected_platform_id = platform_ids[
+                platform_names.index(selected_platform_name)
+            ]
+            criterion_results = {
+                result.criterion_id: result
+                for result in assessment_run.criterion_results
+                if result.asset_id == selected_platform_id
+            }
+            quality_results = {
+                result.criterion_id: result
+                for result in assessment_run.evidence_quality_results
+                if result.asset_id == selected_platform_id
+            }
+            links_by_result = {}
+            for link in assessment_run.evidence_links:
+                links_by_result.setdefault(link.criterion_result_id, []).append(link)
+            evidence_by_id = {
+                record.evidence_id: record for record in evidence_snapshot.records
+            }
+            requirements_by_id = {
+                requirement.requirement_id: requirement
+                for requirement in assessment_run.evidence_requirements
+            }
+            findings_by_result = {}
+            for finding in assessment_run.findings:
+                if finding.asset_id == selected_platform_id:
+                    findings_by_result.setdefault(finding.criterion_id, []).append(finding)
+
+            if len(quality_results) != len(criterion_results):
+                st.warning(
+                    "Evidence-quality detail is partially available for this earlier or degraded run."
+                )
+            for criterion in assessment_definition.criteria:
+                result = criterion_results.get(criterion.criterion_id)
+                quality = quality_results.get(criterion.criterion_id)
+                if result is None:
+                    continue
+                finding_count = len(findings_by_result.get(criterion.criterion_id, []))
+                quality_label = (
+                    f"{quality.completeness_score:.1f}% evidence · "
+                    f"{quality.freshness_status} · {finding_count} finding(s)"
+                    if quality is not None
+                    else "Evidence quality unavailable"
+                )
+                with st.expander(
+                    f"{criterion.dimension} — score {result.value:.1f} · {quality_label}"
+                ):
+                    st.write(f"**Criterion:** `{criterion.criterion_id}`")
+                    st.write(f"**Calculated result:** {result.value:.1f}")
+                    st.write(f"**Scoring owner:** {assessment_run.calculation_owner}")
+                    if quality is None:
+                        st.info(
+                            "This schema-compatible run has no criterion evidence-quality record."
+                        )
+                        continue
+                    indicators = st.columns(4)
+                    indicators[0].metric(
+                        "Completeness", f"{quality.completeness_score:.1f}%"
+                    )
+                    indicators[1].metric("Freshness", quality.freshness_status)
+                    indicators[2].metric(
+                        "Evidence confidence", f"{quality.confidence_score:.1f}%"
+                    )
+                    indicators[3].metric(
+                        "Source authority", f"{quality.authority_score:.1f}%"
+                    )
+                    st.write(f"**Conflict status:** {quality.conflict_status}")
+                    result_links = links_by_result.get(result.criterion_result_id, [])
+                    evidence_links = [link for link in result_links if link.evidence_id]
+                    if evidence_links:
+                        st.markdown("**Evidence relationships**")
+                        for link in evidence_links:
+                            record = evidence_by_id.get(link.evidence_id)
+                            if record is None:
+                                st.warning(
+                                    f"Evidence `{link.evidence_id}` is referenced but unavailable."
+                                )
+                                continue
+                            relation_icon = "✕" if link.relationship_type == "Contradicts" else "✓"
+                            st.write(
+                                f"- {relation_icon} **{link.relationship_type}:** "
+                                f"`{record.evidence_id}` · {record.evidence_category} · "
+                                f"{record.source_authority} · confidence {record.confidence:.2f} · "
+                                f"effective {record.effective_at.date().isoformat()}"
+                            )
+                    else:
+                        st.info("No matching evidence is linked to this criterion.")
+                    if quality.missing_requirement_ids:
+                        st.markdown("**Missing requirements**")
+                        for requirement_id in quality.missing_requirement_ids:
+                            requirement = requirements_by_id.get(requirement_id)
+                            if requirement is not None:
+                                blocking = "Blocking" if requirement.blocking else "Non-blocking"
+                                st.write(
+                                    f"- ◇ **{blocking}:** {requirement.description} "
+                                    f"(`{requirement.requirement_id}`)"
+                                )
+                    criterion_findings = findings_by_result.get(
+                        criterion.criterion_id, []
+                    )
+                    if criterion_findings:
+                        st.markdown("**Findings and remediation**")
+                        for finding in criterion_findings:
+                            st.write(
+                                f"- **{finding.classification} · {finding.finding_type} · "
+                                f"{finding.severity}:** {finding.description}  \n"
+                                f"  **Remediation:** {finding.remediation}"
+                            )
+        else:
+            st.info(
+                "This earlier schema-compatible assessment has reproducibility metadata "
+                "but no Slice 02 evidence-quality findings. Rerun to generate them."
+            )
 
     assessment_display = assessment.rename(
         columns={
@@ -369,7 +575,7 @@ if "assessment" in st.session_state:
     ]
 
     def highlight_candidate(row):
-        if row["Platform"] == "Oracle Customer Analytics Warehouse":
+        if row["Platform"] == candidate_name:
             return ["background-color: #fff3bf; font-weight: 600"] * len(row)
         return [""] * len(row)
 
@@ -390,7 +596,7 @@ if "assessment" in st.session_state:
     )
 
     st.header("Recommended Modernization Candidate")
-    st.success("Oracle Customer Analytics Warehouse")
+    st.success(candidate_name)
     candidate_metrics = st.columns(5)
     candidate_metrics[0].metric("Business Value", f"{candidate['business_value']:.1f}")
     candidate_metrics[1].metric("Complexity", f"{candidate['complexity']:.1f}")
@@ -401,13 +607,18 @@ if "assessment" in st.session_state:
 
     st.subheader("Hermes — Modernization Director")
     st.markdown("**Consulting Recommendation**")
-    st.write(consulting_recommendation(candidate))
+    st.write(
+        st.session_state.get(
+            "assessment_recommendation",
+            recommendation_for_assessment(assessment),
+        )
+    )
 
     st.divider()
     st.header("Modernization Engineering Engagement")
     st.write(
-        "Prepare the implementation-ready starter package for the selected Oracle Customer "
-        "Analytics Warehouse modernization to BigQuery."
+        f"Prepare the implementation-ready starter package for the selected {candidate_name} "
+        "modernization to BigQuery."
     )
     st.caption(
         "Engineering mappings, conversions, controls, and package artifacts are generated "
@@ -415,18 +626,15 @@ if "assessment" in st.session_state:
     )
     if st.button("Prepare Implementation Ready Package", type="primary"):
         try:
-            engineering_engagement = build_engineering_engagement(APEX_DATA_DIR)
-            implementation_package = generate_implementation_package(
-                engineering_engagement, IMPLEMENTATION_OUTPUT_DIR
+            engineering_result = run_engineering(
+                APEX_DATA_DIR,
+                IMPLEMENTATION_OUTPUT_DIR,
+                candidate,
             )
-            st.session_state["engineering_engagement"] = engineering_engagement
-            st.session_state["implementation_package"] = str(implementation_package)
-            st.session_state.pop("agency_replan", None)
-            st.session_state.pop("agency_replan_artifact", None)
+            store_engineering(st.session_state, engineering_result)
             st.rerun()
         except (DataLoadError, RuntimeError, ValueError) as exc:
-            st.session_state.pop("engineering_engagement", None)
-            st.session_state.pop("implementation_package", None)
+            clear_engineering(st.session_state)
             st.error(f"The implementation package could not be prepared. {exc}")
 
 if "engineering_engagement" in st.session_state:
@@ -552,7 +760,7 @@ if "engineering_engagement" in st.session_state:
         f"""
         <div class="summary-card">
             <div class="summary-label">Executive Summary</div>
-            <div class="summary-title">Oracle Customer Analytics Warehouse → BigQuery</div>
+            <div class="summary-title">{escape(str(engineering['candidate']))} → BigQuery</div>
             <div class="summary-body">{escape(str(engineering['executive_summary']))}</div>
         </div>
         """,
@@ -561,7 +769,7 @@ if "engineering_engagement" in st.session_state:
     st.caption(f"Executive summary source: {engineering['narrative_source']}")
     st.download_button(
         "Download Implementation Ready Package",
-        data=package_bytes(package_path),
+        data=download_package(package_path),
         file_name=package_path.name,
         mime="application/zip",
         type="primary",
@@ -591,21 +799,10 @@ if "engineering_engagement" in st.session_state:
         "to human approval."
     )
 
-    constraints = load_business_constraints(APEX_DATA_DIR / "business_constraints.json")
-    original_budget = float(constraints["annual_modernization_budget_usd"])
-    original_downtime = int(constraints["maximum_planned_downtime_hours"])
-    if "agency_original_budget" not in st.session_state:
-        st.session_state["agency_original_budget"] = original_budget
-    if "agency_budget" not in st.session_state:
-        st.session_state["agency_budget"] = original_budget
-    if "agency_downtime" not in st.session_state:
-        st.session_state["agency_downtime"] = original_downtime
-    if "agency_business_priority" not in st.session_state:
-        st.session_state["agency_business_priority"] = "Customer Analytics Continuity"
-    if "agency_start_time" not in st.session_state:
-        st.session_state["agency_start_time"] = datetime.now(timezone.utc).isoformat()
-    if "agency_replan_requested" not in st.session_state:
-        st.session_state["agency_replan_requested"] = False
+    agency_context = load_agency_context(APEX_DATA_DIR / "business_constraints.json")
+    original_budget = agency_context.original_budget
+    original_downtime = agency_context.original_downtime
+    initialize_agency_state(st.session_state, agency_context)
 
     agency_start = datetime.fromisoformat(st.session_state["agency_start_time"])
     replanned = "agency_replan" in st.session_state
@@ -647,11 +844,13 @@ if "engineering_engagement" in st.session_state:
     status_columns = st.columns(3)
     status_columns[0].metric("Current Phase", phase)
     status_columns[1].metric("Active Manager", "Hermes")
-    status_columns[2].metric("Approval", "Pending Human Approval")
+    status_columns[2].metric("Approval", agency_context.approval)
 
     st.markdown('<div class="section-eyebrow">Consulting Outputs</div>', unsafe_allow_html=True)
     st.subheader("Consulting Deliverables")
-    delivery_chain = executive_delivery_chain(package_path.name)
+    delivery_chain = executive_delivery_chain(
+        package_path.name, str(engineering["candidate"])
+    )
     render_deliverable_cards(delivery_chain)
     st.dataframe(
         delivery_chain,
@@ -704,29 +903,27 @@ if "engineering_engagement" in st.session_state:
     if st.session_state["agency_replan_requested"]:
         replan_completed = False
         try:
-            agency_replan = replan_for_constraints(
+            replan_result = run_replan(
                 assessment,
-                original_budget_usd=original_budget,
-                new_budget_usd=float(st.session_state["agency_budget"]),
+                original_budget=original_budget,
+                new_budget=float(st.session_state["agency_budget"]),
                 downtime_hours=int(st.session_state["agency_downtime"]),
                 business_priority=st.session_state["agency_business_priority"],
+                output_directory=REPLAN_OUTPUT_DIR,
             )
-            replan_artifact = store_replan_artifact(agency_replan, REPLAN_OUTPUT_DIR)
-            st.session_state["agency_replan"] = agency_replan
-            st.session_state["agency_replan_artifact"] = str(replan_artifact)
+            store_replan(st.session_state, replan_result)
             replan_completed = True
         except (RuntimeError, ValueError) as exc:
-            st.session_state.pop("agency_replan", None)
-            st.session_state.pop("agency_replan_artifact", None)
+            clear_replan(st.session_state)
             st.error(f"Hermes could not create the revised plan. {exc}")
         finally:
-            st.session_state["agency_replan_requested"] = False
+            complete_replan_request(st.session_state)
         if replan_completed:
             st.rerun()
 
     st.subheader("Original Plan")
-    original_plan = create_plan(assessment, original_budget)
-    st.dataframe(original_plan, width="stretch", hide_index=True)
+    original_plan_data = original_plan(assessment, original_budget)
+    st.dataframe(original_plan_data, width="stretch", hide_index=True)
 
     if "agency_replan" in st.session_state:
         agency_replan = st.session_state["agency_replan"]
