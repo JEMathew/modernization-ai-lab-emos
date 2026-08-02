@@ -11,7 +11,7 @@ Complete and cannot enter a release.
 
 | ID | Name | Program | Epic | Dependencies | Status | Acceptance summary | Complexity |
 |---|---|---|---|---|---|---|---|
-| BASE-01 | Reproducible repository baseline | PGM-FOUNDATION | EPIC-00/01 | Current workspace foundation | Proposed | Separate and commit coherent existing changes; exact commit passes full clean-checkout Python/JavaScript and documentation gates; no behavior change | M |
+| BASE-01 | Reproducible repository baseline | PGM-FOUNDATION | EPIC-00/01 | Current workspace foundation | Complete (`eec5fd5` validated baseline; final evidence in BASE-01 completion commit) | Coherent TMI, inactive runtime, and governance checkpoints committed; clean checkout passes Python, JavaScript, browser, health, security, and documentation gates; unrelated product work preserved | M |
 
 ## Runtime Spine slices
 
@@ -19,7 +19,7 @@ Complete and cannot enter a release.
 |---|---|---|---|---|---|---|
 | RS-01 | Regression and state inventory | EPIC-01 | Approved PRS | Complete (`1a16782`) | Characterization and state ownership baseline committed | S |
 | RS-02 | Versioned runtime contracts | EPIC-01 | RS-01 | Complete (`1a16782`) | Strict provider-neutral contracts committed; runtime inactive | L |
-| RS-03 | Typed runtime configuration | EPIC-01 | RS-02 | Implemented, uncommitted; inactive | Safe local configuration validates without selecting adapters | M |
+| RS-03 | Typed runtime configuration | EPIC-01 | RS-02 | Complete (`711200c`); inactive | Safe local configuration validates without selecting or activating adapters | M |
 | RS-04 | In-process service and compatibility adapter | EPIC-01 | RS-01–03, BASE-01 | Planned; not authorized until dependencies are Complete | Existing behavior runs through typed seam behind safe flag | L |
 | RS-05 | Persistence models and migration | EPIC-02 | RS-02–03 | Planned | Tenant-scoped schema and migration contract pass | L |
 | RS-06 | SQLite repository and optimistic concurrency | EPIC-02 | RS-05 | Planned | Durable create/read and version conflict behavior pass | L |

@@ -15,7 +15,7 @@ Foundation. It deliberately contains no executable runtime implementation.
 
 - RS-01 characterizes existing behavior.
 - RS-02 defines versioned contracts in `engine/runtime/contracts.py`.
-- RS-03 typed configuration exists in the working tree and remains inactive.
+- RS-03 typed configuration is committed at `711200c` and remains inactive.
 - `engine.runtime` is not connected to `app/main.py`, `engine/workflow.py`, or
   `engine/agency.py`.
 - `engine.workflow` remains the current Python workflow and state-transition owner.

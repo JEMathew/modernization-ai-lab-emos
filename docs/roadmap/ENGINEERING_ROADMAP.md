@@ -6,7 +6,7 @@ the ARB controls scope.
 
 | Horizon | Outcome | Slice boundary | Exit decision |
 |---|---|---|---|
-| H0 — Repository integrity | Exact baseline is reproducible and governed | BASE-01 plus committed RS-01/02; reconcile RS-03 | Clean checkout and registry evidence pass |
+| H0 — Repository integrity | Exact baseline is reproducible and governed | BASE-01 and RS-01–RS-03 complete | Complete; clean checkout and registry evidence passed |
 | H1 — Compatibility seam | Current Journey can use typed in-process boundary without behavior change | RS-03–RS-04 | Sprint 1 gate |
 | H2 — Durable local spine | One workflow persists state, snapshots, and authoritative status | RS-05–RS-08 | Sprint 2 gate |
 | H3 — Bounded asynchronous execution | One task stores artifacts and completes through outbox/queue/worker | RS-09–RS-12 | Sprint 3 gate |
@@ -17,9 +17,9 @@ the ARB controls scope.
 
 ## Sequencing constraints
 
-- BASE-01 precedes any new integration because the current working tree is not a
-  clean release boundary.
-- RS-03 must be reviewed, committed, and clean-checkout verified before RS-04.
+- BASE-01 is complete and remains the required release boundary for later
+  integration; intentionally uncommitted product work is outside that boundary.
+- RS-03 is reviewed, committed, clean-checkout verified, and remains inactive.
 - Runtime does not activate before the compatibility slice.
 - Durable state precedes queue/worker execution.
 - Idempotency, effect records, and checkpoints precede recovery claims.

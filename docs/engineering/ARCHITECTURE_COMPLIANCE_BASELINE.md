@@ -27,7 +27,7 @@ the controlling Production Candidate scope when it narrows the reference design.
 | Stored assessment artifacts | Local JSON/ZIP and SQLite assessment bundle | Aligned locally; not operationalized |
 | One Python workflow owner | `engine/workflow.py` | Aligned in Python; browser prototype remains separate |
 | Versioned runtime boundary | `engine/runtime/contracts.py` | Implemented but inactive |
-| Typed runtime configuration | `engine/runtime/config.py` | Implemented in working tree but inactive/uncommitted |
+| Typed runtime configuration | `engine/runtime/config.py` | Implemented, committed, and inactive (`711200c`) |
 | Enterprise DNA authority | Browser model and synthetic relationships | Partial prototype; no durable enterprise authority |
 | Human approval for high risk | UI/state concepts and agency status | Partial; no durable authorization enforcement |
 | Durable execution and recovery | No activated Runtime Spine | Gap by design |
@@ -47,7 +47,7 @@ the controlling Production Candidate scope when it narrows the reference design.
 | AC-007 | Enterprise DNA is rich in the prototype but lacks a durable Python authority. | `enterprise-dna.js`, explorer modules | Journey and intelligence cannot yet consume a governed shared model. | Future approved Enterprise DNA runtime work. |
 | AC-008 | Root documentation contains stale or contradictory statements. | Empty `ARCHITECTURE.md`/`DECISIONS.md`; `PRODUCT.md` claims tools not active; `EVENT_SCHEMA.md` says events are truth | Onboarding and architecture claims can be wrong. | Route readers through this workspace; remediate separately. |
 | AC-009 | Event terminology predates current EMOS language and overstates implementation. | `EVENT_SCHEMA.md` uses “Modernization AI Factory 2D” and declares event sourcing | May be mistaken for current runtime architecture. | Treat as conceptual/historical until superseded by ADR. |
-| AC-010 | Current worktree contains a large set of mixed, uncommitted product/runtime/docs changes. | `git status --short` | Clean-checkout reproducibility and release attribution are weak. | First recommended slice is a reproducible baseline checkpoint. |
+| AC-010 | Current worktree retains mixed, intentionally uncommitted Mission Control, UX, and product-documentation work. | `git status --short`; BASE-01 completion evidence | Uncommitted product work still requires its own review, but the committed Python/runtime/governance baseline no longer depends on it. | BASE-01 complete; preserve and checkpoint the remaining work only through separately approved packets. |
 | AC-011 | Runtime contracts/configuration are definition-only while the workflow remains direct. | No imports from app/workflow/agency into `engine.runtime` | Expected inactive boundary, but risks accidental claims of runtime completion. | Maintain explicit activation scan and status labels. |
 | AC-012 | No repository-evidenced CI pipeline, coverage threshold, service manifest, or CODEOWNERS policy was found. | Repository inventory | Quality gates depend on local execution and tacit ownership. | Add only through an approved engineering slice. |
 

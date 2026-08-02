@@ -75,13 +75,14 @@ Streamlit's optional Watchdog suggestion; neither prevented startup.
   BASE-01 repository stabilization; slice authorization remains separate.
 - No CI pipeline, coverage baseline, service manifest, or CODEOWNERS policy was
   implemented; those require an approved slice.
-- RS-03 exists in the working tree but is not yet a Complete/releasable registry item.
+- RS-03 was subsequently committed and marked Complete during BASE-01; it remains
+  inactive and is not a release by itself.
 
 ## Next recommended slice
 
-BASE-01 — Reproducible repository baseline. It should isolate coherent existing
-changes, verify the exact commit from a clean checkout, and establish automated
-quality evidence before RS-04 activates any compatibility path.
+BASE-01 — Reproducible repository baseline — was subsequently completed. The next
+planned runtime slice is RS-04, but it still requires separate authorization and
+must preserve the inactive flag-off behavior.
 
 ## Demo steps
 
