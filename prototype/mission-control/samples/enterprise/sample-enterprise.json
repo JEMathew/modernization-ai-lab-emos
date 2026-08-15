@@ -1,0 +1,21 @@
+{
+  "schemaVersion": "1.0",
+  "packageId": "SAMPLE-APEX-AEROSPACE-2026-01",
+  "name": "Apex Aerospace Manufacturing",
+  "domain": "Aerospace Manufacturing",
+  "synthetic": true,
+  "deterministic": true,
+  "runtimeBundle": "sample-enterprise.js",
+  "authoritativeEnterpriseDna": "../../enterprise-dna.js",
+  "modernizationUnits": 10,
+  "primaryCaseId": "DR-CIC-001",
+  "primaryCandidateId": "data-01",
+  "journeyStages": [
+    "Portfolio Discovery",
+    "Assessment",
+    "Business Value",
+    "Architecture",
+    "Wave Planning",
+    "Execution Planning"
+  ]
+}

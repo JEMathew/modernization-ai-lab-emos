@@ -1,0 +1,2 @@
+platform_id,platform_name,platform_type,primary_technology,version,hosting,business_owner,technical_owner,annual_cost_usd,data_volume_tb,criticality,lifecycle_status,description
+NS-APP-001,Legacy Order Fulfillment Suite,Enterprise Application,Java EE,7.0,On-premises,SVP Customer Operations,Director Enterprise Applications,1800000,4,Critical,End of Support,Coordinates customer orders plant allocation shipment release and service commitments through tightly coupled modules

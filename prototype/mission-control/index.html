@@ -6,15 +6,37 @@
     <meta name="description" content="Standalone Modernization AI Lab mission-control prototype.">
     <title>Modernization AI Lab — Mission Control</title>
     <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='4' fill='%230b1720'/%3E%3Cpath d='M7 23V15h4v8m3 0V10h4v13m3 0V6h4v17' stroke='%234bd6c2' stroke-width='2'/%3E%3C/svg%3E">
-    <link rel="stylesheet" href="styles.css?v=1.4.5">
+    <link rel="stylesheet" href="styles.css?v=1.8.0">
+    <link rel="stylesheet" href="enterprise-dna-explorer.css?v=1.0">
     <script src="portfolio-lab.js?v=1.0.1-stable3" defer></script>
     <script src="enterprise-dna.js?v=1.4" defer></script>
     <script src="enterprise-context.js?v=1.1" defer></script>
     <script src="program-intelligence.js?v=1.3" defer></script>
-    <script src="script.js?v=1.4.4" defer></script>
-    <script src="portfolio-lab-ui.js?v=1.0.1-stable6" defer></script>
+    <script src="samples/enterprise/sample-enterprise.js?v=1.1" defer></script>
+    <script src="enterprise-dna-explorer-model.js?v=1.0" defer></script>
+    <script src="script.js?v=1.8.0" defer></script>
+    <script src="portfolio-lab-ui.js?v=1.0.1-stable10" defer></script>
+    <script src="sample-portfolio-ui.js?v=1.3" defer></script>
+    <script src="enterprise-dna-explorer.js?v=1.0" defer></script>
   </head>
   <body>
+    <a class="skip-link" href="#application-workspace">Skip to current workspace</a>
+    <nav class="app-navigation" aria-label="Primary application navigation">
+      <div class="app-destinations">
+        <button type="button" id="app-home" data-app-destination="home" aria-current="page">Home</button>
+        <div class="experience-switch" role="group" aria-label="Enterprise workspaces">
+          <button type="button" data-app-destination="mission-control" data-experience-switch="mission-control" aria-pressed="true">Mission Control</button>
+          <button type="button" data-app-destination="hq" data-experience-switch="hq" aria-pressed="false">Modernization HQ</button>
+        </div>
+        <button class="lab-entry-button" id="open-portfolio-lab" data-app-destination="portfolio-lab" type="button">Portfolio Intelligence Lab</button>
+        <button class="dna-explorer-entry" id="open-enterprise-dna-explorer" type="button" aria-pressed="false">Enterprise DNA Explorer</button>
+        <button class="app-journey-return" id="app-guided-journey" data-app-destination="guided-journey" type="button" hidden>Guided Journey</button>
+      </div>
+      <div class="app-orientation" id="app-orientation" aria-live="polite" aria-atomic="true">
+        <small>YOU ARE HERE</small>
+        <span id="app-breadcrumbs">Home</span>
+      </div>
+    </nav>
     <svg class="icon-library" aria-hidden="true">
       <symbol id="icon-grid" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></symbol>
       <symbol id="icon-nodes" viewBox="0 0 24 24"><circle cx="5" cy="12" r="2.5"/><circle cx="19" cy="6" r="2.5"/><circle cx="19" cy="18" r="2.5"/><path d="m7.4 11 9.2-4M7.4 13l9.2 4"/></symbol>
@@ -23,29 +45,24 @@
       <symbol id="icon-close" viewBox="0 0 24 24"><path d="m6 6 12 12M18 6 6 18"/></symbol>
     </svg>
 
-    <div class="app-shell">
+    <div class="app-shell" id="application-workspace" tabindex="-1">
       <header class="topbar">
-        <a class="brand" href="#portfolio" data-view-link="portfolio" aria-label="Mission Control home">
+        <a class="brand" href="#home" data-home-link aria-label="Modernization AI Lab home">
           <span class="brand-mark" aria-hidden="true"><span></span><span></span><span></span></span>
           <span><strong>MODERNIZATION AI LAB</strong><small>PROGRAM INTELLIGENCE / V1.3</small></span>
         </a>
-        <div class="experience-switch" role="group" aria-label="Experience switch">
-          <button class="is-active" type="button" data-experience-switch="mission-control" aria-pressed="true">Mission Control</button>
-          <button type="button" data-experience-switch="hq" aria-pressed="false">Modernization HQ</button>
-        </div>
         <div class="system-status" aria-label="System status">
           <span class="status-dot"></span>
           <span><strong>DEMO SYSTEMS NOMINAL</strong><small>10 PRODUCTS · 8 SPECIALISTS · OFFLINE</small></span>
         </div>
         <button class="simulation-badge" id="simulation-info" type="button" aria-expanded="false" aria-controls="demo-info-panel">Demo Simulation</button>
-        <button class="lab-entry-button" id="open-portfolio-lab" type="button">Portfolio Upload Lab</button>
         <button class="center-case-button" id="center-active-case" type="button" disabled>Center on Active Case</button>
         <button class="reset-button" id="reset-demo" type="button">Reset Full Demo</button>
       </header>
 
       <section class="demo-toolbar" aria-label="Build Week demonstration controls">
         <div class="openai-attribution"><small>DECISION INTELLIGENCE</small><strong>Designed for GPT-5.6</strong><span>·</span><small>MODERNIZATION ENGINEER</small><strong>Powered by Codex</strong></div>
-        <label class="guided-toggle"><input id="guided-demo-toggle" type="checkbox"><span>Guided Demo</span></label>
+        <label class="guided-toggle"><input id="guided-demo-toggle" type="checkbox"><span id="guided-toggle-label">Guided Demo</span></label>
         <div class="pace-control" role="group" aria-label="Demo pace"><span>DEMO PACE</span><button class="is-active" type="button" data-demo-pace="normal" aria-pressed="true">Normal</button><button type="button" data-demo-pace="fast" aria-pressed="false">Fast</button></div>
         <button type="button" id="reset-current-stage">Reset Current Stage</button>
       </section>
@@ -57,14 +74,43 @@
         <button type="button" id="close-demo-info">Close</button>
       </section>
 
-      <section class="entry-launchpad" id="entry-launchpad" role="dialog" aria-modal="true" aria-labelledby="entry-title">
+      <section class="entry-launchpad" id="entry-launchpad" aria-labelledby="entry-title">
         <div class="entry-panel">
-          <header><div><p class="eyebrow">MISSION CONTROL / SELECT EXPERIENCE</p><h1 id="entry-title">How would you like to begin?</h1><p>The guided experience remains the recommended Build Week path. Portfolio Upload Lab is an experimental, local-only analysis sandbox.</p></div><span>SYNTHETIC DATA ONLY</span></header>
+          <header><div><p class="eyebrow">MODERNIZATION AI LAB / BEGIN</p><h1 id="entry-title" tabindex="-1">How do you want to begin modernization?</h1><p>Choose one clear starting point. Every path preserves the same evidence-led, human-governed modernization method.</p></div><span>LOCAL EXPERIENCE · SYNTHETIC SAMPLE AVAILABLE</span></header>
           <div class="entry-options">
-            <article class="entry-option is-recommended"><span class="entry-rating">★★★★★ RECOMMENDED</span><h2>Run Guided Demo</h2><p>Use the complete Apex Aerospace scenario and the existing three-minute governed journey.</p><button class="primary-action" id="entry-guided-demo" type="button">Run Guided Demo <svg aria-hidden="true"><use href="#icon-arrow"></use></svg></button></article>
-            <article class="entry-option"><span class="entry-label">EXPERIMENTAL</span><h2>Upload Portfolio</h2><p>Analyze a local CSV or JSON portfolio. Files remain in this browser session.</p><small>CSV · JSON</small><button type="button" id="entry-upload">Open Upload Lab</button></article>
-            <article class="entry-option"><span class="entry-label">SYNTHETIC SAMPLES</span><h2>Load Sample Portfolio</h2><p>Start with a compact industry portfolio designed for transparent analysis.</p><div class="sample-entry-actions"><button type="button" data-sample-sector="retail">Retail</button><button type="button" data-sample-sector="manufacturing">Manufacturing</button><button type="button" data-sample-sector="financial-services">Financial Services</button></div></article>
+            <article class="entry-option sample-entry-option is-recommended"><span class="entry-rating">★★★★★ RECOMMENDED FOR FIRST VISIT</span><h2>Try Sample Enterprise</h2><p>Experience a prepared Apex Aerospace engagement from executive brief through governed roadmap.</p><small>SYNTHETIC AEROSPACE ENTERPRISE · 10 MODERNIZATION UNITS</small><button class="primary-action" type="button" id="load-sample-portfolio" aria-describedby="sample-load-status">Try Sample Enterprise <svg aria-hidden="true"><use href="#icon-arrow"></use></svg></button><div class="sample-load-progress" id="sample-load-progress" hidden><span role="progressbar" aria-label="Sample engagement preparation progress" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><i></i></span></div><span class="sample-load-status" id="sample-load-status" role="status" aria-live="polite">Best for understanding the complete executive experience.</span></article>
+            <article class="entry-option"><span class="entry-label">YOUR EVIDENCE · LOCAL ONLY</span><h2>Import Your Portfolio</h2><p>Validate and prioritize up to ten application or data-platform records from CSV or JSON.</p><small>PORTFOLIO INTELLIGENCE · ENGINEERING METADATA NOT INCLUDED</small><button type="button" id="entry-upload">Import Your Portfolio</button></article>
+            <article class="entry-option"><span class="entry-label">GUIDED FROM DISCOVERY</span><h2>Start a New Modernization Initiative</h2><p>Begin with an unverified synthetic portfolio and guide one initiative through every governed decision stage.</p><small>STARTS AT PORTFOLIO DISCOVERY · NO DATA PERSISTED</small><button type="button" id="entry-guided-demo">Start New Initiative <svg aria-hidden="true"><use href="#icon-arrow"></use></svg></button></article>
           </div>
+        </div>
+      </section>
+
+      <section class="sample-engagement-experience" id="sample-engagement-experience" hidden>
+        <div class="sample-engagement-shell">
+          <section class="sample-agency-preparation" id="sample-agency-preparation" aria-labelledby="sample-agency-title">
+            <header><div><p class="eyebrow">MODERNIZATION AI AGENCY / ENGAGEMENT PREPARATION</p><h1 id="sample-agency-title" tabindex="-1">Assembling the Apex Aerospace brief</h1><p>Specialists are validating enterprise context and preparing one governed modernization decision.</p></div><span>SYNTHETIC · DETERMINISTIC</span></header>
+            <div class="agency-preparation-progress"><span role="progressbar" aria-label="AI Agency engagement preparation" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><i></i></span><strong id="sample-agency-status" role="status" aria-live="polite">Preparing specialist assignments…</strong></div>
+            <ol class="agency-preparation-steps" aria-label="AI Agency preparation activity">
+              <li data-sample-agency-step="0"><i aria-hidden="true">01</i><span><strong>Portfolio Discovery Specialist</strong><small>Validate ten modernization units</small></span><em>QUEUED</em></li>
+              <li data-sample-agency-step="1"><i aria-hidden="true">02</i><span><strong>Enterprise Architect</strong><small>Connect strategy to eight capabilities</small></span><em>QUEUED</em></li>
+              <li data-sample-agency-step="2"><i aria-hidden="true">03</i><span><strong>Enterprise Intelligence</strong><small>Trace enterprise relationships and ownership</small></span><em>QUEUED</em></li>
+              <li data-sample-agency-step="3"><i aria-hidden="true">04</i><span><strong>Risk &amp; Governance Specialist</strong><small>Identify material evidence conditions</small></span><em>QUEUED</em></li>
+              <li data-sample-agency-step="4"><i aria-hidden="true">05</i><span><strong>Executive Advisor</strong><small>Prepare the Mission Commander decision brief</small></span><em>QUEUED</em></li>
+            </ol>
+          </section>
+
+          <section class="sample-engagement-brief" id="sample-engagement-brief" hidden aria-labelledby="sample-engagement-title">
+            <header><div><p class="eyebrow">EXECUTIVE ENGAGEMENT BRIEF / APEX AEROSPACE</p><h1 id="sample-engagement-title" tabindex="-1">Customer Intelligence is the first governed modernization move</h1><p>The AI Agency has converted the synthetic enterprise portfolio into one decision-ready engagement.</p></div><span>MISSION COMMANDER BRIEF</span></header>
+            <div class="engagement-brief-grid">
+              <article><small>STRATEGIC MANDATE</small><strong>Connected Customer Growth</strong><p>Improve customer service, renewal insight, reporting confidence, operating efficiency, and delivery speed.</p></article>
+              <article><small>PRIMARY MODERNIZATION CASE</small><strong>DR-CIC-001 · Customer Intelligence Capability</strong><p>Customer Analytics Warehouse, Customer Service Portal, and Product Telemetry Platform.</p></article>
+              <article><small>WHY NOW</small><strong>Business outcomes are exposed to aging analytics</strong><p>Oracle technical debt and tightly coupled evidence place five strategic outcomes at risk.</p></article>
+              <article class="is-attention"><small>MATERIAL CONDITION</small><strong>Finance ownership must be resolved</strong><p>Protect twelve dependent Finance Warehouse reports before any governed cutover.</p></article>
+            </div>
+            <section class="engagement-economics-summary" aria-labelledby="engagement-economics-title"><div><small>PLANNING BUSINESS CASE</small><strong id="engagement-economics-title">Directional economics for executive review</strong></div><dl><div><dt>ESTIMATED INVESTMENT</dt><dd id="engagement-investment">—</dd></div><div><dt>EXPECTED ANNUAL BENEFIT</dt><dd id="engagement-benefit">—</dd></div><div><dt>EXPECTED PAYBACK</dt><dd id="engagement-payback">—</dd></div><div><dt>IMPLEMENTATION TIMELINE</dt><dd id="engagement-timeline">—</dd></div></dl><p id="engagement-economics-boundary">Synthetic directional estimate · not audited financial guidance.</p></section>
+            <div class="agency-completion-summary"><small>AI AGENCY COMPLETED</small><span>10 units validated</span><span>39 Enterprise DNA objects confirmed</span><span>77 relationships traced</span><span>3 evidence conditions surfaced</span><span>1 executive recommendation prepared</span></div>
+            <div class="engagement-decision"><div><small>YOUR ROLE / MISSION COMMANDER</small><strong>Review why this case leads the portfolio, then authorize the next evidence-backed assessment step.</strong></div><div><button class="primary-action" id="enter-sample-engagement" type="button">Enter Mission Control <svg aria-hidden="true"><use href="#icon-arrow"></use></svg></button><button type="button" id="cancel-sample-engagement">Return Home</button></div></div>
+          </section>
         </div>
       </section>
 
@@ -74,14 +120,14 @@
 
           <section class="upload-requirements" aria-label="Supported portfolio artifacts">
             <div><small>REQUIRED</small><strong>portfolio.csv or portfolio.json</strong><span>12-field portfolio schema</span></div>
-            <div><small>OPTIONAL</small><strong>dependencies.csv</strong><span>source_asset_id, target_asset_id</span></div>
+            <div><small>OPTIONAL</small><strong>dependencies.csv</strong><span>Source Asset ID, Target Asset ID</span></div>
             <div><small>OPTIONAL</small><strong>constraints.json</strong><span>Governance context</span></div>
             <div class="is-rejected"><small>NOT SUPPORTED</small><strong>Documents, repositories, images</strong><span>PDF · DOCX · PPTX · ZIP · Visio · diagrams</span></div>
           </section>
 
           <div class="upload-lab-grid">
             <section class="upload-control-panel">
-              <div class="lab-step-heading"><span>01</span><div><small>PROVIDE ARTIFACTS</small><h2>Portfolio evidence</h2></div></div>
+              <div class="lab-step-heading"><span>01</span><div><small>PROVIDE ARTIFACTS</small><h2>Portfolio Evidence</h2></div></div>
               <label class="file-drop"><span>Portfolio file <strong>Required</strong></span><input id="portfolio-file" type="file" accept=".csv,.json,text/csv,application/json"><small id="portfolio-file-name">Choose portfolio.csv or JSON</small></label>
               <label class="file-drop"><span>Dependency file <strong>Optional</strong></span><input id="dependencies-file" type="file" accept=".csv,text/csv"><small id="dependencies-file-name">Choose dependencies.csv</small></label>
               <label class="file-drop"><span>Constraints file <strong>Optional</strong></span><input id="constraints-file" type="file" accept=".json,application/json"><small id="constraints-file-name">Choose constraints.json</small></label>
@@ -90,12 +136,12 @@
             </section>
 
             <section class="lab-workbench" aria-live="polite">
-              <div class="lab-empty" id="upload-lab-empty"><span class="target-reticle" aria-hidden="true"><i></i></span><p class="eyebrow">AWAITING PORTFOLIO</p><h2>Validation begins immediately</h2><p>Choose a supported portfolio artifact or load a synthetic sample to inspect schema, dependencies, evidence quality, and candidate scores.</p></div>
-              <section class="mapping-panel" id="mapping-panel" hidden aria-labelledby="mapping-title"><div class="lab-step-heading"><span>02</span><div><small>COLUMN MAPPING</small><h2 id="mapping-title">Map source columns</h2></div></div><p>Confirm how source columns map to the required portfolio schema.</p><div id="mapping-fields"></div><button type="button" id="apply-column-mapping">Apply Mapping</button></section>
-              <section class="validation-report" id="upload-validation-report" hidden aria-labelledby="upload-validation-report-title"><div class="lab-step-heading"><span>03</span><div><small>VALIDATION REPORT</small><h2 id="upload-validation-report-title">Portfolio validation</h2></div></div><div class="validation-summary" id="upload-validation-summary"></div><div class="validation-issues" id="upload-validation-issues"></div><div class="empty-portfolio-actions" id="empty-portfolio-actions" hidden><button type="button" id="retry-upload">Retry Upload</button><button type="button" id="load-empty-sample">Load Sample Portfolio</button><button type="button" id="download-template">Download Template</button></div><div class="validation-actions"><button type="button" id="continue-accepted">Continue with Accepted Records</button><button type="button" id="cancel-validation">Cancel</button></div></section>
-              <section class="unit-limit-panel" id="unit-limit-panel" hidden aria-labelledby="unit-limit-title"><div class="lab-step-heading"><span>04</span><div><small>PORTFOLIO LIMIT</small><h2 id="unit-limit-title">Choose ten modernization units</h2></div></div><p>This sandbox analyzes a maximum of ten units.</p><div class="limit-actions"><button type="button" id="analyze-first-ten">Analyze First 10</button><button type="button" id="select-ten">Select 10</button></div><div id="unit-selector" hidden></div><button type="button" id="analyze-selected" hidden>Analyze Selected Units</button></section>
+              <div class="lab-empty" id="upload-lab-empty"><span class="target-reticle" aria-hidden="true"><i></i></span><p class="eyebrow">AWAITING PORTFOLIO</p><h2>Validation Begins Immediately</h2><p>Choose a supported portfolio artifact or load a synthetic sample to inspect schema, dependencies, evidence quality, and candidate scores.</p></div>
+              <section class="mapping-panel" id="mapping-panel" hidden aria-labelledby="mapping-title"><div class="lab-step-heading"><span>02</span><div><small>COLUMN MAPPING</small><h2 id="mapping-title">Map Source Columns</h2></div></div><p>Confirm how source columns map to the required portfolio schema.</p><div id="mapping-fields"></div><button type="button" id="apply-column-mapping">Apply Mapping</button></section>
+              <section class="validation-report" id="upload-validation-report" hidden aria-labelledby="upload-validation-report-title"><div class="lab-step-heading"><span>03</span><div><small>VALIDATION REPORT</small><h2 id="upload-validation-report-title">Portfolio Validation</h2></div></div><div class="validation-summary" id="upload-validation-summary"></div><div class="validation-issues" id="upload-validation-issues"></div><div class="empty-portfolio-actions" id="empty-portfolio-actions" hidden><button type="button" id="retry-upload">Retry Upload</button><button type="button" id="load-empty-sample">Load Sample Portfolio</button><button type="button" id="download-template">Download Template</button></div><div class="validation-actions"><button type="button" id="continue-accepted">Continue with Accepted Records</button><button type="button" id="cancel-validation">Cancel</button></div></section>
+              <section class="unit-limit-panel" id="unit-limit-panel" hidden aria-labelledby="unit-limit-title"><div class="lab-step-heading"><span>04</span><div><small>PORTFOLIO LIMIT</small><h2 id="unit-limit-title">Choose Ten Modernization Units</h2></div></div><p>This sandbox analyzes a maximum of ten units.</p><div class="limit-actions"><button type="button" id="analyze-first-ten">Analyze First 10</button><button type="button" id="select-ten">Select 10</button></div><div id="unit-selector" hidden></div><button type="button" id="analyze-selected" hidden>Analyze Selected Units</button></section>
               <section class="analysis-results" id="analysis-results" hidden aria-labelledby="analysis-title"><div class="lab-step-heading"><span>05</span><div><small>DETERMINISTIC ANALYSIS</small><h2 id="analysis-title">Modernization Priority Scores</h2></div></div><div class="scoring-legend"><span>30% Technical Urgency</span><span>25% Business Value</span><span>15% Operating Cost</span><span>15% Dependency Readiness</span><span>10% Risk Reduction</span><span>5% Evidence Confidence</span></div><div id="candidate-recommendation"></div><div class="score-table" id="score-table"></div><div class="journey-boundary"><strong>Portfolio Intelligence ends at governed assessment.</strong><span>Engineering requires representative SQL, source schema, and target-platform evidence. The Apex Guided Demo remains the complete engineering experience.</span></div><button class="primary-action" type="button" id="start-uploaded-journey">Start Modernization Journey <svg aria-hidden="true"><use href="#icon-arrow"></use></svg></button></section>
-              <section class="portfolio-assessment" id="portfolio-assessment" hidden aria-labelledby="portfolio-assessment-title"><div class="lab-step-heading"><span>06</span><div><small>CAPABILITY FORMATION / ASSESSMENT</small><h2 id="portfolio-assessment-title">Portfolio assessment complete</h2></div></div><div class="assessment-grid"><div><small>PRIMARY CANDIDATE</small><strong id="assessment-candidate">—</strong></div><div><small>MODERNIZATION CAPABILITY</small><strong id="assessment-capability">—</strong></div><div><small>CAPABILITY UNITS</small><strong id="assessment-units">—</strong></div><div><small>DECLARED DEPENDENCIES</small><strong id="assessment-dependencies">—</strong></div></div><div class="engineering-metadata-gate" id="engineering-metadata-gate"></div><button type="button" id="return-to-scores">Return to Portfolio Scores</button></section>
+              <section class="portfolio-assessment" id="portfolio-assessment" hidden aria-labelledby="portfolio-assessment-title"><div class="lab-step-heading"><span>06</span><div><small>CAPABILITY FORMATION / ASSESSMENT</small><h2 id="portfolio-assessment-title">Portfolio Assessment Complete</h2></div></div><div class="assessment-grid"><div><small>PRIMARY CANDIDATE</small><strong id="assessment-candidate">—</strong></div><div><small>MODERNIZATION CAPABILITY</small><strong id="assessment-capability">—</strong></div><div><small>CAPABILITY UNITS</small><strong id="assessment-units">—</strong></div><div><small>DECLARED DEPENDENCIES</small><strong id="assessment-dependencies">—</strong></div></div><div class="engineering-metadata-gate" id="engineering-metadata-gate"></div><button type="button" id="return-to-scores">Return to Portfolio Scores</button></section>
             </section>
           </div>
         </div>
@@ -103,17 +149,59 @@
 
       <section class="uploaded-journey-context" id="uploaded-journey-context" hidden aria-live="polite"><div><small>EXPERIMENTAL PORTFOLIO HANDOFF</small><strong id="uploaded-journey-title">Uploaded modernization case</strong></div><div><small>PRIMARY CANDIDATE</small><strong id="uploaded-candidate-name">—</strong></div><div><small>VALIDATED UNITS</small><strong id="uploaded-unit-count">0</strong></div><div><small>BOUNDARY</small><strong>STANDARD GUIDED JOURNEY · METADATA ONLY</strong></div><button type="button" id="return-upload-lab">Return to Analysis</button></section>
 
-      <aside class="guided-cue" id="guided-cue" hidden aria-live="polite" aria-label="Guided modernization journey">
-        <header class="guided-journey-header"><div><small>GUIDED MODERNIZATION JOURNEY</small><strong id="guided-step-title">Portfolio Discovery</strong></div><div><span id="guided-step-count">STEP 1 OF 9</span><strong id="guided-progress-label">0% COMPLETE</strong></div></header>
-        <section class="guided-context" aria-label="Active enterprise context"><span><small>BUSINESS INITIATIVE</small><strong id="guided-initiative">Connected Customer Growth</strong></span><span><small>MODERNIZATION PROGRAM</small><strong id="guided-program">Customer Intelligence Modernization Program</strong></span><span class="guided-case-context"><small>ACTIVE MODERNIZATION CASE</small><strong id="guided-case-name">Customer Intelligence Capability</strong><em id="guided-case-id">CASE ID · DR-CIC-001</em></span></section>
-        <section class="guided-status-grid" aria-label="Current guided status"><span><small>CURRENT STAGE</small><strong id="guided-current-stage">Unverified</strong></span><span><small>CURRENT STATUS</small><strong id="guided-current-status">Awaiting discovery authorization</strong></span><span><small>CURRENT OWNER</small><strong id="guided-current-owner">Portfolio Intelligence Specialist</strong></span><span><small>CURRENT WORK OBJECT</small><strong id="guided-current-work-object">Portfolio Evidence</strong></span><span class="guided-blocker"><small>CURRENT BLOCKER</small><strong id="guided-current-blocker">None</strong></span></section>
-        <p id="guided-objective">Reveal evidence quality and portfolio dependencies.</p>
-        <section class="guided-action-panel" aria-labelledby="guided-next-action"><small>IMMEDIATE NEXT ACTION</small><strong id="guided-next-action">Begin Portfolio Discovery</strong><button class="primary-action" id="guided-primary-action" type="button" aria-describedby="guided-action-status">Begin Portfolio Discovery</button><span id="guided-action-status" role="status">Ready for Mission Commander authorization.</span></section>
-        <ol class="guided-lifecycle" id="guided-lifecycle" aria-label="Guided journey lifecycle"></ol>
-        <dl class="guided-orientation"><div><dt>PREVIOUS STAGE</dt><dd id="guided-previous-stage">Not started</dd></div><div><dt>UPCOMING STAGE</dt><dd id="guided-upcoming-stage">Capability Formation</dd></div><div><dt>TIME</dt><dd id="guided-duration">15 seconds</dd></div></dl>
-        <div class="guided-progress" aria-hidden="true"><i id="guided-progress-bar"></i></div>
-        <details class="guided-presenter"><summary>Presenter cue</summary><p id="guided-presenter-cue">“Start with evidence, not opinions.”</p></details>
-        <footer class="guided-footer"><button type="button" id="restart-guided-demo">Restart Guided Demo</button><button type="button" id="disable-guided-demo">Turn Off</button></footer>
+      <div class="guided-resize-handle" id="guided-resize-handle" role="separator" aria-orientation="vertical" aria-label="Resize Guided Modernization Journey" aria-valuemin="360" aria-valuemax="640" aria-valuenow="430" aria-valuetext="430 pixels wide" aria-disabled="false" tabindex="0"><span aria-hidden="true"></span></div>
+      <aside class="guided-cue" id="guided-cue" hidden aria-labelledby="guided-inspector-label">
+        <header class="guided-journey-header">
+          <div class="guided-heading">
+            <small id="guided-inspector-label">GUIDED MODERNIZATION JOURNEY</small>
+            <h2 id="guided-step-title" tabindex="-1">Portfolio Discovery</h2>
+            <span id="guided-case-summary">Customer Intelligence Capability · DR-CIC-001</span>
+          </div>
+          <div class="guided-step-summary"><span id="guided-step-count">STEP 1 OF 9</span><strong id="guided-progress-label">0 OF 9 STAGES COMPLETE</strong></div>
+          <nav class="guided-panel-controls" aria-label="Guided journey panel controls">
+            <button type="button" id="guided-return-mission">Mission Control</button>
+            <button type="button" id="guided-size-toggle" aria-pressed="false">Wider Panel</button>
+            <button type="button" id="guided-collapse" aria-expanded="true" aria-controls="guided-expanded">Collapse</button>
+          </nav>
+        </header>
+        <div class="guided-progress" id="guided-progress" role="progressbar" aria-label="Journey completion" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" aria-valuetext="Step 1 of 9; 0 stages complete"><i id="guided-progress-bar"></i></div>
+        <div class="guided-step-progress" id="guided-step-progress" aria-hidden="true"></div>
+        <section class="guided-compact-summary" id="guided-compact-summary" hidden aria-label="Guided Journey Summary">
+          <div><small>CURRENT STAGE</small><strong id="guided-compact-stage">Unverified</strong></div>
+          <div><small>CURRENT OWNER</small><strong id="guided-compact-owner">Portfolio Intelligence Specialist</strong></div>
+          <div class="guided-compact-blocker"><small>BLOCKER</small><strong id="guided-compact-blocker">None</strong></div>
+          <div class="guided-compact-next"><small>NEXT ACTION</small><strong id="guided-compact-next-action">Begin Portfolio Discovery</strong></div>
+          <button type="button" id="guided-restore" aria-expanded="false" aria-controls="guided-expanded">Restore Journey</button>
+        </section>
+        <div class="guided-expanded" id="guided-expanded">
+          <section class="guided-action-panel" aria-labelledby="guided-next-action"><small>IMMEDIATE NEXT ACTION</small><strong id="guided-next-action">Begin Portfolio Discovery</strong><p id="guided-objective">Reveal evidence quality and portfolio dependencies.</p><button class="primary-action" id="guided-primary-action" type="button" aria-describedby="guided-action-status">Begin Portfolio Discovery</button><span id="guided-action-status" role="status">Ready for Mission Commander authorization.</span></section>
+          <section class="guided-execution-context" aria-labelledby="guided-execution-context-title">
+            <header><span><small>EXECUTION CONTEXT</small><strong id="guided-execution-context-title">Where the work stands now</strong></span><em id="guided-context-state">READY</em></header>
+            <div class="guided-status-grid">
+              <span><small>CURRENT STAGE</small><strong id="guided-current-stage">Unverified</strong></span>
+              <span><small>STATUS</small><strong class="guided-status-badge" id="guided-current-status">Awaiting discovery authorization</strong></span>
+              <span><small>OWNER</small><strong id="guided-current-owner">Portfolio Intelligence Specialist</strong></span>
+              <span><small>WORK OBJECT</small><strong id="guided-current-work-object">Portfolio Evidence</strong></span>
+              <span class="guided-blocker"><small>BLOCKER</small><strong id="guided-current-blocker">None</strong></span>
+            </div>
+          </section>
+          <section class="guided-health" aria-labelledby="guided-health-title">
+            <header><small>JOURNEY HEALTH</small><strong id="guided-health-title">Decision support signals</strong></header>
+            <div><span><small>EVIDENCE QUALITY</small><strong id="guided-health-evidence">Not assessed</strong></span><span><small>CONFIDENCE</small><strong id="guided-health-confidence">Establishing</strong></span><span><small>DECISION READINESS</small><strong id="guided-health-readiness">Not ready</strong></span></div>
+          </section>
+          <details class="guided-journey-map" open>
+            <summary><span>Journey Timeline</span><small>Inspect stages without changing workflow state</small></summary>
+            <ol class="guided-lifecycle" id="guided-lifecycle" aria-label="Guided journey lifecycle"></ol>
+            <section class="guided-stage-review" id="guided-stage-review" hidden tabindex="-1" aria-live="polite"></section>
+          </details>
+          <details class="guided-operational-details guided-journey-details">
+            <summary><span>Journey Details</span><small>Context, adjacent stages, timing and presenter cue</small></summary>
+            <section class="guided-context" aria-label="Active enterprise context"><span><small>BUSINESS INITIATIVE</small><strong id="guided-initiative">Connected Customer Growth</strong></span><span><small>MODERNIZATION PROGRAM</small><strong id="guided-program">Customer Intelligence Modernization Program</strong></span><span class="guided-case-context"><small>ACTIVE MODERNIZATION CASE</small><strong id="guided-case-name">Customer Intelligence Capability</strong><em id="guided-case-id">CASE ID · DR-CIC-001</em></span></section>
+            <dl class="guided-orientation"><div><dt>PREVIOUS STAGE</dt><dd id="guided-previous-stage">Not started</dd></div><div><dt>UPCOMING STAGE</dt><dd id="guided-upcoming-stage">Capability Formation</dd></div><div><dt>TIME</dt><dd id="guided-duration">15 seconds</dd></div></dl>
+            <div class="guided-presenter"><small>PRESENTER CUE</small><p id="guided-presenter-cue">“Start with evidence, not opinions.”</p></div>
+          </details>
+          <footer class="guided-footer"><button type="button" id="restart-guided-demo">Restart Guided Demo</button><button type="button" id="disable-guided-demo" aria-describedby="guided-exit-description">Exit Guide</button><span id="guided-exit-description">Journey progress is preserved.</span></footer>
+        </div>
       </aside>
 
       <nav class="environment-nav" data-experience-panel="mission-control" aria-label="Mission control environments">
@@ -121,7 +209,7 @@
         <button class="env-control is-active" type="button" data-view="portfolio" aria-current="page">
           <span class="env-index">01</span>
           <svg aria-hidden="true"><use href="#icon-grid"></use></svg>
-          <span><strong>Portfolio</strong><small>Command Center</small></span>
+          <span><strong>Portfolio</strong><small>Decision Center</small></span>
         </button>
         <button class="env-control" type="button" data-view="decision">
           <span class="env-index">02</span>
@@ -161,9 +249,122 @@
 
         <section class="environment is-visible" id="portfolio-view" data-environment="portfolio" aria-labelledby="portfolio-title">
           <div class="section-heading">
-            <div><p class="eyebrow">ENVIRONMENT 01 / PORTFOLIO INTELLIGENCE</p><h1 id="portfolio-title">Portfolio Command Center</h1><p>Survey the synthetic Apex Aerospace estate and select a product to inspect its modernization posture.</p></div>
-            <div class="heading-metrics"><span><small>ESTATE</small><strong>10</strong></span><span><small>FOCUS</small><strong>1</strong></span><span><small>DATA AGE</small><strong>LIVE</strong></span></div>
+            <div><p class="eyebrow">ENVIRONMENT 01 / ENTERPRISE DECISION INTELLIGENCE</p><h1 id="portfolio-title">Enterprise Decision Center</h1><p>Direct executive attention to enterprise health, modernization priorities, governed recommendations, and the decision required next.</p></div>
+            <div class="heading-metrics"><span><small>PORTFOLIO</small><strong>10</strong></span><span><small>ACTIVE CASE</small><strong>1</strong></span><span><small>DECISION</small><strong>READY</strong></span></div>
           </div>
+
+          <section class="sample-executive-brief mission-decision-center" id="sample-executive-brief" hidden aria-labelledby="sample-executive-brief-title">
+            <header><div><p class="eyebrow">MISSION CONTROL / EXECUTIVE DECISION BRIEF</p><h2 id="sample-executive-brief-title" tabindex="-1">Authorize the Customer Intelligence capability assessment</h2><p id="decision-center-summary">Evidence is sufficient to advance one governed case. Finance ownership remains a protected condition—not a hidden assumption.</p></div><div class="decision-center-header-actions"><span id="decision-center-status">DECISION READY · 91% CONFIDENCE</span><button type="button" id="reload-sample-portfolio">Reload Sample</button><button type="button" id="reset-sample-portfolio">Reset Sample</button></div></header>
+
+            <section class="decision-executive-summary" aria-labelledby="decision-executive-summary-title">
+              <div><small>EXECUTIVE SUMMARY</small><h3 id="decision-executive-summary-title">Customer Intelligence is the first governed modernization move</h3><p id="decision-executive-summary-copy">The highest-priority candidate supports five business outcomes, carries critical Oracle urgency, and has a bounded modernization path. Advance assessment while preserving twelve dependent finance reports.</p></div>
+              <dl><div><dt>DECISION NOW</dt><dd id="decision-now">Authorize capability assessment</dd></div><div><dt>ACCOUNTABLE EXECUTIVE</dt><dd>Chief Customer Officer</dd></div><div><dt>OPERATING COST IN SCOPE</dt><dd id="decision-cost-in-scope">$10.13M</dd></div><div><dt>MISSION COMMANDER NEXT</dt><dd id="decision-next">Use the Guided Journey action</dd></div></dl>
+            </section>
+
+            <section class="decision-health-section" aria-labelledby="decision-health-title">
+              <div class="decision-section-heading"><div><small>ENTERPRISE HEALTH</small><h3 id="decision-health-title">Where executive attention is required</h3></div><span>4 DECISION SIGNALS</span></div>
+              <div class="decision-health-grid">
+                <article class="is-attention"><small>ENTERPRISE HEALTH</small><strong>Attention Required</strong><p>Critical Oracle exposure and one accountable-ownership conflict.</p></article>
+                <article><small>EVIDENCE QUALITY</small><strong id="decision-evidence-health">7 of 10 Ready</strong><p>Seven decisions can proceed; three evidence conditions remain visible.</p></article>
+                <article><small>BUSINESS VALUE</small><strong id="decision-value-health">9 of 10 High Value</strong><p>Five strategic business outcomes depend on this capability foundation.</p></article>
+                <article><small>MODERNIZATION READINESS</small><strong id="decision-readiness-health">78 / 100</strong><p>Ready with conditions; cloud readiness is confirmed at 82.</p></article>
+              </div>
+            </section>
+
+            <section class="investment-case" aria-labelledby="investment-case-title">
+              <div class="decision-section-heading"><div><small>INVESTMENT-GRADE BUSINESS CASE</small><h3 id="investment-case-title">Directional economics and explicit assumptions</h3></div><span id="investment-estimate-label">SYNTHETIC PLANNING ESTIMATE</span></div>
+              <div class="investment-case-grid">
+                <article><small>RECOMMENDED CANDIDATE</small><strong id="investment-candidate">—</strong></article>
+                <article><small>ESTIMATED INVESTMENT</small><strong id="investment-range">—</strong></article>
+                <article><small>EXPECTED ANNUAL BENEFIT</small><strong id="benefit-range">—</strong></article>
+                <article><small>EXPECTED PAYBACK</small><strong id="payback-range">—</strong></article>
+                <article><small>IMPLEMENTATION TIMELINE</small><strong id="investment-timeline">—</strong></article>
+                <article><small>BUSINESS VALUE</small><strong id="investment-business-value">—</strong></article>
+                <article><small>COST REDUCTION OPPORTUNITY</small><strong id="cost-reduction-range">—</strong></article>
+                <article><small>RISK LEVEL</small><strong id="investment-risk">—</strong></article>
+                <article><small>CONFIDENCE</small><strong id="investment-confidence">—</strong></article>
+                <article class="is-attention"><small>APPROVAL REQUIREMENT</small><strong id="investment-approval">—</strong></article>
+              </div>
+              <details class="investment-method">
+                <summary><span><small>ASSUMPTIONS AND DERIVATION</small><strong>Inspect how the estimate was calculated</strong></span><span>RANGES · NO AUDITED PRECISION</span></summary>
+                <div><section><h4>Key assumptions</h4><ul id="investment-assumptions"></ul></section><section><h4>Key dependencies</h4><ul id="investment-dependencies"></ul></section><section><h4>Decision conditions</h4><ul id="investment-conditions"></ul></section><section><h4>Derivation</h4><dl id="investment-derivation"></dl></section></div>
+              </details>
+            </section>
+
+            <div class="decision-intelligence-layout">
+              <section class="priority-intelligence" aria-labelledby="priority-intelligence-title">
+                <div class="decision-section-heading"><div><small>PRIORITY INTELLIGENCE</small><h3 id="priority-intelligence-title">Why this case leads the portfolio</h3></div><span>DETERMINISTIC SCORING</span></div>
+                <div class="priority-candidate" id="decision-primary-candidate"></div>
+                <ol class="priority-comparison" id="decision-priority-comparison" aria-label="Top modernization candidate comparison"></ol>
+              </section>
+
+              <section class="decision-intelligence" aria-labelledby="decision-intelligence-title">
+                <div class="decision-section-heading"><div><small>DECISION INTELLIGENCE</small><h3 id="decision-intelligence-title">The decision and its consequence</h3></div><span>MISSION COMMANDER</span></div>
+                <div class="decision-question"><small>RECOMMENDED DECISION</small><strong id="decision-recommended-action">Advance DR-CIC-001 to capability assessment</strong><p id="decision-authority-boundary">This authorizes deeper evidence-backed assessment. It does not approve engineering or cutover.</p></div>
+                <div class="decision-consequences"><article><small>IF YOU PROCEED</small><strong id="decision-proceed-title">Validate the staged Oracle-to-BigQuery boundary</strong><p id="decision-proceed-detail">Confirm value, architecture, ownership, and the protected finance-report condition.</p></article><article class="is-attention"><small>IF YOU DEFER</small><strong id="decision-defer-title">Critical platform exposure remains</strong><p id="decision-defer-detail">Five customer outcomes stay constrained and the ownership conflict remains unresolved.</p></article></div>
+                <div class="decision-control-note"><span>NO DUPLICATE ACTION</span><p>The existing Guided Journey remains the authoritative workflow control.</p></div>
+              </section>
+            </div>
+
+            <div class="decision-support-layout">
+              <section class="business-outcomes" aria-labelledby="business-outcomes-title"><div class="decision-section-heading"><div><small>BUSINESS OUTCOMES</small><h3 id="business-outcomes-title">What the modernization should change</h3></div><span>5 OUTCOMES</span></div><div id="decision-business-outcomes"></div></section>
+              <section class="readiness-intelligence" aria-labelledby="readiness-intelligence-title"><div class="decision-section-heading"><div><small>MODERNIZATION READINESS</small><h3 id="readiness-intelligence-title">Conditions for responsible progress</h3></div><span>GOVERNED GATES</span></div><ul><li class="is-ready"><i>✓</i><span><strong>Portfolio evidence</strong><small>10 units validated · dependencies traced</small></span></li><li class="is-ready"><i>✓</i><span><strong>Target landing zone</strong><small>Google Cloud analytics foundation is target-ready</small></span></li><li class="is-attention"><i>!</i><span><strong>Finance reporting ownership</strong><small>Accountable change authority remains conflicting</small></span></li><li class="is-ready"><i>→</i><span><strong id="readiness-decision-label">Assessment decision</strong><small id="readiness-decision-detail">Ready for Mission Commander authorization</small></span></li></ul></section>
+            </div>
+
+            <section class="recommendation-intelligence" aria-labelledby="recommendation-intelligence-title">
+              <div class="decision-section-heading"><div><small>RECOMMENDATION INTELLIGENCE</small><h3 id="recommendation-intelligence-title">One recommendation, with rationale and boundary</h3></div><span>91% EVIDENCE CONFIDENCE</span></div>
+              <div><article><small>RECOMMENDED MOVE</small><strong>Staged Oracle-to-BigQuery replatform</strong><p>Modernize the Customer Analytics Warehouse through a governed dual-run while keeping protected finance-report contracts stable.</p></article><article><small>WHY IT LEADS</small><strong>Urgency, value, and dependency leverage converge</strong><p>The warehouse has the highest priority score and creates the trusted foundation required by customer service, telemetry, renewal insight, and reporting.</p></article><article class="is-attention"><small>NON-NEGOTIABLE BOUNDARY</small><strong>Do not change twelve finance reports without confirmed authority</strong><p>The recommendation remains conditional until ownership and change authority are governed.</p></article></div>
+            </section>
+
+            <details class="recommendation-evidence-brief" id="recommendation-evidence-brief">
+              <summary><span><small>RECOMMENDATION EVIDENCE BRIEF</small><strong>Inspect evidence, rationale, assumptions, alternatives, and limitations</strong></span><span>TRACEABLE · CHALLENGEABLE</span></summary>
+              <div class="recommendation-evidence-content">
+                <section><small>RECOMMENDATION</small><strong id="evidence-recommendation">—</strong><p id="evidence-why-candidate"></p></section>
+                <section><small>WHY NOW</small><strong id="evidence-why-now">—</strong><p id="evidence-current-state">Current case state will appear here.</p></section>
+                <section><small>BUSINESS RATIONALE</small><p id="evidence-business-rationale"></p></section>
+                <section><small>ARCHITECTURE RATIONALE</small><p id="evidence-architecture-rationale"></p></section>
+                <section><small>RISK RATIONALE</small><p id="evidence-risk-rationale"></p></section>
+                <section><small>CONFIDENCE</small><strong id="evidence-confidence">—</strong><p id="evidence-confidence-method"></p></section>
+                <section class="evidence-wide"><small>SPECIFIC EVIDENCE</small><ul id="recommendation-evidence-list"></ul></section>
+                <section><small>ASSUMPTIONS</small><ul id="recommendation-assumptions"></ul></section>
+                <section><small>LIMITATIONS</small><ul id="recommendation-limitations"></ul></section>
+                <section><small>ALTERNATIVES CONSIDERED</small><div id="recommendation-alternatives"></div></section>
+                <section class="evidence-wide is-attention"><small>APPROVAL AND GOVERNANCE BOUNDARY</small><strong id="recommendation-governance-boundary">—</strong></section>
+              </div>
+            </details>
+
+            <details class="decision-assurance" id="decision-assurance">
+              <summary><span><small>DECISION ASSURANCE</small><strong>Inspect deterministic decision-support indicators</strong></span><span>NOT PRODUCTION ENFORCEMENT</span></summary>
+              <div class="decision-assurance-grid">
+                <article><small>EVIDENCE QUALITY</small><strong id="assurance-evidence-quality">—</strong></article>
+                <article><small>BUSINESS ALIGNMENT</small><strong id="assurance-business-alignment">—</strong></article>
+                <article><small>ARCHITECTURE READINESS</small><strong id="assurance-architecture-readiness">—</strong></article>
+                <article><small>RISK</small><strong id="assurance-risk">—</strong></article>
+                <article class="is-not-active"><small>SENSITIVE DATA STATUS</small><strong id="assurance-sensitive-data">—</strong></article>
+                <article class="is-not-active"><small>POLICY STATUS</small><strong id="assurance-policy">—</strong></article>
+                <article class="is-attention"><small>APPROVAL REQUIREMENT</small><strong id="assurance-approval">—</strong></article>
+              </div>
+              <p id="assurance-production-boundary"></p>
+            </details>
+          </section>
+
+          <details class="sample-portfolio-evidence" id="sample-portfolio-evidence" hidden>
+            <summary><span><small>SUPPORTING EVIDENCE</small><strong>Explore portfolio intelligence and inventory</strong></span><span>10 UNITS · 3 RANKED CANDIDATES · 9 REPORTING VIEWS</span></summary>
+            <section class="sample-portfolio-dashboard" id="sample-portfolio-dashboard" hidden aria-labelledby="sample-dashboard-title">
+            <header><div><p class="eyebrow">SYNTHETIC ENTERPRISE / VALIDATED</p><h2 id="sample-dashboard-title" tabindex="-1">Apex Aerospace Portfolio Intelligence</h2><p id="sample-dashboard-description">A reusable Enterprise DNA sample is active.</p></div></header>
+            <div class="sample-dashboard-grid">
+              <article class="sample-summary-card sample-summary-primary"><small>PORTFOLIO SUMMARY</small><div id="sample-summary"></div></article>
+              <article class="sample-summary-card"><small>TECHNOLOGY DISTRIBUTION</small><div id="sample-technology-distribution"></div></article>
+              <article class="sample-summary-card"><small>RISK DISTRIBUTION</small><div id="sample-risk-distribution"></div></article>
+              <article class="sample-summary-card"><small>BUSINESS VALUE</small><div id="sample-business-value"></div></article>
+              <article class="sample-summary-card sample-inventory-card"><small>APPLICATION INVENTORY</small><div id="sample-application-inventory"></div></article>
+              <article class="sample-summary-card"><small>TOP MODERNIZATION CANDIDATES</small><div id="sample-top-candidates"></div></article>
+              <article class="sample-summary-card"><small>RECOMMENDED WAVE</small><div id="sample-recommended-wave"></div></article>
+              <article class="sample-summary-card"><small>JOURNEY STATUS</small><div id="sample-journey-status"></div></article>
+              <article class="sample-summary-card sample-recommendation-card"><small>EXECUTIVE RECOMMENDATION</small><div id="sample-executive-recommendation"></div></article>
+            </div>
+          </section>
+          </details>
 
           <div class="discovery-console" id="discovery-console">
             <div class="discovery-state"><small>PORTFOLIO STATE</small><strong id="portfolio-state">UNVERIFIED</strong></div>
@@ -544,5 +745,71 @@
 
       <footer class="footer-bar"><span>SYNTHETIC ENTERPRISE DATA · VISUAL PROTOTYPE ONLY</span><span>APEX AEROSPACE / TRACK 3</span></footer>
     </div>
+
+    <section class="dna-explorer" id="enterprise-dna-explorer" hidden aria-labelledby="dna-explorer-title">
+      <header class="dna-explorer-header">
+        <div><p class="eyebrow">ENTERPRISE DNA / LIVING OPERATING MODEL</p><h1 id="dna-explorer-title" tabindex="-1">Enterprise DNA Explorer</h1><p>Trace business intent through products, technology, ownership, risk, and modernization consequence.</p></div>
+        <div class="dna-explorer-header-actions"><span>READ-ONLY · 100% SYNTHETIC</span><button type="button" id="close-dna-explorer">Return to Previous Workspace</button></div>
+      </header>
+
+      <div class="dna-explorer-summary" id="dna-explorer-summary" aria-label="Enterprise DNA summary"></div>
+
+      <nav class="dna-explorer-modes" id="dna-explorer-modes" role="tablist" aria-label="Enterprise DNA explorer perspectives"></nav>
+
+      <div class="dna-explorer-toolbar" role="search">
+        <label><span>SEARCH ENTERPRISE DNA</span><input id="dna-search" type="search" autocomplete="off" placeholder="Search strategy, capability, product, technology, owner, or risk"></label>
+        <label><span>OBJECT TYPE</span><select id="dna-kind-filter"></select></label>
+        <label><span>LIFECYCLE</span><select id="dna-status-filter"></select></label>
+        <label><span>RELATIONSHIP DEPTH</span><input id="dna-depth" type="range" min="1" max="3" step="1" value="2"><output id="dna-depth-value" for="dna-depth">2 HOPS</output></label>
+        <span class="dna-explorer-live-status" id="dna-explorer-status" role="status" aria-live="polite"></span>
+      </div>
+
+      <div class="dna-explorer-layout">
+        <aside class="dna-object-index" aria-labelledby="dna-object-index-title">
+          <header><div><small>ENTERPRISE INVENTORY</small><h2 id="dna-object-index-title">Objects in scope</h2></div><span id="dna-result-count">0 MATCHES</span></header>
+          <ol id="dna-object-results"></ol>
+        </aside>
+
+        <main class="dna-graph-workspace">
+          <header><div><small>RELATIONSHIP MAP</small><h2 id="dna-graph-title">Capability Explorer</h2><p id="dna-graph-description"></p></div><div class="dna-graph-legend" aria-label="Graph legend"><span class="is-business">Business</span><span class="is-product">Products</span><span class="is-technology">Technology</span><span class="is-control">Ownership &amp; Modernization</span></div></header>
+          <div class="dna-graph-scroll">
+            <svg id="dna-graph" viewBox="0 0 1000 620" role="group" aria-labelledby="dna-graph-title dna-graph-description"></svg>
+          </div>
+        </main>
+
+        <aside class="dna-inspector" aria-labelledby="dna-object-name">
+          <header><small id="dna-object-kind">ENTERPRISE OBJECT</small><h2 id="dna-object-name" tabindex="-1">Select an object</h2><p id="dna-object-description"></p><div><span id="dna-object-id"></span><span id="dna-object-status"></span><span id="dna-object-confidence"></span></div></header>
+
+          <section class="dna-intelligence" aria-labelledby="dna-intelligence-title">
+            <div><small>ENTERPRISE INTELLIGENCE</small><h3 id="dna-intelligence-title">Ask the operating model</h3></div>
+            <div class="dna-intelligence-questions" id="dna-intelligence-questions" role="tablist" aria-label="Enterprise Intelligence questions"></div>
+            <article id="dna-intelligence-answer" tabindex="-1" aria-live="polite"></article>
+          </section>
+
+          <details open>
+            <summary><span>Impact and blast radius</span><small>BOUNDED TO 3 HOPS</small></summary>
+            <div class="dna-impact-summary" id="dna-impact-summary"></div>
+          </details>
+
+          <details>
+            <summary><span>Object attributes</span><small>PROVENANCE INCLUDED</small></summary>
+            <dl class="dna-object-attributes" id="dna-object-attributes"></dl>
+            <div class="dna-provenance"><small>PROVENANCE</small><p id="dna-object-provenance"></p><small>EVIDENCE REFERENCES</small><p id="dna-object-evidence"></p></div>
+          </details>
+
+          <details>
+            <summary><span>Direct relationships</span><small>CLICK TO NAVIGATE</small></summary>
+            <ul class="dna-direct-connections" id="dna-direct-connections"></ul>
+          </details>
+
+          <details>
+            <summary><span>Modernization priority</span><small>DETERMINISTIC SCORING</small></summary>
+            <ol class="dna-modernization-ranking" id="dna-modernization-ranking"></ol>
+          </details>
+        </aside>
+      </div>
+
+      <footer class="dna-explorer-boundary"><strong>Enterprise DNA is a read-only projection in this prototype.</strong><span>No workflow stage, recommendation, portfolio record, or modernization case is changed by Explorer interaction.</span></footer>
+    </section>
   </body>
 </html>

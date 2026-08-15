@@ -142,6 +142,21 @@ CREATE TABLE IF NOT EXISTS finding_evidence_relationships (
     relationship_json TEXT NOT NULL
 );
 
+CREATE TABLE IF NOT EXISTS modernization_recommendations (
+    recommendation_id TEXT PRIMARY KEY,
+    run_id TEXT NOT NULL REFERENCES assessment_runs(run_id),
+    asset_id TEXT NOT NULL,
+    recommended_strategy TEXT NOT NULL,
+    trust_status TEXT NOT NULL,
+    confidence REAL NOT NULL,
+    recommendation_version TEXT NOT NULL,
+    recommendation_hash TEXT NOT NULL,
+    authority_scope TEXT NOT NULL,
+    execution_authority TEXT NOT NULL,
+    recommendation_json TEXT NOT NULL,
+    UNIQUE (run_id, asset_id, recommendation_version)
+);
+
 CREATE TABLE IF NOT EXISTS artifact_references (
     run_id TEXT NOT NULL REFERENCES assessment_runs(run_id),
     artifact_type TEXT NOT NULL,
@@ -416,6 +431,31 @@ class TrustedAssessmentStore:
                             relationship.model_dump_json(),
                         ),
                     )
+                for recommendation in run.modernization_recommendations:
+                    connection.execute(
+                        """
+                        INSERT INTO modernization_recommendations
+                            (recommendation_id, run_id, asset_id,
+                             recommended_strategy, trust_status, confidence,
+                             recommendation_version, recommendation_hash,
+                             authority_scope, execution_authority,
+                             recommendation_json)
+                        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                        """,
+                        (
+                            recommendation.recommendation_id,
+                            run.run_id,
+                            recommendation.asset_id,
+                            recommendation.recommended_strategy.value,
+                            recommendation.trust_status,
+                            recommendation.confidence,
+                            recommendation.recommendation_version,
+                            recommendation.recommendation_hash,
+                            recommendation.authority_scope,
+                            recommendation.execution_authority,
+                            recommendation.model_dump_json(),
+                        ),
+                    )
                 connection.execute(
                     """
                     INSERT INTO artifact_references
@@ -514,4 +554,21 @@ class TrustedAssessmentStore:
         except sqlite3.Error as exc:
             raise TrustedAssessmentPersistenceError(
                 "Assessment evidence health could not be read."
+            ) from exc
+
+    def get_recommendations(self, run_id: str) -> tuple[dict[str, object], ...]:
+        """Return immutable recommendations for local artifact verification."""
+
+        self.initialize()
+        try:
+            with self._connect() as connection:
+                rows = connection.execute(
+                    """SELECT * FROM modernization_recommendations
+                       WHERE run_id = ? ORDER BY asset_id""",
+                    (run_id,),
+                ).fetchall()
+                return tuple(dict(row) for row in rows)
+        except sqlite3.Error as exc:
+            raise TrustedAssessmentPersistenceError(
+                "Modernization recommendations could not be read."
             ) from exc

@@ -59,7 +59,9 @@ Connected Customer Growth / BI-CX-2026-01
 - `enterprise-context.js` defines and validates the provider-neutral Initiative, Portfolio, Program, and Case lineage.
 - `program-intelligence.js` defines the two-case program, reusable case workflow, keyed case state, program constraints and decisions, case-impact records, selective propagation, shared dependencies, provider-neutral work objects, and sequencing rationale.
 - `portfolio-lab.js` contains the standalone parser, schema validation, dependency checks, ten-unit limit, and deterministic scoring engine.
-- `portfolio-lab-ui.js` connects that engine to upload, mapping, validation, sample, scoring, capability-formation, assessment, and engineering-evidence-gate views.
+- `portfolio-lab-ui.js` connects that engine to upload, mapping, validation, scoring, capability-formation, assessment, and engineering-evidence-gate views.
+- `samples/enterprise/sample-enterprise.js` is the canonical deterministic Aerospace Manufacturing sample package. It composes the portfolio engine and existing Enterprise DNA rather than creating a second state owner.
+- `sample-portfolio-ui.js` validates and loads the canonical package, then renders its calculated Mission Control summary.
 
 No React, Streamlit, npm, TypeScript, external library, API, or backend is used by this standalone prototype.
 
@@ -144,7 +146,11 @@ V1.3 does not add arbitrary constraints, unlimited cases, second-case engineerin
 
 ## Portfolio Upload Lab
 
-The entry launchpad keeps **Run Guided Demo** as the recommended Apex Aerospace experience. **Upload Portfolio** opens an experimental local sandbox, while **Load Sample Portfolio** provides synthetic Retail, Manufacturing, and Financial Services examples.
+The entry launchpad keeps **Run Guided Demo** as the recommended Apex Aerospace experience. **Upload Portfolio** opens an experimental local sandbox. **Load Sample Portfolio** validates and loads the canonical Apex Aerospace Manufacturing sample directly into Mission Control.
+
+The sample package is reusable from the browser and Node. It contains ten modernization units, five business units, eight business capabilities, APIs, data products, pipelines, dashboards, AI systems, infrastructure, technology, owners, risks, technical debt, readiness, current and target states, dependencies, a three-wave modernization plan, and evidence for six Journey stages. Loading it immediately displays Portfolio Summary, Technology Distribution, Risk Distribution, Business Value, Application Inventory, Top Modernization Candidates, Recommended Wave, Journey Status, and Executive Recommendation. The existing deterministic portfolio engine selects Customer Analytics Warehouse as the primary candidate.
+
+**Reload Sample** repeats validation and reconstruction from the same immutable package. **Reset Sample** clears sample presentation and the existing Journey state, then returns to the launchpad. **Reset Full Demo** also clears the sample presentation. No sample operation calls a backend, an API, or a live model.
 
 The lab accepts:
 

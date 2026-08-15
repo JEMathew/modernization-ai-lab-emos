@@ -55,6 +55,7 @@ ASSESSMENT_STATE_KEYS = (
     "assessment_run",
     "assessment_evidence_snapshot",
     "assessment_definition",
+    "modernization_recommendations",
 )
 ENGINEERING_STATE_KEYS = ("engineering_engagement", "implementation_package")
 REPLAN_STATE_KEYS = ("agency_replan", "agency_replan_artifact")
@@ -288,6 +289,7 @@ def store_assessment(state: MutableMapping[str, object], result: AssessmentResul
     state["assessment_run"] = result.run
     state["assessment_evidence_snapshot"] = result.evidence_snapshot
     state["assessment_definition"] = result.definition
+    state["modernization_recommendations"] = result.run.modernization_recommendations
     evidence_health = result.run.evidence_health
     state["assessment_trust"] = {
         "run_id": result.run.run_id,

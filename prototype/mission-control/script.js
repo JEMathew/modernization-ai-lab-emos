@@ -262,9 +262,33 @@ const state = {
   executiveDecisionRecord: null,
   guidedDemo: false,
   demoPace: "normal",
+  sampleEnterpriseLoaded: false,
+  samplePackageId: null,
   productStates: new Map(),
   agentStates: new Map()
 };
+
+const GUIDED_DOCK_WIDTH = Object.freeze({
+  min: 360,
+  default: 430,
+  legacyWide: 520,
+  absoluteMax: 640,
+  workspaceReserve: 560,
+  viewportRatio: 0.48,
+  breakpoint: 1181,
+  keyboardStep: 10,
+  keyboardLargeStep: 40
+});
+const GUIDED_DOCK_WIDTH_STORAGE_KEY = "modernization-ai-lab.guided-dock-right-width";
+
+const guidedPresentation = {
+  collapsed: false,
+  wide: false,
+  width: GUIDED_DOCK_WIDTH.default,
+  inspectedStep: null,
+  hasStarted: false
+};
+let guidedResizeSession = null;
 
 const $ = (selector, root = document) => root.querySelector(selector);
 const $$ = (selector, root = document) => [...root.querySelectorAll(selector)];
@@ -295,6 +319,18 @@ function stateClass(label) {
   }[label] || "";
 }
 
+function displayTitle(value) {
+  const preserved = new Set(["AI", "API", "CSV", "DNA", "GPT-5.6", "HQ", "ID", "JSON", "SQL"]);
+  return String(value ?? "")
+    .replace(/([a-z0-9])([A-Z])/g, "$1 $2")
+    .replace(/[_-]+/g, " ")
+    .replace(/\s+/g, " ")
+    .trim()
+    .split(" ")
+    .map((word) => preserved.has(word.toUpperCase()) ? word.toUpperCase() : `${word.charAt(0).toUpperCase()}${word.slice(1).toLowerCase()}`)
+    .join(" ");
+}
+
 function dnaObjectNames(items, limit = 4) {
   const names = (items || []).slice(0, limit).map((item) => item.name);
   return `${names.join(" · ")}${(items || []).length > limit ? ` · +${items.length - limit} more` : ""}`;
@@ -302,7 +338,7 @@ function dnaObjectNames(items, limit = 4) {
 
 function activeDnaProjection() {
   if (!enterpriseDna || activeCaseId() !== "DR-CIC-001") return null;
-  return enterpriseDna.projectionForCase("DR-CIC-001", currentCaseSnapshot());
+  return enterpriseDna.projectionForCase("DR-CIC-001", authoritativeCaseProjection("DR-CIC-001"));
 }
 
 function renderEnterpriseDnaContext() {
@@ -591,8 +627,8 @@ function continueToAssessment() {
   state.assessmentMode = null;
   state.assessmentReady = false;
   clearProduct();
-  $("#portfolio-title").textContent = "Modernization Consequence Landscape";
-  $("#portfolio-title + p").textContent = "The enterprise is reorganizing around shared modernization consequence and business capability.";
+  $("#portfolio-title").textContent = "Enterprise Decision Center";
+  $("#portfolio-title + p").textContent = "Assessment intelligence is reorganizing the portfolio around shared business consequence and capability.";
   $("#discovery-console").hidden = true;
   $("#discovery-summary").hidden = true;
   const landscape = $("#assessment-landscape");
@@ -744,7 +780,79 @@ function currentCaseSnapshot(caseId = activeCaseId()) {
   }
   if (state.assessmentReady) return { stage: "Ready to Start", owner: "Portfolio Intelligence Specialist", ownerId: "agent-01", task: "Prepare evidence handoff", blocker: "None", next: state.hqCaseLocation === "decision-room" ? "Start Workspace Flow" : "Enter Modernization HQ", evidence: "4 governed sources ready", recommendation: "PENDING SPECIALIST REVIEW" };
   if (state.capabilityState) return { stage: state.capabilityState, owner: "Portfolio Intelligence Specialist", ownerId: "agent-01", task: "Confirm assessment boundary", blocker: "None", next: hqNextAction(), evidence: "3 capability packages", recommendation: "NOT STARTED" };
-  return { stage: state.portfolioState, owner: "Portfolio Intelligence Specialist", ownerId: "agent-01", task: "Collect portfolio evidence", blocker: "None", next: hqNextAction(), evidence: state.discovery === "complete" ? "10 products reviewed" : "Portfolio inventory pending", recommendation: "NOT STARTED" };
+  return {
+    stage: state.portfolioState,
+    owner: "Portfolio Intelligence Specialist",
+    ownerId: "agent-01",
+    task: state.discovery === "complete" ? "Portfolio Evidence Package complete" : "Collect portfolio evidence",
+    blocker: "None",
+    next: hqNextAction(),
+    evidence: state.discovery === "complete" ? "10 products reviewed · 7 ready · 3 blocked" : "Portfolio inventory pending",
+    recommendation: "NOT STARTED"
+  };
+}
+
+/*
+ * Read-only UI projection over the existing state owners. The primary case is
+ * derived from the guided journey state above; the supplier case remains owned
+ * by ProgramIntelligence. This prevents presentation surfaces from consulting
+ * ProgramIntelligence's untouched seed state for DR-CIC-001.
+ */
+function authoritativeCaseProjection(caseId = activeCaseId()) {
+  const definition = programIntelligence.cases[caseId];
+  const snapshot = currentCaseSnapshot(caseId);
+  if (caseId === "DR-SQP-002") return { ...definition, ...snapshot };
+  const hasPassedWorkspace = state.decisionStatus !== "idle"
+    || state.propagationStatus !== "idle"
+    || state.engineeringStatus !== "idle"
+    || state.validationStatus !== "idle"
+    || state.executiveEntered
+    || state.executiveStatus !== "idle";
+  const stageIndex = hasPassedWorkspace
+    ? 4
+    : state.workspaceStage >= 0
+      ? Math.min(state.workspaceStage, 4)
+      : 0;
+  return {
+    ...definition,
+    ...snapshot,
+    id: caseId,
+    name: definition.name,
+    stageIndex,
+    status: state.workspaceStatus === "paused" ? "paused" : stageIndex === 4 ? "waiting" : stageIndex > 0 ? "in-review" : "ready",
+    paused: state.workspaceStatus === "paused"
+  };
+}
+
+function authoritativeCaseWorkObjects(caseId = activeCaseId()) {
+  if (caseId === "DR-SQP-002") return programIntelligence.workObjectsForCase(caseId);
+  const definition = programIntelligence.cases[caseId];
+  return workspaceWorkObjects.map((item, index) => ({
+    ...item,
+    caseId,
+    dependencies: definition.dependencies.slice(),
+    evidence: `${item.evidenceCount} · ${item.finding}`,
+    lifecycle: (index === 0 && state.discovery === "complete" ? "Complete" : workObjectStatus(index)).toLowerCase().replaceAll(" ", "-"),
+    next: item.next
+  }));
+}
+
+function authoritativeProgramProjection(summary = programIntelligence.programSummary()) {
+  const primary = authoritativeCaseProjection("DR-CIC-001");
+  const supplier = authoritativeCaseProjection("DR-SQP-002");
+  const constraintBlocker = summary.constraint.approvalStatus === "Approved" && summary.propagation.status === "Complete"
+    ? "Supplier Quality compatibility control remains case-level work"
+    : summary.constraint.approvalStatus === "Evidence Requested"
+      ? "Additional shared-dependency evidence requested"
+      : summary.constraint.approvalStatus === "Rejected"
+        ? "Program constraint rejected; no propagation authorized"
+        : "Protected interface boundary requires Mission Commander approval";
+  return {
+    ...summary,
+    blocker: constraintBlocker,
+    readiness: `${primary.name}: ${primary.stage}; ${supplier.name}: ${supplier.stage}`,
+    sequence: [`${primary.id} · ${primary.stage}`, `${supplier.id} · ${supplier.stage}`]
+  };
 }
 
 function workObjectStatus(index) {
@@ -778,7 +886,7 @@ function enterpriseContextStatus(id, snapshot) {
 
 function renderEnterpriseContext() {
   if (!enterpriseContext?.validateHierarchy()) return;
-  const snapshot = currentCaseSnapshot();
+  const snapshot = authoritativeCaseProjection();
   $$('[data-enterprise-context-rail]').forEach((rail) => {
     if (rail.childElementCount) return;
     rail.innerHTML = enterpriseContext.levels.map((node, index) => `${index ? '<i aria-hidden="true">→</i>' : ""}<button type="button" data-enterprise-context-id="${node.id}" aria-pressed="false"><small>${node.type.toUpperCase()}</small><strong>${node.name}</strong><span>${node.id === "case" ? node.reference : node.owner}</span><em data-enterprise-context-status="${node.id}">${enterpriseContextStatus(node.id, snapshot)}</em></button>`).join("");
@@ -804,9 +912,9 @@ function renderEnterpriseContext() {
 
 function renderProgramIntelligence() {
   if (!programIntelligence?.validateModel()) return;
-  const summary = programIntelligence.programSummary();
-  const active = programIntelligence.caseSnapshot();
-  const objects = programIntelligence.workObjectsForCase();
+  const summary = authoritativeProgramProjection();
+  const active = authoritativeCaseProjection();
+  const objects = authoritativeCaseWorkObjects();
   const constraint = summary.constraint;
   const decision = summary.decision;
   const impacts = Object.values(programIntelligence.cases).map((item) => programIntelligence.caseImpact(item.id));
@@ -815,9 +923,9 @@ function renderProgramIntelligence() {
   $$('[data-program-intelligence]').forEach((panel) => {
     panel.innerHTML = `<header><div><small>V1.3 / GOVERNED PROGRAM COORDINATION</small><strong>${summary.name}</strong></div><span>${summary.caseCount} GOVERNED CASES</span></header>
       <div class="program-overview"><div><small>PROGRAM OWNER</small><strong>${summary.owner}</strong></div><div><small>READINESS</small><strong>${summary.readiness}</strong></div><div><small>PROGRAM BLOCKER</small><strong>${summary.blocker}</strong></div></div>
-      <div class="program-case-grid">${Object.values(programIntelligence.cases).map((item) => { const snapshot = currentCaseSnapshot(item.id); const selected = item.id === active.id; return `<article class="program-case${selected ? " is-selected" : ""}" data-program-case-card="${item.id}"><div><small>${item.type.toUpperCase()} / ${item.id}</small><h3>${item.name}</h3></div><p>${item.purpose}</p><dl><div><dt>STATUS</dt><dd>${snapshot.stage}</dd></div><div><dt>OWNER</dt><dd>${snapshot.owner}</dd></div><div><dt>BLOCKER</dt><dd>${snapshot.blocker}</dd></div><div><dt>NEXT</dt><dd>${snapshot.next}</dd></div></dl><button type="button" data-program-action="select" data-case-id="${item.id}" ${selected ? "disabled" : ""}>${selected ? "Selected Case" : "Select Case"}</button><button type="button" data-program-action="inspect" data-case-id="${item.id}">Inspect Case</button></article>`; }).join("")}</div>
+      <div class="program-case-grid">${Object.values(programIntelligence.cases).map((item) => { const snapshot = authoritativeCaseProjection(item.id); const selected = item.id === active.id; return `<article class="program-case${selected ? " is-selected" : ""}" data-program-case-card="${item.id}"><div><small>${item.type.toUpperCase()} / ${item.id}</small><h3>${item.name}</h3></div><p>${item.purpose}</p><dl><div><dt>STATUS</dt><dd>${snapshot.stage}</dd></div><div><dt>OWNER</dt><dd>${snapshot.owner}</dd></div><div><dt>BLOCKER</dt><dd>${snapshot.blocker}</dd></div><div><dt>NEXT</dt><dd>${snapshot.next}</dd></div></dl><button type="button" data-program-action="select" data-case-id="${item.id}" ${selected ? "disabled" : ""}>${selected ? "Selected Case" : "Select Case"}</button><button type="button" data-program-action="inspect" data-case-id="${item.id}">Inspect Case</button></article>`; }).join("")}</div>
       <section class="active-case-work"><header><div><small>ACTIVE CASE / ${active.id}</small><strong>${active.name}</strong></div><span>${active.stage.toUpperCase()}</span></header><div class="case-work-facts"><button type="button" data-program-action="inspect-owner"><small>CURRENT OWNER</small><strong>${active.owner}</strong></button><button type="button" data-program-action="inspect-blocker"><small>CURRENT BLOCKER</small><strong>${active.blocker}</strong></button><button type="button" data-program-action="inspect-next"><small>NEXT ACTION</small><strong>${active.next}</strong></button></div>
-      <div class="program-workflow">${programIntelligence.WORKFLOW.map((stage, index) => `<span class="${index < active.stageIndex ? "is-complete" : index === active.stageIndex ? "is-active" : ""}"><i>${index + 1}</i><strong>${stage.stage}</strong></span>`).join("")}</div>
+      <div class="program-workflow">${programIntelligence.WORKFLOW.map((stage, index) => `<span class="${index < active.stageIndex || (index === 4 && active.stage === "Execution Ready with Conditions") ? "is-complete" : index === active.stageIndex ? "is-active" : ""}"><i>${index + 1}</i><strong>${stage.stage}</strong></span>`).join("")}</div>
       <div class="program-work-objects">${objects.map((object) => `<button type="button" data-program-action="inspect-object" data-object-id="${object.id}" ${object.lifecycle === "locked" ? "disabled" : ""}><small>${object.caseId} · ${object.lifecycle.toUpperCase()}</small><strong>${object.title}</strong><span>${object.owner}</span></button>`).join("")}</div>
       <div class="program-actions"><button type="button" data-program-action="return-program">Return to Program</button>${isSupplierCase() ? `<button type="button" data-program-action="advance" ${active.stage === "Decision Pending" || active.paused ? "disabled" : ""}>${active.stageIndex === 0 ? "Start Supplier Quality Journey" : "Complete Current Review"}</button><button type="button" data-program-action="pause" ${active.paused || active.stage === "Decision Pending" ? "disabled" : ""}>Pause Case</button><button type="button" data-program-action="resume" ${active.paused ? "" : "disabled"}>Resume Case</button><button type="button" data-program-action="reset">Reset Current Case</button>` : ""}</div>
       <div class="program-inspector" data-program-inspector hidden aria-live="polite"></div></section>
@@ -843,11 +951,11 @@ function handleProgramAction(button) {
   const caseId = button.dataset.caseId;
   if (action === "select") { programIntelligence.selectCase(caseId); state.selectedWorkObjectId = null; renderHqState(); return; }
   if (action === "inspect") { const item = programIntelligence.cases[caseId]; inspectProgramItem(`${item.name} / ${item.id}`, `${item.purpose} Application owner: ${item.applicationOwner}. Technical owner: ${item.technicalOwner}. Dependencies: ${item.dependencies.join(", ")}. Evidence lineage: ${item.lineage.join(" → ")}.`); return; }
-  const snapshot = programIntelligence.caseSnapshot();
+  const snapshot = authoritativeCaseProjection();
   if (action === "inspect-owner") inspectProgramItem(`Current owner · ${snapshot.owner}`, snapshot.task);
   if (action === "inspect-blocker") inspectProgramItem(`Current blocker · ${snapshot.blocker}`, snapshot.blocker === "None" ? "No blocker prevents the next governed review." : "The blocker remains attached only to this case.");
   if (action === "inspect-next") inspectProgramItem(`Next action · ${snapshot.next}`, `Current evidence: ${snapshot.evidence}.`);
-  if (action === "inspect-object") { const object = programIntelligence.workObjectsForCase().find((item) => item.id === button.dataset.objectId); inspectProgramItem(`${object.title} · ${object.lifecycle}`, `Owner: ${object.owner}. Evidence: ${object.evidence}. Dependencies: ${object.dependencies.join(", ")}. Next: ${object.next}.`); }
+  if (action === "inspect-object") { const object = authoritativeCaseWorkObjects().find((item) => item.id === button.dataset.objectId); inspectProgramItem(`${object.title} · ${object.lifecycle}`, `Owner: ${object.owner}. Evidence: ${object.evidence}. Dependencies: ${object.dependencies.join(", ")}. Next: ${object.next}.`); }
   if (action === "inspect-impact") { const impact = programIntelligence.caseImpact(caseId); inspectProgramItem(`${impact.impactType} impact · ${caseId}`, `Current readiness: ${impact.currentReadiness}. Proposed changes: ${impact.proposedChanges.join(" · ")}. Unaffected work: ${impact.unaffectedWork} Sequencing: ${impact.sequencingImpact} Owner: ${impact.owner}. Next: ${impact.nextAction}.`); }
   if (action === "inspect-program-object") { const object = programIntelligence.programWorkObjects().find((item) => item.id === button.dataset.objectId); inspectProgramItem(`${object.title} · ${object.status}`, `Owner: ${object.owner}. Evidence: ${object.evidence}. Source decision: ${object.sourceDecision}. Dependency: ${object.affectedDependency}. Lifecycle: ${object.lifecycle}. Next: ${object.nextAction}. Lineage: ${object.lineage}.`); }
   if (action === "program-decision") { programIntelligence.decideProgramConstraint(button.dataset.decisionOption); renderHqState(); }
@@ -866,8 +974,101 @@ function selectEnterpriseContext(id) {
   renderEnterpriseContext();
 }
 
+function renderMissionDecisionCenter() {
+  const center = $("#sample-executive-brief");
+  if (!center || center.hidden) return;
+
+  const snapshot = authoritativeCaseProjection();
+  let view;
+  if (isSupplierCase()) {
+    view = {
+      status: "PRIMARY DECISION PAUSED",
+      title: "Return to the Customer Intelligence decision",
+      summary: "The Supplier Quality case remains available for program context. DR-CIC-001 is the active guided decision path.",
+      decision: "Resume DR-CIC-001",
+      next: "Select the Customer Intelligence case",
+      recommendation: "Return to DR-CIC-001 before advancing the guided journey",
+      boundary: "Changing case context does not alter either case record or its governed evidence.",
+      proceedTitle: "Restore the primary decision context",
+      proceedDetail: "Mission Control and Modernization HQ will synchronize on the Customer Intelligence case.",
+      deferTitle: "The guided decision remains paused",
+      deferDetail: "No case state is lost, but the primary executive decision cannot advance from this context."
+    };
+  } else if (state.executiveStatus === "approved") {
+    view = {
+      status: "CONDITIONED READY",
+      title: "Launch Wave 1 with governed conditions",
+      summary: "The Mission Commander approved Wave 1. Transformation Office mobilization can begin while finance-report ownership remains a cutover prerequisite.",
+      decision: "Authorize mobilization",
+      next: "Launch Wave 1",
+      recommendation: "Mobilize the approved Wave 1 roadmap",
+      boundary: "Approval authorizes mobilization, not cutover of the twelve protected finance reports.",
+      proceedTitle: "Begin governed Wave 1 execution",
+      proceedDetail: "Mobilize the approved initiatives and retain the ownership condition at the release gate.",
+      deferTitle: "Approved value remains unrealized",
+      deferDetail: "The governed baseline remains intact, but critical Oracle exposure and customer-outcome constraints continue."
+    };
+  } else if (state.discovery === "complete" && !state.capabilityState && !state.assessmentReady) {
+    view = {
+      status: "DECISION READY · 91% CONFIDENCE",
+      title: "Authorize the Customer Intelligence capability assessment",
+      summary: "Evidence is sufficient to advance one governed case. Finance ownership remains a protected condition—not a hidden assumption.",
+      decision: "Authorize capability assessment",
+      next: "Use the Guided Journey action",
+      recommendation: "Advance DR-CIC-001 to capability assessment",
+      boundary: "This authorizes deeper evidence-backed assessment. It does not approve engineering or cutover.",
+      proceedTitle: "Validate the staged Oracle-to-BigQuery boundary",
+      proceedDetail: "Confirm value, architecture, ownership, and the protected finance-report condition.",
+      deferTitle: "Critical platform exposure remains",
+      deferDetail: "Five customer outcomes stay constrained and the ownership conflict remains unresolved."
+    };
+  } else {
+    const blocker = snapshot.blocker === "None"
+      ? "No blocker currently prevents the next governed stage."
+      : snapshot.blocker;
+    const nextDecision = displayTitle(snapshot.next);
+    view = {
+      status: snapshot.stage.toUpperCase(),
+      title: nextDecision,
+      summary: `${snapshot.owner} owns ${snapshot.task}. ${blocker}`,
+      decision: nextDecision,
+      next: "Use the Guided Journey action",
+      recommendation: nextDecision,
+      boundary: "Advance only the current governed stage; remaining review, validation, and approval gates stay in force.",
+      proceedTitle: `Move the case beyond ${snapshot.stage}`,
+      proceedDetail: `${snapshot.owner} will complete ${snapshot.task} using ${snapshot.evidence}.`,
+      deferTitle: `The case remains at ${snapshot.stage}`,
+      deferDetail: snapshot.blocker === "None" ? "The next business decision and its evidence remain pending." : snapshot.blocker
+    };
+  }
+
+  $("#decision-center-status").textContent = view.status;
+  $("#sample-executive-brief-title").textContent = view.title;
+  $("#decision-center-summary").textContent = view.summary;
+  $("#decision-now").textContent = view.decision;
+  $("#decision-next").textContent = view.next;
+  $("#decision-recommended-action").textContent = view.recommendation;
+  $("#decision-authority-boundary").textContent = view.boundary;
+  $("#decision-proceed-title").textContent = view.proceedTitle;
+  $("#decision-proceed-detail").textContent = view.proceedDetail;
+  $("#decision-defer-title").textContent = view.deferTitle;
+  $("#decision-defer-detail").textContent = view.deferDetail;
+  $("#evidence-current-state").textContent = `${snapshot.stage} · ${snapshot.owner} owns ${snapshot.task}. Next: ${snapshot.next}.`;
+  const approved = !isSupplierCase() && state.executiveStatus === "approved";
+  $("#decision-executive-summary-title").textContent = approved
+    ? "Wave 1 is approved for governed mobilization"
+    : "Customer Intelligence is the first governed modernization move";
+  $("#decision-executive-summary-copy").textContent = approved
+    ? "Seven of seven critical checks passed and the Mission Commander approved Wave 1. Mobilization may begin; Finance ownership remains a cutover prerequisite."
+    : "The highest-priority candidate supports five business outcomes, carries critical Oracle urgency, and has a bounded modernization path. Advance assessment while preserving twelve dependent finance reports.";
+  $("#decision-evidence-health").textContent = approved ? "7 of 7 Critical Checks Passed" : "7 of 10 Ready";
+  $("#decision-readiness-health").textContent = approved ? "Execution Ready with Conditions" : "78 / 100";
+  $("#readiness-decision-label").textContent = approved ? "Mobilization authorization" : "Assessment decision";
+  $("#readiness-decision-detail").textContent = approved ? "Approved; Finance ownership remains required before cutover" : "Ready for Mission Commander authorization";
+}
+
 function renderMissionCase() {
-  const snapshot = currentCaseSnapshot();
+  const snapshot = authoritativeCaseProjection();
   $(".mission-case-identity strong").textContent = programIntelligence?.cases[activeCaseId()]?.name || "Customer Intelligence Capability";
   $("#mission-case-stage").textContent = snapshot.stage.toUpperCase();
   $("#mission-case-owner").textContent = snapshot.owner.toUpperCase();
@@ -880,6 +1081,7 @@ function renderMissionCase() {
   renderEnterpriseDnaContext();
   renderEnterpriseContext();
   renderProgramIntelligence();
+  renderMissionDecisionCenter();
 }
 
 function renderWorkObjects() {
@@ -916,12 +1118,12 @@ function renderWorkQueue() {
   $("#workspace-queue").innerHTML = statuses.map((status) => {
     const items = workspaceWorkObjects.filter((_, index) => workObjectStatus(index) === status);
     const caseHere = activeQueue === status;
-    return `<div class="queue-lane status-${status.toLowerCase().replaceAll(" ", "-")}${caseHere ? " is-current" : ""}"><span><strong>${status}</strong><small>${items.length}</small></span>${caseHere ? `<div class="queue-case-chip"><i></i><span>Customer Intelligence Capability<small>${currentCaseSnapshot().stage}</small></span></div>` : ""}<div class="queue-items">${items.map((item) => `<small>${item.sequence} / ${item.title}</small>`).join("") || "<small>NO WORK OBJECTS</small>"}</div></div>`;
+    return `<div class="queue-lane status-${status.toLowerCase().replaceAll(" ", "-")}${caseHere ? " is-current" : ""}"><span><strong>${status}</strong><small>${items.length}</small></span>${caseHere ? `<div class="queue-case-chip"><i></i><span>Customer Intelligence Capability<small>${authoritativeCaseProjection().stage}</small></span></div>` : ""}<div class="queue-items">${items.map((item) => `<small>${item.sequence} / ${item.title}</small>`).join("") || "<small>NO WORK OBJECTS</small>"}</div></div>`;
   }).join("");
 }
 
 function renderWorkspaceState() {
-  const snapshot = currentCaseSnapshot();
+  const snapshot = authoritativeCaseProjection();
   if (isSupplierCase()) {
     $$('[data-workflow-stage]').forEach((node) => { const index = Number(node.dataset.workflowStage); node.classList.toggle("is-complete", index < snapshot.stageIndex); node.classList.toggle("is-active", index === snapshot.stageIndex); node.classList.toggle("is-blocked", index === 4); });
     $("#workspace-observatory-title").textContent = snapshot.name;
@@ -985,7 +1187,7 @@ function decisionComparison() {
 }
 
 function decisionActionContent(action) {
-  const dna = enterpriseDna?.workspaceProjection("decision", "DR-CIC-001", currentCaseSnapshot());
+  const dna = enterpriseDna?.workspaceProjection("decision", "DR-CIC-001", authoritativeCaseProjection("DR-CIC-001"));
   const dnaShared = dna ? `<div class="dna-inspector-context"><small>ENTERPRISE DNA / BUSINESS CONSEQUENCE</small><strong>${dna.strategy.name} → ${dna.digitalProduct.name}</strong><span>Affected outcomes: ${dnaObjectNames(dna.outcomes, 5)}</span><span>Accountable owners: ${dnaObjectNames(dna.accountableOwners, 4)}</span><span>Responsible teams: ${dnaObjectNames(dna.responsibleTeams, 4)}</span></div>` : "";
   const content = {
     compare: decisionComparison(),
@@ -1014,7 +1216,7 @@ function renderDecisionRoom() {
   const canvas = $("#shared-decision-canvas");
   canvas.hidden = !visible;
   if (!visible) return;
-  const snapshot = currentCaseSnapshot();
+  const snapshot = authoritativeCaseProjection();
   $("#decision-canvas-state").textContent = snapshot.stage.toUpperCase();
   $("#decision-case-core-state").textContent = snapshot.stage.toUpperCase();
   $("#assemble-positions").hidden = state.decisionStatus !== "idle";
@@ -1205,7 +1407,7 @@ function approveRevisedPlan() {
 }
 
 function renderEngineeringContract() {
-  const dna = enterpriseDna?.workspaceProjection("engineering", "DR-CIC-001", currentCaseSnapshot());
+  const dna = enterpriseDna?.workspaceProjection("engineering", "DR-CIC-001", authoritativeCaseProjection("DR-CIC-001"));
   const fields = [
     ["CASE ID", engineeringContract.caseId], ["DIGITAL PRODUCT", dna?.digitalProduct.name || "Customer Intelligence"], ["ENTERPRISE DNA CHANGES", dna ? dnaObjectNames(dna.changedObjects, 4) : "Customer Intelligence assets"], ["BUSINESS OUTCOMES", dna ? dnaObjectNames(dna.outcomes, 5) : "Customer insight and reliability"], ["MODERNIZATION STRATEGY", engineeringContract.approvedStrategy], ["SOURCE PLATFORM", engineeringContract.sourcePlatform], ["TARGET PLATFORM", engineeringContract.targetPlatform], ["MIGRATION STAGES", engineeringContract.migrationStages.join(" · ")], ["HUMAN CONSTRAINT", engineeringContract.humanConstraints.join(" · ")], ["PROTECTED DEPENDENCY", engineeringContract.protectedDependencies.join(" · ")], ["REQUIRED CONTROLS", engineeringContract.engineeringControls.join(" · ")], ["VALIDATION EXPECTATIONS", engineeringContract.validationExpectations.join(" · ")], ["REMAINING GOVERNANCE ACTION", engineeringContract.governanceActions.join(" · ")], ["APPROVAL REFERENCE", engineeringContract.approvalReference]
   ];
@@ -1233,8 +1435,8 @@ function renderEngineeringWorkspace() {
   workspace.hidden = !state.engineeringEntered;
   if (!state.engineeringEntered) return;
   renderEngineeringContract();
-  $("#engineering-status").textContent = currentCaseSnapshot().stage.toUpperCase();
-  $("#engineering-owner").textContent = currentCaseSnapshot().owner.toUpperCase();
+  $("#engineering-status").textContent = authoritativeCaseProjection().stage.toUpperCase();
+  $("#engineering-owner").textContent = authoritativeCaseProjection().owner.toUpperCase();
   $("#generate-package").hidden = state.engineeringStatus !== "contract-review";
   const completeThrough = state.engineeringStatus === "validation-ready" ? 9 : state.engineeringStatus === "package-generated" ? 8 : state.engineeringStep - 1;
   $("#engineering-sequence-steps").innerHTML = engineeringSequence.map((label, index) => `<span class="${index <= completeThrough ? "is-complete" : state.engineeringStatus === "generating" && index === state.engineeringStep ? "is-active" : ""}"><i>${String(index + 1).padStart(2, "0")}</i><strong>${label}</strong></span>`).join("");
@@ -1351,7 +1553,7 @@ function finalizeMigrationPackage() {
 }
 
 function renderValidationContract() {
-  const dna = enterpriseDna?.workspaceProjection("validation", "DR-CIC-001", currentCaseSnapshot());
+  const dna = enterpriseDna?.workspaceProjection("validation", "DR-CIC-001", authoritativeCaseProjection("DR-CIC-001"));
   const fields = [["CASE ID", validationContract.caseId], ["PACKAGE", validationContract.packageId], ["BUSINESS OUTCOMES", dna ? dnaObjectNames(dna.outcomes, 5) : "Customer insight and reliability"], ["VALIDATED ENTERPRISE DNA OBJECTS", dna ? dnaObjectNames(dna.validatedObjects, 4) : "Customer Intelligence assets"], ["TECHNICAL CONDITIONS", dna ? dnaObjectNames(dna.conditions, 3) : "Finance reporting ownership"], ["SOURCE", validationContract.sourcePlatform], ["TARGET", validationContract.targetPlatform], ["ARTIFACTS", "6"], ["VALIDATION EXPECTATIONS", engineeringContract.validationExpectations.join(" · ")], ["HUMAN CONSTRAINT", validationContract.constraints[0]], ["REQUIRED CONTROL", validationContract.constraints[1]], ["GOVERNANCE PREREQUISITE", validationContract.governancePrerequisites[0]], ["VALIDATION AUTHORITY", validationContract.validationAuthority]];
   $("#validation-contract-fields").innerHTML = fields.map(([label, value]) => `<span><small>${label}</small><strong>${value}</strong></span>`).join("");
 }
@@ -1381,7 +1583,7 @@ function renderValidationWorkspace() {
   const workspace = $("#validation-workspace");
   workspace.hidden = !state.validationEntered;
   if (!state.validationEntered) return;
-  const snapshot = currentCaseSnapshot();
+  const snapshot = authoritativeCaseProjection();
   renderValidationContract();
   renderValidationChecks();
   renderValidationObjects();
@@ -1548,7 +1750,7 @@ function renderExecutiveEvidence() {
 }
 
 function renderExecutiveRecommendation() {
-  const dna = enterpriseDna?.workspaceProjection("executive", "DR-CIC-001", currentCaseSnapshot());
+  const dna = enterpriseDna?.workspaceProjection("executive", "DR-CIC-001", authoritativeCaseProjection("DR-CIC-001"));
   const strategyTrace = dna ? `<div class="executive-dna-trace"><small>ENTERPRISE DNA / STRATEGY-TO-OUTCOME TRACE</small><strong>${dna.strategy.name} → ${dna.initiative.name} → ${dna.digitalProduct.name}</strong><span>Outcomes: ${dnaObjectNames(dna.outcomes, 5)}</span><span>Capabilities: ${dnaObjectNames(dna.capabilities, 5)}</span><span>Expected value: ${dna.expectedValue}</span><span>Remaining risk: ${dnaObjectNames(dna.remainingRisks, 2)}</span></div>` : "";
   $("#executive-recommendation-content").innerHTML = `${strategyTrace}<div class="recommendation-initiatives">${executiveRecommendation.initiatives.map((item, index) => `<article><small>WAVE 1 / INITIATIVE ${index + 1}</small><h3>${item.name}</h3><strong>${item.strategy}</strong><p>${item.rationale}</p></article>`).join("")}</div><p class="recommendation-rationale">${executiveRecommendation.rationale}</p>`;
 }
@@ -1574,7 +1776,7 @@ function renderExecutiveObjects() {
     return;
   }
   $("#executive-record-title").textContent = "APPROVED / TRACE ATTACHED";
-  $("#executive-record-fields").innerHTML = Object.entries(state.executiveDecisionRecord).map(([key, value]) => `<span><small>${key.replaceAll(/([A-Z])/g, " $1").toUpperCase()}</small><strong>${value}</strong></span>`).join("");
+  $("#executive-record-fields").innerHTML = Object.entries(state.executiveDecisionRecord).map(([key, value]) => `<span><small>${displayTitle(key)}</small><strong>${value}</strong></span>`).join("");
 }
 
 function renderExecutiveWorkspace() {
@@ -1807,20 +2009,400 @@ function guidedLifecycleState(index, step, snapshot, pausedForCase) {
   return "current";
 }
 
+function guidedDesktopResizeSupported() {
+  return window.innerWidth >= GUIDED_DOCK_WIDTH.breakpoint;
+}
+
+function guidedMaximumWidth(viewportWidth = window.innerWidth) {
+  return Math.max(
+    GUIDED_DOCK_WIDTH.min,
+    Math.min(
+      GUIDED_DOCK_WIDTH.absoluteMax,
+      Math.floor(viewportWidth * GUIDED_DOCK_WIDTH.viewportRatio),
+      viewportWidth - GUIDED_DOCK_WIDTH.workspaceReserve
+    )
+  );
+}
+
+function clampGuidedWidth(value, viewportWidth = window.innerWidth) {
+  const numericValue = Number(value);
+  if (!Number.isFinite(numericValue)) return GUIDED_DOCK_WIDTH.default;
+  return Math.round(Math.min(guidedMaximumWidth(viewportWidth), Math.max(GUIDED_DOCK_WIDTH.min, numericValue)));
+}
+
+function normalizeGuidedWidthPreference(value) {
+  const numericValue = Number(value);
+  if (!Number.isFinite(numericValue)) return GUIDED_DOCK_WIDTH.default;
+  return Math.round(Math.min(GUIDED_DOCK_WIDTH.absoluteMax, Math.max(GUIDED_DOCK_WIDTH.min, numericValue)));
+}
+
+function readGuidedWidthPreference() {
+  try {
+    const storedValue = window.localStorage.getItem(GUIDED_DOCK_WIDTH_STORAGE_KEY);
+    return storedValue === null ? GUIDED_DOCK_WIDTH.default : normalizeGuidedWidthPreference(storedValue);
+  } catch {
+    return GUIDED_DOCK_WIDTH.default;
+  }
+}
+
+function persistGuidedWidthPreference() {
+  try {
+    window.localStorage.setItem(GUIDED_DOCK_WIDTH_STORAGE_KEY, String(guidedPresentation.width));
+  } catch {
+    // A blocked storage preference must not interrupt the Journey.
+  }
+}
+
+function updateGuidedResizeHandle() {
+  const handle = $("#guided-resize-handle");
+  const supported = state.guidedDemo && guidedDesktopResizeSupported() && !guidedPresentation.collapsed;
+  const maximum = guidedMaximumWidth();
+  handle.setAttribute("aria-valuemin", String(GUIDED_DOCK_WIDTH.min));
+  handle.setAttribute("aria-valuemax", String(maximum));
+  handle.setAttribute("aria-valuenow", String(guidedPresentation.width));
+  handle.setAttribute("aria-valuetext", `${guidedPresentation.width} pixels wide`);
+  handle.setAttribute("aria-disabled", String(!supported));
+  handle.tabIndex = supported ? 0 : -1;
+}
+
+function setGuidedWidth(value, { persist = false } = {}) {
+  guidedPresentation.width = clampGuidedWidth(value);
+  guidedPresentation.wide = guidedPresentation.width > GUIDED_DOCK_WIDTH.default;
+  applyGuidedPresentation();
+  if (persist) persistGuidedWidthPreference();
+}
+
+function finishGuidedResize(event) {
+  if (!guidedResizeSession || (event && event.pointerId !== guidedResizeSession.pointerId)) return;
+  const handle = $("#guided-resize-handle");
+  if (handle.hasPointerCapture?.(guidedResizeSession.pointerId)) handle.releasePointerCapture(guidedResizeSession.pointerId);
+  guidedResizeSession = null;
+  document.body.classList.remove("is-resizing-guided-inspector");
+  persistGuidedWidthPreference();
+}
+
+function initializeGuidedResize() {
+  guidedPresentation.width = readGuidedWidthPreference();
+  if (guidedDesktopResizeSupported()) guidedPresentation.width = clampGuidedWidth(guidedPresentation.width);
+  guidedPresentation.wide = guidedPresentation.width > GUIDED_DOCK_WIDTH.default;
+  const handle = $("#guided-resize-handle");
+  handle.addEventListener("pointerdown", (event) => {
+    if (event.button !== 0 || !guidedDesktopResizeSupported() || guidedPresentation.collapsed) return;
+    event.preventDefault();
+    guidedResizeSession = {
+      pointerId: event.pointerId,
+      startX: event.clientX,
+      startWidth: guidedPresentation.width
+    };
+    handle.setPointerCapture(event.pointerId);
+    document.body.classList.add("is-resizing-guided-inspector");
+  });
+  handle.addEventListener("pointermove", (event) => {
+    if (!guidedResizeSession || event.pointerId !== guidedResizeSession.pointerId) return;
+    event.preventDefault();
+    setGuidedWidth(guidedResizeSession.startWidth + guidedResizeSession.startX - event.clientX);
+  });
+  handle.addEventListener("pointerup", finishGuidedResize);
+  handle.addEventListener("pointercancel", finishGuidedResize);
+  handle.addEventListener("lostpointercapture", finishGuidedResize);
+  handle.addEventListener("keydown", (event) => {
+    if (!guidedDesktopResizeSupported() || guidedPresentation.collapsed) return;
+    const isArrow = ["ArrowLeft", "ArrowRight"].includes(event.key);
+    if (!isArrow && !["Home", "End"].includes(event.key)) return;
+    event.preventDefault();
+    const step = event.shiftKey ? GUIDED_DOCK_WIDTH.keyboardLargeStep : GUIDED_DOCK_WIDTH.keyboardStep;
+    const nextWidth = event.key === "Home"
+      ? GUIDED_DOCK_WIDTH.min
+      : event.key === "End"
+        ? guidedMaximumWidth()
+        : guidedPresentation.width + (event.key === "ArrowLeft" ? step : -step);
+    setGuidedWidth(nextWidth, { persist: true });
+  });
+  window.addEventListener("resize", () => {
+    if (guidedResizeSession) finishGuidedResize();
+    if (guidedDesktopResizeSupported()) {
+      const clampedWidth = clampGuidedWidth(guidedPresentation.width);
+      if (clampedWidth !== guidedPresentation.width) {
+        guidedPresentation.width = clampedWidth;
+        guidedPresentation.wide = clampedWidth > GUIDED_DOCK_WIDTH.default;
+        persistGuidedWidthPreference();
+      }
+    }
+    applyGuidedPresentation();
+  });
+}
+
+function applyGuidedPresentation() {
+  const cue = $("#guided-cue");
+  const active = state.guidedDemo;
+  cue.classList.toggle("is-collapsed", guidedPresentation.collapsed);
+  cue.classList.toggle("is-wide", guidedPresentation.wide);
+  $("#guided-expanded").hidden = guidedPresentation.collapsed;
+  $("#guided-compact-summary").hidden = !guidedPresentation.collapsed;
+  $("#guided-collapse").setAttribute("aria-expanded", String(!guidedPresentation.collapsed));
+  $("#guided-restore").setAttribute("aria-expanded", String(!guidedPresentation.collapsed));
+  $("#guided-size-toggle").setAttribute("aria-pressed", String(guidedPresentation.wide));
+  $("#guided-size-toggle").textContent = guidedPresentation.wide ? "Standard Panel" : "Wider Panel";
+  document.body.style.setProperty("--guided-inspector-width", `${guidedPresentation.collapsed ? 330 : guidedPresentation.width}px`);
+  document.body.classList.toggle("guided-inspector-active", active);
+  document.body.classList.toggle("guided-inspector-wide", active && guidedPresentation.wide);
+  document.body.classList.toggle("guided-inspector-collapsed", active && guidedPresentation.collapsed);
+  updateGuidedResizeHandle();
+  $("#guided-toggle-label").textContent = active ? "Guided Journey Active" : guidedPresentation.hasStarted ? "Resume Guided Journey" : "Guided Demo";
+}
+
+function setGuidedCollapsed(collapsed, moveFocus = true) {
+  guidedPresentation.collapsed = Boolean(collapsed);
+  guidedPresentation.inspectedStep = null;
+  applyGuidedPresentation();
+  if (moveFocus) (guidedPresentation.collapsed ? $("#guided-restore") : $("#guided-collapse")).focus();
+}
+
+function toggleGuidedWidth() {
+  const targetWidth = guidedPresentation.width > GUIDED_DOCK_WIDTH.default
+    ? GUIDED_DOCK_WIDTH.default
+    : Math.min(GUIDED_DOCK_WIDTH.legacyWide, guidedMaximumWidth());
+  setGuidedWidth(targetWidth, { persist: true });
+}
+
+function resetGuidedPresentation() {
+  guidedPresentation.collapsed = false;
+  guidedPresentation.inspectedStep = null;
+  applyGuidedPresentation();
+}
+
+function applicationSurface() {
+  if (!$("#entry-launchpad").hidden) return "home";
+  if (!$("#sample-engagement-experience").hidden) return "sample-engagement";
+  if (!$("#portfolio-upload-lab").hidden) return "portfolio-lab";
+  return state.experience;
+}
+
+function workspaceLabel() {
+  return {
+    portfolio: "Portfolio",
+    decision: "Decision Room",
+    factory: "Modernization Factory"
+  }[state.view];
+}
+
+function syncApplicationNavigation() {
+  const surface = applicationSurface();
+  const activeOverlayId = {
+    home: "entry-launchpad",
+    "sample-engagement": "sample-engagement-experience",
+    "portfolio-lab": "portfolio-upload-lab"
+  }[surface] || null;
+  [...$("#application-workspace").children].forEach((element) => {
+    element.toggleAttribute("inert", Boolean(activeOverlayId && element.id !== activeOverlayId));
+  });
+  $$("[data-app-destination]").forEach((control) => {
+    const destination = control.dataset.appDestination;
+    const current = destination === surface;
+    control.classList.toggle("is-active", current);
+    if (current) control.setAttribute("aria-current", "page"); else control.removeAttribute("aria-current");
+    if (control.hasAttribute("data-experience-switch")) control.setAttribute("aria-pressed", String(current));
+  });
+  const journeyReturn = $("#app-guided-journey");
+  journeyReturn.hidden = !guidedPresentation.hasStarted;
+  journeyReturn.textContent = state.guidedDemo ? "Guided Journey" : "Resume Guided Journey";
+  journeyReturn.setAttribute("aria-pressed", String(state.guidedDemo && !["home", "sample-engagement", "portfolio-lab"].includes(surface)));
+
+  let trail;
+  if (surface === "home") {
+    trail = state.guidedDemo
+      ? `Home · Guided Journey preserved at ${$("#guided-step-title").textContent}`
+      : "Home";
+  } else if (surface === "portfolio-lab") {
+    trail = "Home / Portfolio Intelligence Lab";
+  } else if (surface === "sample-engagement") {
+    trail = $("#sample-engagement-brief").hidden
+      ? "Home / Apex Aerospace Engagement / AI Agency Preparation"
+      : "Home / Apex Aerospace Engagement / Executive Brief";
+  } else if (surface === "hq") {
+    trail = `Home / Modernization HQ${state.guidedDemo ? ` / Guided Journey · ${$("#guided-step-title").textContent}` : ""}`;
+  } else {
+    trail = `Home / Mission Control / ${workspaceLabel()}${state.guidedDemo ? ` / Guided Journey · ${$("#guided-step-title").textContent}` : ""}`;
+  }
+  $("#app-breadcrumbs").textContent = trail;
+  const skipLink = $(".skip-link");
+  skipLink.href = surface === "home"
+    ? "#entry-title"
+    : surface === "sample-engagement"
+      ? ($("#sample-engagement-brief").hidden ? "#sample-agency-title" : "#sample-engagement-title")
+    : surface === "portfolio-lab"
+      ? "#upload-lab-title"
+      : surface === "hq"
+        ? "#hq-title"
+        : `#${state.view}-title`;
+}
+globalThis.syncApplicationNavigation = syncApplicationNavigation;
+
+function hideApplicationOverlays() {
+  $("#entry-launchpad").hidden = true;
+  $("#sample-engagement-experience").hidden = true;
+  $("#portfolio-upload-lab").hidden = true;
+  document.body.classList.remove("portfolio-lab-active");
+}
+
+function focusWorkspaceHeading(selector) {
+  const target = $(selector);
+  if (!target) return;
+  if (!target.hasAttribute("tabindex")) target.setAttribute("tabindex", "-1");
+  target.focus({ preventScroll: true });
+}
+
+function openApplicationHome() {
+  $("#sample-engagement-experience").hidden = true;
+  $("#portfolio-upload-lab").hidden = true;
+  document.body.classList.remove("portfolio-lab-active");
+  $("#entry-launchpad").hidden = false;
+  history.replaceState(null, "", "#home");
+  syncApplicationNavigation();
+  focusWorkspaceHeading("#entry-title");
+}
+
+function openMissionControlFromNavigation() {
+  hideApplicationOverlays();
+  openExperience("mission-control");
+  navigate(state.view);
+  syncApplicationNavigation();
+  focusWorkspaceHeading(`#${state.view}-title`);
+}
+
+function openHqFromNavigation() {
+  hideApplicationOverlays();
+  openExperience("hq");
+  syncApplicationNavigation();
+  focusWorkspaceHeading("#hq-title");
+}
+
+function alignGuidedJourneyWorkspace() {
+  const step = currentDemoStep();
+  if (step <= 2 || (step === 3 && !state.hqEntered && state.workspaceStatus === "idle")) {
+    openExperience("mission-control");
+    navigate("portfolio");
+    return;
+  }
+  openExperience("hq", { startHandoff: false });
+}
+
+function returnToGuidedJourney() {
+  hideApplicationOverlays();
+  if (!state.guidedDemo) setGuidedDemo(true);
+  if (guidedPresentation.collapsed) setGuidedCollapsed(false, false);
+  alignGuidedJourneyWorkspace();
+  syncApplicationNavigation();
+  $("#guided-step-title").focus();
+}
+
+function returnGuidedToMissionControl() {
+  hideApplicationOverlays();
+  openExperience("mission-control");
+  navigate(state.view);
+  syncApplicationNavigation();
+  $("#guided-step-title").focus();
+}
+
+function renderGuidedStageReview(stepIndex, currentStep, lifecycleState, snapshot) {
+  const review = $("#guided-stage-review");
+  const definition = guidedDemoSteps[stepIndex];
+  if (!definition) {
+    review.hidden = true;
+    return;
+  }
+  const isLive = stepIndex === currentStep - 1;
+  const prerequisite = stepIndex === 0 ? "No prerequisite." : `Complete ${guidedDemoSteps[stepIndex - 1].title} first.`;
+  const reviewLabel = isLive ? "Live Stage" : lifecycleState === "complete" ? "Read-Only Stage Review" : "Future Stage";
+  const detail = isLive
+    ? `Owner: ${snapshot.owner}. Current blocker: ${snapshot.blocker}.`
+    : lifecycleState === "complete"
+      ? `Expected outcome: ${definition.expected}`
+      : `${prerequisite} This inspection does not advance or reset the journey.`;
+  review.innerHTML = `<small>${reviewLabel.toUpperCase()}</small><strong>${definition.title}</strong><span>${definition.objective}</span><span>${detail}</span>`;
+  review.hidden = false;
+}
+
+function inspectGuidedStage(stepIndex, moveFocus = true) {
+  const currentStep = currentDemoStep();
+  const snapshot = authoritativeCaseProjection(activeCaseId());
+  const pausedForCase = activeCaseId() !== "DR-CIC-001";
+  const lifecycleState = guidedLifecycleState(stepIndex, currentStep, snapshot, pausedForCase);
+  guidedPresentation.inspectedStep = stepIndex;
+  renderGuidedStageReview(stepIndex, currentStep, lifecycleState, snapshot);
+  if (moveFocus) $("#guided-stage-review").focus();
+}
+
+function guidedHealthSnapshot(step) {
+  if (step === 1) {
+    return {
+      evidence: ["Not assessed", "pending"],
+      confidence: ["Establishing", "pending"],
+      readiness: ["Not ready", "pending"]
+    };
+  }
+  if (step === 2) {
+    return {
+      evidence: ["7 ready · 3 blocked", "attention"],
+      confidence: ["Moderate", "attention"],
+      readiness: ["Assessment ready", "good"]
+    };
+  }
+  if (step <= 5) {
+    return {
+      evidence: ["Governed evidence", "good"],
+      confidence: ["High", "good"],
+      readiness: ["Decision review", "attention"]
+    };
+  }
+  if (step === 6) {
+    return {
+      evidence: ["Decision linked", "good"],
+      confidence: ["High", "good"],
+      readiness: ["Engineering ready", "good"]
+    };
+  }
+  if (step === 7) {
+    const failed = state.validationStatus === "exception";
+    return {
+      evidence: [failed ? "Issue identified" : "Package assembled", failed ? "attention" : "good"],
+      confidence: [failed ? "Under review" : "High", failed ? "attention" : "good"],
+      readiness: [failed ? "Validation blocked" : "Validation pending", "attention"]
+    };
+  }
+  if (step === 8) {
+    const validated = state.validationStatus === "complete";
+    return {
+      evidence: [validated ? "Corrected · 7/7" : "Correction governed", validated ? "good" : "attention"],
+      confidence: [validated ? "High" : "Under review", validated ? "good" : "attention"],
+      readiness: [validated ? "Validated with conditions" : "Validation pending", validated ? "good" : "attention"]
+    };
+  }
+  return {
+    evidence: ["Validated · 7/7", "good"],
+    confidence: ["High", "good"],
+    readiness: [state.executiveStatus === "approved" ? "Ready with conditions" : "Executive decision pending", state.executiveStatus === "approved" ? "good" : "attention"]
+  };
+}
+
 function renderGuidedDemo() {
   const step = currentDemoStep();
   const definition = guidedDemoSteps[step - 1];
   const activeId = activeCaseId();
   const activeDefinition = programIntelligence.cases[activeId];
-  const snapshot = currentCaseSnapshot(activeId);
+  const snapshot = authoritativeCaseProjection(activeId);
   const descriptor = guidedActionDescriptor(step);
   const pausedForCase = activeId !== "DR-CIC-001";
   const cue = $("#guided-cue");
   cue.hidden = !state.guidedDemo;
   cue.dataset.reliable = String(demoStateIsReliable());
   $("#guided-demo-toggle").checked = state.guidedDemo;
+  applyGuidedPresentation();
   syncGuidedActionControl(descriptor);
-  if (!state.guidedDemo) return;
+  if (!state.guidedDemo) {
+    syncApplicationNavigation();
+    return;
+  }
   $("#guided-step-count").textContent = `STEP ${step} OF 9`;
   $("#guided-step-title").textContent = definition.title;
   $("#guided-objective").textContent = definition.objective;
@@ -1828,28 +2410,58 @@ function renderGuidedDemo() {
   $("#guided-program").textContent = enterpriseContext.getLevel("program").name;
   $("#guided-case-name").textContent = activeDefinition.name;
   $("#guided-case-id").textContent = `CASE ID · ${activeId}`;
+  $("#guided-case-summary").textContent = `${activeDefinition.name} · ${activeId}`;
   $("#guided-current-stage").textContent = snapshot.stage;
-  $("#guided-current-status").textContent = pausedForCase ? "Guided path paused for this case" : descriptor.waiting ? "Work in progress" : state.executiveStatus === "approved" ? "Journey complete" : "Ready for action";
+  const currentStatus = pausedForCase ? "Guided path paused for this case" : descriptor.waiting ? "Work in progress" : state.executiveStatus === "approved" ? "Execution Ready with Conditions" : "Ready for action";
+  $("#guided-current-status").textContent = currentStatus;
   $("#guided-current-owner").textContent = snapshot.owner;
   $("#guided-current-work-object").textContent = snapshot.task;
   $("#guided-current-blocker").textContent = snapshot.blocker;
+  $("#guided-context-state").textContent = state.executiveStatus === "approved" ? "CONDITIONED READY" : descriptor.waiting ? "IN PROGRESS" : pausedForCase || snapshot.blocker !== "None" ? "BLOCKED" : "READY";
   $("#guided-next-action").textContent = guidedNextAction(step);
+  $("#guided-compact-stage").textContent = snapshot.stage;
+  $("#guided-compact-owner").textContent = snapshot.owner;
+  $("#guided-compact-blocker").textContent = snapshot.blocker;
+  $("#guided-compact-next-action").textContent = guidedNextAction(step);
+  cue.dataset.guideStatus = state.executiveStatus === "approved" ? "complete" : pausedForCase || snapshot.blocker !== "None" ? "blocked" : "ready";
+  const health = guidedHealthSnapshot(step);
+  [
+    ["#guided-health-evidence", health.evidence],
+    ["#guided-health-confidence", health.confidence],
+    ["#guided-health-readiness", health.readiness]
+  ].forEach(([selector, [label, healthState]]) => {
+    const element = $(selector);
+    element.textContent = label;
+    element.dataset.healthState = healthState;
+  });
   $("#guided-previous-stage").textContent = step === 1 ? "Not started" : `${guidedDemoSteps[step - 2].title} — Complete`;
   $("#guided-upcoming-stage").textContent = step === guidedDemoSteps.length ? (state.executiveStatus === "approved" ? "Execution Ready with Conditions" : "Execution Ready") : guidedDemoSteps[step].title;
   $("#guided-lifecycle").innerHTML = guidedDemoSteps.map((item, index) => {
     const lifecycleState = guidedLifecycleState(index, step, snapshot, pausedForCase);
-    const statusLabel = { complete: "Complete", current: "Current", pending: "Pending", blocked: "Blocked" }[lifecycleState];
-    return `<li class="is-${lifecycleState}" ${index === step - 1 ? 'aria-current="step"' : ""}><i>${index + 1}</i><span><strong>${item.title}</strong><small>${statusLabel}</small></span></li>`;
+    const statusLabel = { complete: "Completed", current: "Current stage", pending: "Upcoming", blocked: "Blocked" }[lifecycleState];
+    const prerequisite = index === 0 ? "No prerequisite" : `Requires ${guidedDemoSteps[index - 1].title}`;
+    const marker = lifecycleState === "complete" ? "✓" : lifecycleState === "current" || lifecycleState === "blocked" ? "→" : index + 1;
+    return `<li class="is-${lifecycleState}"><button type="button" data-guided-stage="${index}" ${index === step - 1 ? 'aria-current="step"' : ""} ${lifecycleState === "pending" ? `title="${prerequisite}"` : ""}><i aria-hidden="true">${marker}</i><span><strong>${item.title}</strong><small>${statusLabel}</small></span><small>${lifecycleState === "pending" ? "Inspect prerequisite" : "Inspect"}</small></button></li>`;
   }).join("");
+  if (guidedPresentation.inspectedStep !== null) inspectGuidedStage(guidedPresentation.inspectedStep, false); else $("#guided-stage-review").hidden = true;
   $("#guided-presenter-cue").textContent = `“${definition.presenter}”`;
   $("#guided-duration").textContent = `${definition.duration} seconds`;
   const progress = state.executiveStatus === "approved" ? 100 : Math.round(((step - 1) / 9) * 100);
-  $("#guided-progress-label").textContent = `${progress}% COMPLETE`;
+  const completedStages = state.executiveStatus === "approved" ? 9 : step - 1;
+  $("#guided-progress-label").textContent = `${completedStages} OF 9 STAGES COMPLETE`;
   $("#guided-progress-bar").style.width = `${progress}%`;
+  $("#guided-progress").setAttribute("aria-valuenow", String(progress));
+  $("#guided-progress").setAttribute("aria-valuetext", `Step ${step} of 9; ${completedStages} ${completedStages === 1 ? "stage" : "stages"} complete`);
+  $("#guided-step-progress").innerHTML = guidedDemoSteps.map((_, index) => `<i class="${index < completedStages ? "is-complete" : index === step - 1 && completedStages < 9 ? "is-current" : "is-upcoming"}"></i>`).join("");
+  syncApplicationNavigation();
 }
 
 function setGuidedDemo(enabled) {
   state.guidedDemo = Boolean(enabled);
+  if (state.guidedDemo) {
+    guidedPresentation.hasStarted = true;
+    alignGuidedJourneyWorkspace();
+  }
   renderGuidedDemo();
 }
 
@@ -1909,7 +2521,7 @@ function resetCurrentStage() {
   if (isSupplierCase()) { programIntelligence.resetCase(); renderHqState(); return; }
   resetToGuidedStep(currentDemoStep());
 }
-function restartGuidedDemo() { setGuidedDemo(true); resetToGuidedStep(1); }
+function restartGuidedDemo() { resetGuidedPresentation(); setGuidedDemo(true); resetToGuidedStep(1); }
 
 function toggleDemoInfo(force) {
   const panel = $("#demo-info-panel");
@@ -1926,7 +2538,7 @@ function inspectDecisionLineage() {
 }
 
 function hqAgentMessage(id) {
-  const snapshot = currentCaseSnapshot();
+  const snapshot = authoritativeCaseProjection();
   if (["contract-review", "running", "exception", "correction-applied", "rerunning"].includes(state.validationStatus) && id === "agent-07") return `${snapshot.task}. Independent results remain attached to VC-DR-CIC-001.`;
   if (["correction-proposed", "evidence-requested", "correction-rejected"].includes(state.validationStatus) && id === "agent-06") return "Correction proposal is evidence-linked and awaits Mission Commander authority.";
   if (["contract-review", "generating", "package-generated"].includes(state.engineeringStatus) && id === "agent-06") return `${snapshot.task}. All outputs remain attached to EC-DR-CIC-001.`;
@@ -1954,7 +2566,7 @@ function hqAgentMessage(id) {
 }
 
 function renderHqState() {
-  const snapshot = currentCaseSnapshot();
+  const snapshot = authoritativeCaseProjection();
   $("#hq-experience").dataset.activeCase = activeCaseId();
   $("#reset-current-stage").textContent = isSupplierCase() ? "Reset Current Case" : "Reset Current Stage";
   const workflow = state.workspaceStage >= 0 ? snapshot.stage : state.portfolioState || "Unverified";
@@ -2030,6 +2642,7 @@ function openExperience(experience, options = {}) {
   if (experience === "hq" && state.assessmentReady && !state.hqEntered && startHandoff) beginHqHandoff();
   if (updateHash) history.replaceState(null, "", experience === "hq" ? "#hq" : `#${state.view}`);
   window.scrollTo({ top: 0, behavior: "smooth" });
+  syncApplicationNavigation();
 }
 
 function setHqMove(element, target) {
@@ -2140,7 +2753,7 @@ function selectWorkObject(id) {
 }
 
 function renderCasePanel(focus = "summary") {
-  const snapshot = currentCaseSnapshot();
+  const snapshot = authoritativeCaseProjection();
   const definition = programIntelligence.cases[activeCaseId()];
   const dna = activeDnaProjection();
   const focused = {
@@ -2262,6 +2875,7 @@ function navigate(view, updateHash = true) {
   $(".environment-nav").dataset.progress = String({ portfolio: 0, decision: 1, factory: 2 }[view]);
   if (updateHash) history.replaceState(null, "", `#${view}`);
   window.scrollTo({ top: 0, behavior: "smooth" });
+  syncApplicationNavigation();
 }
 
 function resetAssessmentLandscape() {
@@ -2281,8 +2895,8 @@ function resetAssessmentLandscape() {
   $("#assess-individually").classList.remove("is-selected");
   $("#assess-initiative").classList.remove("is-selected");
   $("#assessment-choice-status").textContent = "Choose an assessment boundary.";
-  $("#portfolio-title").textContent = "Portfolio Command Center";
-  $("#portfolio-title + p").textContent = "Survey the synthetic Apex Aerospace estate and select a product to inspect its modernization posture.";
+  $("#portfolio-title").textContent = "Enterprise Decision Center";
+  $("#portfolio-title + p").textContent = "Direct executive attention to enterprise health, modernization priorities, governed recommendations, and the decision required next.";
 }
 
 function resetHqState() {
@@ -2409,6 +3023,8 @@ function resetDemo() {
   if (programIntelligence) programIntelligence.resetAll();
   state.discovery = "unverified";
   state.portfolioState = "Unverified";
+  state.sampleEnterpriseLoaded = false;
+  state.samplePackageId = null;
   state.capabilityState = null;
   state.assessmentMode = null;
   state.assessmentReady = false;
@@ -2434,13 +3050,38 @@ function resetDemo() {
   navigate("portfolio", false);
   openExperience("mission-control");
   if (typeof globalThis.resetPortfolioUploadLab === "function") globalThis.resetPortfolioUploadLab();
+  if (typeof globalThis.resetSyntheticSamplePortfolioView === "function") globalThis.resetSyntheticSamplePortfolioView();
 }
+
+function applySyntheticEnterpriseSample(sample, snapshot) {
+  if (!sample || !snapshot || sample.synthetic !== true) throw new Error("A validated synthetic enterprise sample is required.");
+  resetDemo();
+  state.sampleEnterpriseLoaded = true;
+  state.samplePackageId = sample.packageId;
+  revealDependencies();
+  completeDiscovery();
+  hideApplicationOverlays();
+  openExperience("mission-control", { updateHash: false });
+  navigate("portfolio");
+  setGuidedDemo(true);
+}
+
+function clearSyntheticEnterpriseSample() {
+  resetGuidedPresentation();
+  resetDemo();
+  setGuidedDemo(false);
+  openApplicationHome();
+}
+
+globalThis.applySyntheticEnterpriseSample = applySyntheticEnterpriseSample;
+globalThis.clearSyntheticEnterpriseSample = clearSyntheticEnterpriseSample;
 
 function init() {
   initializeEntityStates();
   renderProducts();
   renderAgents();
-  $("#reset-demo").addEventListener("click", resetDemo);
+  initializeGuidedResize();
+  $("#reset-demo").addEventListener("click", () => { resetGuidedPresentation(); resetDemo(); });
   $$('[data-enterprise-context]').forEach((context) => context.addEventListener("click", (event) => {
     const node = event.target.closest('[data-enterprise-context-id]');
     if (node) selectEnterpriseContext(node.dataset.enterpriseContextId);
@@ -2451,22 +3092,69 @@ function init() {
   }));
   $$('[data-view]').forEach((control) => control.addEventListener("click", () => navigate(control.dataset.view)));
   $$('[data-view-link]').forEach((link) => link.addEventListener("click", (event) => { event.preventDefault(); navigate(link.dataset.viewLink, false); openExperience("mission-control"); }));
-  $$('[data-experience-switch]').forEach((button) => button.addEventListener("click", () => openExperience(button.dataset.experienceSwitch)));
+  $$('[data-app-destination="home"]').forEach((control) => control.addEventListener("click", (event) => { event.preventDefault(); openApplicationHome(); }));
+  $$("[data-home-link]").forEach((control) => control.addEventListener("click", (event) => { event.preventDefault(); openApplicationHome(); }));
+  $('[data-app-destination="mission-control"]').addEventListener("click", openMissionControlFromNavigation);
+  $('[data-app-destination="hq"]').addEventListener("click", openHqFromNavigation);
+  $("#app-guided-journey").addEventListener("click", returnToGuidedJourney);
   $("#guided-demo-toggle").addEventListener("change", (event) => setGuidedDemo(event.target.checked));
-  $("#guided-primary-action").addEventListener("click", () => {
+  $("#guided-return-mission").addEventListener("click", returnGuidedToMissionControl);
+  $("#guided-size-toggle").addEventListener("click", toggleGuidedWidth);
+  $("#guided-collapse").addEventListener("click", () => setGuidedCollapsed(true));
+  $("#guided-restore").addEventListener("click", () => setGuidedCollapsed(false));
+  $("#guided-lifecycle").addEventListener("click", (event) => {
+    const button = event.target.closest("[data-guided-stage]");
+    if (button) inspectGuidedStage(Number(button.dataset.guidedStage));
+  });
+  $("#guided-lifecycle").addEventListener("keydown", (event) => {
+    const activeStage = event.target.closest("[data-guided-stage]");
+    if (activeStage && ["Enter", " "].includes(event.key)) {
+      event.preventDefault();
+      inspectGuidedStage(Number(activeStage.dataset.guidedStage));
+      return;
+    }
+    if (!["ArrowDown", "ArrowUp", "Home", "End"].includes(event.key)) return;
+    const buttons = $$("[data-guided-stage]", $("#guided-lifecycle"));
+    const currentIndex = buttons.indexOf(activeStage);
+    if (currentIndex < 0) return;
+    event.preventDefault();
+    const targetIndex = event.key === "Home" ? 0 : event.key === "End" ? buttons.length - 1 : event.key === "ArrowDown" ? Math.min(buttons.length - 1, currentIndex + 1) : Math.max(0, currentIndex - 1);
+    buttons[targetIndex].focus();
+  });
+  const activateGuidedPrimaryAction = () => {
     const descriptor = guidedActionDescriptor(currentDemoStep());
     if (descriptor.waiting || !descriptor.selector) return;
     const source = document.querySelector(descriptor.selector);
     if (!source || source.disabled) return;
     source.click();
     renderGuidedDemo();
+  };
+  $("#guided-primary-action").addEventListener("click", activateGuidedPrimaryAction);
+  $("#guided-primary-action").addEventListener("keydown", (event) => {
+    if (!["Enter", " "].includes(event.key)) return;
+    event.preventDefault();
+    activateGuidedPrimaryAction();
   });
   $$('[data-demo-pace]').forEach((button) => button.addEventListener("click", () => setDemoPace(button.dataset.demoPace)));
   $("#simulation-info").addEventListener("click", () => toggleDemoInfo());
   $("#close-demo-info").addEventListener("click", () => toggleDemoInfo(false));
   $("#reset-current-stage").addEventListener("click", resetCurrentStage);
   $("#restart-guided-demo").addEventListener("click", restartGuidedDemo);
-  $("#disable-guided-demo").addEventListener("click", () => setGuidedDemo(false));
+  $("#disable-guided-demo").addEventListener("click", () => {
+    setGuidedDemo(false);
+    $("#guided-demo-toggle").focus();
+  });
+  document.addEventListener("keydown", (event) => {
+    if (event.key !== "Escape" || !state.guidedDemo) return;
+    if (guidedPresentation.inspectedStep !== null) {
+      guidedPresentation.inspectedStep = null;
+      $("#guided-stage-review").hidden = true;
+      const currentButton = $(`[data-guided-stage="${currentDemoStep() - 1}"]`, $("#guided-lifecycle"));
+      currentButton?.focus();
+      return;
+    }
+    if (!guidedPresentation.collapsed && matchMedia("(max-width: 1180px)").matches) setGuidedCollapsed(true);
+  });
   $("#replay-demo").addEventListener("click", restartGuidedDemo);
   $("#inspect-decision-lineage").addEventListener("click", inspectDecisionLineage);
   $("#begin-discovery").addEventListener("click", beginDiscovery);
@@ -2567,6 +3255,7 @@ function init() {
   openExperience(initialHash === "hq" ? "hq" : "mission-control", { updateHash: false, startHandoff: false });
   setDemoPace("normal");
   renderGuidedDemo();
+  syncApplicationNavigation();
 }
 
 document.addEventListener("DOMContentLoaded", init);

@@ -160,6 +160,17 @@ st.markdown(
         .stage-card.current { border-color: #8eb1ff; background: #eff6ff; box-shadow: 0 8px 24px rgba(37,99,235,.12); }
         .stage-number { color: var(--blue); font-size: .72rem; font-weight: 800; letter-spacing: .12em; }
         .stage-label { color: var(--navy); font-size: .9rem; font-weight: 700; margin-top: .35rem; line-height: 1.25; }
+        .desktop-stage-shell { display: block; }
+        .desktop-stage-grid { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 1rem; }
+        .desktop-stage-progress { margin-top: .8rem; }
+        .desktop-stage-progress-track, .mobile-stage-progress-track {
+            width: 100%; height: .5rem; overflow: hidden; border-radius: 999px; background: #e6ebf3;
+        }
+        .desktop-stage-progress-fill, .mobile-stage-progress-fill {
+            height: 100%; border-radius: inherit; background: var(--blue); transition: width .2s ease;
+        }
+        .desktop-stage-progress-label { color: var(--muted); font-size: .82rem; margin-top: .45rem; }
+        .mobile-stage-shell { display: none; }
         .section-eyebrow { color: var(--blue); font-size: .74rem; font-weight: 800; letter-spacing: .14em; text-transform: uppercase; margin-bottom: -.6rem; }
         .summary-card { background: linear-gradient(135deg, #eff6ff, #f5f3ff); border: 1px solid #cbd9f5; border-radius: 18px; padding: 1.5rem 1.7rem; box-shadow: 0 10px 32px rgba(55,78,132,.08); }
         .summary-label { color: var(--purple); font-size: .75rem; font-weight: 800; letter-spacing: .13em; text-transform: uppercase; }
@@ -185,7 +196,183 @@ st.markdown(
         .deliverable-icon { color: var(--teal); font-size: 1.25rem; }
         .deliverable-stage { color: var(--navy); font-size: .82rem; font-weight: 750; margin-top: .65rem; line-height: 1.3; }
         .deliverable-status { color: var(--purple); font-size: .72rem; font-weight: 750; margin-top: .55rem; }
-        @media (max-width: 900px) { .hero-title { font-size: 2rem; } .deliverable-card { min-height: auto; } }
+        /* Keep rich desktop layout as the default while making wide widgets containable. */
+        .stApp * { box-sizing: border-box; }
+        [data-testid="stDataFrame"],
+        [data-testid="stTable"],
+        [data-testid="stGraphVizChart"],
+        [data-testid="stPlotlyChart"],
+        [data-testid="stVegaLiteChart"] {
+            width: 100%;
+            max-width: 100%;
+        }
+        [data-testid="stGraphVizChart"],
+        [data-testid="stPlotlyChart"],
+        [data-testid="stVegaLiteChart"] { overflow-x: auto; }
+        [data-testid="stGraphVizChart"] svg { max-width: 100%; height: auto; }
+        [data-testid="stFileUploaderDropzone"] { gap: .75rem; }
+
+        /* Tablet: large two-column sections stack; card and metric groups wrap to two columns. */
+        @media (max-width: 1100px) {
+            .block-container {
+                max-width: 100%;
+                padding: 1.5rem 1.5rem 4rem;
+            }
+            .hero-panel { padding: 1.8rem 2rem; }
+            .hero-title { font-size: 2.2rem; }
+            [data-testid="stHorizontalBlock"] {
+                flex-wrap: wrap;
+                row-gap: 1rem;
+            }
+            [data-testid="stHorizontalBlock"] > [data-testid="stColumn"] {
+                flex: 1 1 calc(50% - 1rem) !important;
+                width: auto !important;
+                min-width: min(18rem, 100%) !important;
+            }
+            [data-testid="stHorizontalBlock"]:has(> [data-testid="stColumn"]:nth-child(2):last-child)
+                > [data-testid="stColumn"] {
+                flex-basis: 100% !important;
+                width: 100% !important;
+            }
+            [data-testid="stHorizontalBlock"]:has(> [data-testid="stColumn"]:nth-child(5):last-child)
+                > [data-testid="stColumn"] {
+                flex: 0 0 calc(50% - .5rem) !important;
+                min-width: 0 !important;
+            }
+            [data-testid="stMetric"] { height: 100%; }
+            .stage-card, .agent-card, .deliverable-card { height: 100%; }
+            .deliverable-card { min-height: 132px; }
+            [data-testid="stDataFrame"], [data-testid="stTable"] { overflow-x: auto; }
+        }
+
+        /* Mobile: preserve every control and result in a readable one-column flow. */
+        @media (max-width: 700px) {
+            .block-container {
+                padding: 1rem .85rem 3rem;
+            }
+            h1 { font-size: 1.8rem !important; }
+            h2 { font-size: 1.45rem !important; margin-top: 2rem !important; }
+            h3 { font-size: 1.2rem !important; }
+            .hero-panel {
+                border-radius: 16px;
+                padding: 1.35rem 1.15rem;
+                margin-bottom: .85rem;
+            }
+            .hero-kicker {
+                font-size: .68rem;
+                letter-spacing: .11em;
+                line-height: 1.45;
+            }
+            .hero-title {
+                font-size: clamp(1.75rem, 9vw, 2.1rem);
+                line-height: 1.08;
+                overflow-wrap: anywhere;
+            }
+            .hero-subtitle { font-size: .96rem; line-height: 1.5; }
+            .disclaimer-panel { padding: .75rem .8rem; font-size: .88rem; }
+            .desktop-stage-shell { display: none; }
+            .mobile-stage-shell {
+                display: block;
+                background: white;
+                border: 1px solid var(--line);
+                border-radius: 16px;
+                padding: 1rem;
+                box-shadow: 0 8px 24px rgba(26,54,93,.07);
+            }
+            .mobile-stage-count {
+                color: var(--blue);
+                font-size: .76rem;
+                font-weight: 800;
+                letter-spacing: .08em;
+                text-transform: uppercase;
+            }
+            .mobile-stage-title {
+                color: var(--navy);
+                font-size: 1.2rem;
+                font-weight: 760;
+                margin: .25rem 0 .8rem;
+            }
+            .mobile-stage-controls { display: grid; grid-template-columns: 1fr 1fr; gap: .75rem; margin-top: .9rem; }
+            .mobile-stage-button {
+                display: block;
+                width: 100%;
+                border: 1px solid #b9c8df;
+                border-radius: 10px;
+                padding: .62rem .75rem;
+                color: var(--navy) !important;
+                font-size: .88rem;
+                font-weight: 700;
+                text-align: center;
+                text-decoration: none !important;
+            }
+            .mobile-stage-button.next { border-color: var(--blue); background: var(--blue); color: white !important; }
+            .mobile-stage-button.disabled { opacity: .45; cursor: not-allowed; }
+            [data-testid="stHorizontalBlock"] {
+                flex-direction: column !important;
+                flex-wrap: nowrap;
+                gap: .8rem !important;
+            }
+            [data-testid="stHorizontalBlock"] > [data-testid="stColumn"] {
+                flex: 1 1 100% !important;
+                width: 100% !important;
+                min-width: 0 !important;
+            }
+            [data-testid="stHorizontalBlock"]:has(> [data-testid="stColumn"]:nth-child(5):last-child)
+                > [data-testid="stColumn"] {
+                flex: 1 1 100% !important;
+                width: 100% !important;
+            }
+            [data-testid="stMetric"] { min-height: 0; padding: .85rem 1rem; }
+            .stage-card { min-height: 0; padding: .7rem .8rem; }
+            .stage-label { margin-top: .2rem; }
+            [data-testid="stProgress"] { width: 100%; }
+            [data-testid="stProgress"] p { white-space: normal; line-height: 1.35; }
+            .stElementContainer:has(> .stButton),
+            .stElementContainer:has(> .stDownloadButton) { width: 100% !important; }
+            .stButton, .stDownloadButton { width: 100%; }
+            .stButton > button, .stDownloadButton > button {
+                width: 100%;
+                min-height: 2.75rem;
+                white-space: normal;
+            }
+            [role="radiogroup"] {
+                align-items: stretch;
+                flex-direction: column !important;
+            }
+            [data-testid="stFileUploader"] { width: 100%; }
+            [data-testid="stFileUploaderDropzone"] {
+                align-items: stretch;
+                flex-direction: column;
+                padding: 1rem;
+            }
+            [data-testid="stFileUploaderDropzone"] > span { width: 100%; }
+            [data-testid="stFileUploaderDropzone"] button { width: 100%; }
+            [data-testid="stDataFrame"], [data-testid="stTable"] {
+                overflow-x: auto;
+                -webkit-overflow-scrolling: touch;
+            }
+            [data-testid="stGraphVizChart"],
+            [data-testid="stPlotlyChart"],
+            [data-testid="stVegaLiteChart"] {
+                overflow-x: auto;
+                -webkit-overflow-scrolling: touch;
+            }
+            [data-testid="stGraphVizChart"] svg { min-width: 36rem; }
+            .summary-card { padding: 1.1rem; }
+            .summary-title { font-size: 1.1rem; overflow-wrap: anywhere; }
+            .summary-body { font-size: .9rem; line-height: 1.55; }
+            .agent-card { min-height: 0; margin-bottom: 0; }
+            .agent-task { min-height: 0; }
+            .agent-meta { align-items: flex-start; flex-direction: column; gap: .3rem; }
+            .agency-timeline { margin-left: .6rem; padding-left: 1rem; }
+            .timeline-event { grid-template-columns: 1fr; gap: .25rem; }
+            .timeline-marker { left: -1.42rem; }
+            .timeline-copy span { overflow-wrap: anywhere; }
+            .deliverable-card { min-height: 0; }
+            [data-testid="stTabs"] [role="tablist"] { overflow-x: auto; }
+            [data-testid="stTabs"] [role="tab"] { flex: 0 0 auto; }
+            pre, code { max-width: 100%; white-space: pre; overflow-x: auto; }
+        }
     </style>
     """,
     unsafe_allow_html=True,
@@ -208,34 +395,59 @@ st.markdown(
     unsafe_allow_html=True,
 )
 
-stages = [
-    "Intake",
-    "Consulting Assessment",
-    "Recommended Modernization Candidate",
-    "Implementation Ready Package",
-    "Executive Review",
+stages = ["Intake", "Assessment", "Candidate", "Implementation", "Executive Review"]
+stage_anchors = [
+    "intake",
+    "consulting-assessment",
+    "recommended-modernization-candidate",
+    "modernization-engineering-engagement",
+    "ai-agency-operations",
 ]
-completed_stage = 0
-if "enterprise_profile" in st.session_state:
-    completed_stage = 1
-if "assessment" in st.session_state:
-    completed_stage = 3
-if "engineering_engagement" in st.session_state:
-    completed_stage = 4
-
-stage_columns = st.columns(len(stages))
-for index, (column, stage) in enumerate(zip(stage_columns, stages), start=1):
+completed_stage = workflow_stage(st.session_state)
+current_stage = min(completed_stage + 1, len(stages))
+desktop_stage_cards = []
+for index, stage in enumerate(stages, start=1):
     stage_class = "complete" if index <= completed_stage else "current" if index == completed_stage + 1 else ""
-    column.markdown(
-        f"""
-        <div class="stage-card {stage_class}">
-            <div class="stage-number">0{index}</div>
-            <div class="stage-label">{escape(stage)}</div>
-        </div>
-        """,
-        unsafe_allow_html=True,
+    desktop_stage_cards.append(
+        f'<div class="stage-card {stage_class}">'
+        f'<div class="stage-number">0{index}</div>'
+        f'<div class="stage-label">{escape(stage)}</div>'
+        '</div>'
     )
-st.progress(completed_stage / len(stages), text=f"Engagement progress · {completed_stage} of {len(stages)} stages complete")
+
+previous_stage = max(1, current_stage - 1)
+next_stage = min(len(stages), current_stage + 1)
+previous_control = (
+    '<span class="mobile-stage-button disabled" aria-disabled="true">Previous</span>'
+    if current_stage == 1
+    else f'<a class="mobile-stage-button" href="#{stage_anchors[previous_stage - 1]}">Previous</a>'
+)
+next_control = (
+    '<span class="mobile-stage-button next disabled" aria-disabled="true">Next</span>'
+    if current_stage == len(stages)
+    else f'<a class="mobile-stage-button next" href="#{stage_anchors[next_stage - 1]}">Next</a>'
+)
+
+stage_markup = (
+    '<div class="desktop-stage-shell">'
+    f'<div class="desktop-stage-grid">{"".join(desktop_stage_cards)}</div>'
+    '<div class="desktop-stage-progress">'
+    f'<div class="desktop-stage-progress-track" role="progressbar" aria-label="Engagement progress" aria-valuemin="0" aria-valuemax="5" aria-valuenow="{completed_stage}">'
+    f'<div class="desktop-stage-progress-fill" style="width: {completed_stage / len(stages) * 100:.0f}%"></div>'
+    '</div>'
+    f'<div class="desktop-stage-progress-label">Engagement progress · {completed_stage} of {len(stages)} stages complete</div>'
+    '</div>'
+    '</div>'
+    '<div class="mobile-stage-shell">'
+    f'<div class="mobile-stage-count">Stage {current_stage} of {len(stages)}</div>'
+    f'<div class="mobile-stage-title">{escape(stages[current_stage - 1])}</div>'
+    f'<div class="mobile-stage-progress-track" role="progressbar" aria-label="Current stage" aria-valuemin="1" aria-valuemax="5" aria-valuenow="{current_stage}">'
+    f'<div class="mobile-stage-progress-fill" style="width: {current_stage / len(stages) * 100:.0f}%"></div>'
+    '</div>'
+    f'<div class="mobile-stage-controls">{previous_control}{next_control}</div>'
+    '</div>'
+)
+st.markdown(stage_markup, unsafe_allow_html=True)
 
 st.divider()
 st.header("Intake")
@@ -604,6 +816,80 @@ if "assessment" in st.session_state:
     candidate_metrics[3].metric("Priority", f"{candidate['priority_score']:.1f}")
     candidate_metrics[4].metric("Migration Wave", candidate["migration_wave"])
     st.write(f"**Deterministic 6R recommendation:** {candidate['six_r_recommendation']}")
+
+    recommendations = st.session_state.get("modernization_recommendations", ())
+    governed_recommendation = next(
+        (
+            recommendation
+            for recommendation in recommendations
+            if recommendation.asset_id == str(candidate["platform_id"])
+        ),
+        None,
+    )
+    if governed_recommendation is not None:
+        st.subheader("Governed 6R Recommendation")
+        st.caption(
+            "Evidence → Findings → Recommendation → Governed Decision. "
+            "This record is a recommendation only; execution authority is None."
+        )
+        recommendation_metrics = st.columns(4)
+        recommendation_metrics[0].metric(
+            "Recommended strategy",
+            governed_recommendation.recommended_strategy.value,
+        )
+        recommendation_metrics[1].metric(
+            "Confidence",
+            f"{governed_recommendation.confidence * 100:.1f}%",
+            help="Deterministic evidence confidence, not an LLM probability.",
+        )
+        recommendation_metrics[2].metric(
+            "Recommendation trust", governed_recommendation.trust_status
+        )
+        recommendation_metrics[3].metric(
+            "Version", governed_recommendation.recommendation_version
+        )
+        if governed_recommendation.trust_status == "Blocked":
+            st.error(
+                "This recommendation is blocked from governed decision progression "
+                "until its blocking evidence issues are resolved."
+            )
+        elif governed_recommendation.trust_status == "Warning":
+            st.warning("Review the identified evidence limitations before decisioning.")
+        else:
+            st.success("The recommendation evidence is ready for governed review.")
+        st.write(governed_recommendation.rationale)
+
+        with st.expander("Why not the other five strategies?"):
+            for alternative in governed_recommendation.alternatives:
+                st.write(
+                    f"- **{alternative.strategy.value} · fit {alternative.fit_score:.1f}/100:** "
+                    f"{alternative.reason_not_selected}"
+                )
+
+        with st.expander("Supporting evidence and provenance"):
+            for evidence_reference in governed_recommendation.supporting_evidence:
+                st.write(
+                    f"- `{evidence_reference.evidence_id}` · "
+                    f"{evidence_reference.evidence_category} · "
+                    f"confidence {evidence_reference.confidence:.2f}  \n"
+                    f"  {evidence_reference.provenance}  \n"
+                    f"  Source: `{evidence_reference.source_reference}`"
+                )
+            if governed_recommendation.missing_evidence_requirement_ids:
+                st.markdown("**Missing evidence requirements**")
+                for requirement_id in governed_recommendation.missing_evidence_requirement_ids:
+                    st.write(f"- `{requirement_id}`")
+            if governed_recommendation.conflicting_evidence_ids:
+                st.markdown("**Conflicting evidence**")
+                for evidence_id in governed_recommendation.conflicting_evidence_ids:
+                    st.write(f"- `{evidence_id}`")
+            st.write(
+                f"**Recommendation ID:** `{governed_recommendation.recommendation_id}`  \n"
+                f"**Recommendation hash:** `{governed_recommendation.recommendation_hash}`  \n"
+                f"**Status:** {governed_recommendation.status}  \n"
+                f"**Authority:** {governed_recommendation.authority_scope}  \n"
+                f"**Execution authority:** {governed_recommendation.execution_authority}"
+            )
 
     st.subheader("Hermes — Modernization Director")
     st.markdown("**Consulting Recommendation**")

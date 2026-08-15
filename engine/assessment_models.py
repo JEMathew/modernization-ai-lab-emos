@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from datetime import datetime
+from enum import Enum
 from typing import Any, Literal, Optional, Union
 
 from pydantic import (
@@ -309,6 +310,93 @@ class AssessmentTrustSummary(TrustedAssessmentModel):
     explanation: str = Field(min_length=1, max_length=1000)
 
 
+class ModernizationStrategy(str, Enum):
+    """Canonical strategy identifiers; Replace is an input compatibility alias."""
+
+    RETAIN = "Retain"
+    RETIRE = "Retire"
+    REHOST = "Rehost"
+    REPLATFORM = "Replatform"
+    REFACTOR = "Refactor"
+    REPURCHASE = "Repurchase"
+
+
+class StrategyDefinition(TrustedAssessmentModel):
+    strategy_id: str = Field(pattern=IDENTIFIER_PATTERN)
+    strategy: ModernizationStrategy
+    name: str = Field(min_length=1, max_length=128)
+    definition: str = Field(min_length=1, max_length=1000)
+    eligibility_criteria: tuple[str, ...] = Field(min_length=1)
+    positive_signals: tuple[str, ...] = Field(min_length=1)
+    negative_signals: tuple[str, ...] = Field(min_length=1)
+    required_evidence: tuple[str, ...] = Field(min_length=1)
+    typical_risks: tuple[str, ...] = Field(min_length=1)
+    expected_benefits: tuple[str, ...] = Field(min_length=1)
+    planning_requirements: tuple[str, ...] = Field(min_length=1)
+    execution_pattern: tuple[str, ...] = Field(min_length=1)
+    validation_requirements: tuple[str, ...] = Field(min_length=1)
+    expected_outcome_categories: tuple[str, ...] = Field(min_length=1)
+    aliases: tuple[str, ...] = ()
+    version: str = Field(pattern=r"^[0-9]+\.[0-9]+\.[0-9]+$")
+
+
+class RecommendationEvidenceReference(TrustedAssessmentModel):
+    evidence_id: str = Field(pattern=IDENTIFIER_PATTERN)
+    evidence_category: str = Field(min_length=1, max_length=128)
+    source_type: str = Field(min_length=1, max_length=128)
+    source_reference: str = Field(min_length=1, max_length=512)
+    provenance: str = Field(min_length=1, max_length=500)
+    confidence: float = Field(ge=0.0, le=1.0)
+    content_hash: str = Field(pattern=SHA256_PATTERN)
+    criterion_ids: tuple[str, ...] = Field(min_length=1)
+
+
+class StrategyAlternative(TrustedAssessmentModel):
+    strategy: ModernizationStrategy
+    fit_score: float = Field(ge=0.0, le=100.0)
+    reason_not_selected: str = Field(min_length=1, max_length=1000)
+
+
+class ModernizationRecommendation(TrustedAssessmentModel):
+    recommendation_id: str = Field(pattern=IDENTIFIER_PATTERN)
+    assessment_run_id: str = Field(pattern=IDENTIFIER_PATTERN)
+    enterprise_id: str = Field(pattern=IDENTIFIER_PATTERN)
+    asset_id: str = Field(pattern=IDENTIFIER_PATTERN)
+    asset_name: str = Field(min_length=1, max_length=256)
+    asset_type: str = Field(min_length=1, max_length=128)
+    recommended_strategy: ModernizationStrategy
+    rationale: str = Field(min_length=1, max_length=2000)
+    supporting_evidence: tuple[RecommendationEvidenceReference, ...] = Field(
+        min_length=1
+    )
+    finding_ids: tuple[str, ...] = Field(min_length=1)
+    confidence: float = Field(ge=0.0, le=1.0)
+    trust_status: Literal["Ready", "Warning", "Blocked"]
+    alternatives: tuple[StrategyAlternative, ...] = Field(min_length=5, max_length=5)
+    missing_evidence_requirement_ids: tuple[str, ...] = ()
+    conflicting_evidence_ids: tuple[str, ...] = ()
+    recommendation_timestamp: AwareDatetime
+    recommendation_version: str = Field(pattern=r"^[0-9]+\.[0-9]+\.[0-9]+$")
+    engine_version: str = Field(pattern=r"^[0-9]+\.[0-9]+\.[0-9]+$")
+    recommendation_hash: str = Field(pattern=SHA256_PATTERN)
+    status: Literal["Recommended"] = "Recommended"
+    authority_scope: Literal["RecommendOnly"] = "RecommendOnly"
+    execution_authority: Literal["None"] = "None"
+
+    @model_validator(mode="after")
+    def validate_alternatives(self) -> "ModernizationRecommendation":
+        strategies = [alternative.strategy for alternative in self.alternatives]
+        if self.recommended_strategy in strategies:
+            raise ValueError("alternatives cannot repeat the recommended strategy")
+        if len(strategies) != len(set(strategies)):
+            raise ValueError("alternative strategies must be unique")
+        if set(strategies) | {self.recommended_strategy} != set(ModernizationStrategy):
+            raise ValueError("recommendation must evaluate all six strategies")
+        if len(self.finding_ids) != len(set(self.finding_ids)):
+            raise ValueError("recommendation finding identifiers must be unique")
+        return self
+
+
 class AssessmentRun(TrustedAssessmentModel):
     schema_version: Literal["1.0"] = "1.0"
     run_id: str = Field(pattern=IDENTIFIER_PATTERN)
@@ -338,6 +426,7 @@ class AssessmentRun(TrustedAssessmentModel):
     finding_generation_version: Optional[str] = Field(
         default=None, pattern=r"^[0-9]+\.[0-9]+\.[0-9]+$"
     )
+    modernization_recommendations: tuple[ModernizationRecommendation, ...] = ()
     assessment: tuple[dict[str, Any], ...] = Field(min_length=1)
     artifact_reference: str = Field(min_length=1, max_length=1024)
 
@@ -407,6 +496,20 @@ class AssessmentRun(TrustedAssessmentModel):
             for relationship in self.finding_evidence_relationships
         ):
             raise ValueError("finding relationships must resolve within the run")
+        recommendation_assets = [
+            recommendation.asset_id
+            for recommendation in self.modernization_recommendations
+        ]
+        assessment_assets = {str(row["platform_id"]) for row in self.assessment}
+        if len(recommendation_assets) != len(set(recommendation_assets)):
+            raise ValueError("recommendations must be unique by asset within a run")
+        if any(
+            recommendation.assessment_run_id != self.run_id
+            or recommendation.enterprise_id != self.enterprise_id
+            or recommendation.asset_id not in assessment_assets
+            for recommendation in self.modernization_recommendations
+        ):
+            raise ValueError("recommendations must belong to this run and its assets")
         return self
 
 

@@ -25,6 +25,7 @@ from .evidence_quality import (
     FRESHNESS_POLICY_VERSION,
     evaluate_evidence_quality,
 )
+from .modernization_strategy import build_modernization_recommendations
 
 
 SCORE_COLUMNS = (
@@ -495,6 +496,15 @@ def build_assessment_run(
         criterion_results,
         generated_at,
     )
+    recommendations = build_modernization_recommendations(
+        records,
+        snapshot,
+        run_id,
+        generated_at,
+        criterion_results,
+        evidence_quality.quality_results,
+        evidence_quality.findings,
+    )
     supported = sum(result.supported for result in criterion_results)
     completeness = round(supported / len(criterion_results) * 100, 1)
     return AssessmentRun(
@@ -521,6 +531,7 @@ def build_assessment_run(
         evidence_health=evidence_quality.trust_summary,
         freshness_policy_version=FRESHNESS_POLICY_VERSION,
         finding_generation_version=FINDING_GENERATION_VERSION,
+        modernization_recommendations=recommendations,
         assessment=records,
         artifact_reference=artifact_reference,
     )
@@ -580,6 +591,10 @@ def assessment_artifact_payload(run: AssessmentRun) -> dict[str, object]:
         ),
         "freshness_policy_version": run.freshness_policy_version,
         "finding_generation_version": run.finding_generation_version,
+        "modernization_recommendations": [
+            recommendation.model_dump(mode="json")
+            for recommendation in run.modernization_recommendations
+        ],
         "assessment": list(run.assessment),
     }
 

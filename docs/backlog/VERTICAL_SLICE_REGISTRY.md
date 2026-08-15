@@ -42,6 +42,12 @@ Complete and cannot enter a release.
 | RS-23 | Performance/capacity envelope | EPIC-05 | RS-18–22 | Planned | Candidate limits are measured and published | M |
 | RS-24 | Regression, rollback, Epic exit | EPIC-06 | RS-01–23 | Planned | Full product, security, reliability, rollback, and clean-checkout gates pass | L |
 
+## Governed decision-intelligence slices
+
+| ID | Name | Program / Feature | Dependencies | Status | Acceptance summary | Complexity |
+|---|---|---|---|---|---|---|
+| 6R-01 | Canonical 6R decision model and evidence-backed recommendation | PGM-INTELLIGENCE / Phase A | BASE-01; committed trusted assessment Slices 01–02; PRS-020; ADR-0001 | Implemented, uncommitted; validated 2026-08-15 | Six canonical strategies; immutable evidence-backed recommendations and alternatives; application and data-platform references; persisted artifact; UI projection; no decision or execution authority | L |
+
 ## Deferred decomposition
 
 Trust, governed intelligence, operations, Controlled Pilot, Enterprise

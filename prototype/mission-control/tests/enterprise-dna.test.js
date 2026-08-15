@@ -104,7 +104,7 @@ assert.match(html, /enterprise-dna\.js/, "Enterprise DNA loads before the V1.3 c
 assert.ok(html.indexOf("enterprise-dna.js") < html.indexOf("script.js"), "Enterprise DNA loads before the Journey UI controller");
 assert.equal((html.match(/id="enterprise-dna-context"/g) || []).length, 1, "Mission Control has one Enterprise DNA context surface");
 assert.match(script, /const enterpriseDna = globalThis\.EnterpriseDNA/, "V1.3 consumes the shared Enterprise DNA contract");
-assert.match(script, /enterpriseDna\.projectionForCase\("DR-CIC-001", currentCaseSnapshot\(\)\)/, "Journey state is passed into a read-only projection");
+assert.match(script, /enterpriseDna\.projectionForCase\("DR-CIC-001", authoritativeCaseProjection\("DR-CIC-001"\)\)/, "authoritative Journey state is passed into a read-only projection");
 assert.match(script, /renderEnterpriseDnaContext\(\);[\s\S]*renderEnterpriseContext\(\);/, "Mission Control renders Enterprise DNA without replacing the enterprise hierarchy");
 assert.match(script, /workspaceProjection\("decision"/, "Decision Room consumes an Enterprise DNA projection");
 assert.match(script, /workspaceProjection\("engineering"/, "Engineering consumes an Enterprise DNA projection");

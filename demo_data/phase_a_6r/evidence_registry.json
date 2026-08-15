@@ -1,0 +1,37 @@
+{
+  "schema_version": "1.0",
+  "synthetic_demo_evidence": true,
+  "description": "Synthetic Northstar application evidence for the governed Phase A 6R reference scenario.",
+  "records": [
+    {
+      "evidence_id": "EVD-NS-APP-001-INVENTORY",
+      "enterprise_id": "NORTHSTAR-MFG-001",
+      "asset_id": "NS-APP-001",
+      "evidence_category": "portfolio_inventory",
+      "source_type": "synthetic_demo_registry",
+      "source_reference": "demo://northstar/application-inventory/NS-APP-001",
+      "captured_at": "2026-08-10T00:00:00Z",
+      "effective_at": "2026-08-01T00:00:00Z",
+      "provenance": "Synthetic application inventory prepared for the EMOS Phase A 6R reference scenario.",
+      "confidence": 1.0,
+      "source_authority": "Trusted",
+      "content_hash": "300aff6621767ddfe422fefcd3782beb9f8f75485f7e3a295be6425a71f8e7d5",
+      "criterion_references": ["business_value", "technical_debt", "cloud_readiness", "ai_readiness", "complexity", "migration_risk", "operating_cost_pressure", "priority_score"],
+      "facts": {
+        "platform_id": "NS-APP-001",
+        "platform_name": "Legacy Order Fulfillment Suite",
+        "platform_type": "Enterprise Application",
+        "primary_technology": "Java EE",
+        "version": 7.0,
+        "hosting": "On-premises",
+        "business_owner": "SVP Customer Operations",
+        "technical_owner": "Director Enterprise Applications",
+        "annual_cost_usd": 1800000,
+        "data_volume_tb": 4,
+        "criticality": "Critical",
+        "lifecycle_status": "End of Support",
+        "description": "Coordinates customer orders plant allocation shipment release and service commitments through tightly coupled modules"
+      }
+    }
+  ]
+}

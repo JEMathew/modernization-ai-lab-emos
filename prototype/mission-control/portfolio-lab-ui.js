@@ -2,6 +2,22 @@
   "use strict";
 
   const engine = globalThis.PortfolioLabEngine;
+  const displayAcronyms = new Set(["AI", "API", "CSV", "DNA", "ID", "JSON", "SQL", "UTF-8"]);
+
+  function displayTitle(value) {
+    return String(value ?? "")
+      .replace(/([a-z0-9])([A-Z])/g, "$1 $2")
+      .replace(/[_-]+/g, " ")
+      .replace(/\s+/g, " ")
+      .trim()
+      .split(" ")
+      .map((word) => displayAcronyms.has(word.toUpperCase()) ? word.toUpperCase() : `${word.charAt(0).toUpperCase()}${word.slice(1).toLowerCase()}`)
+      .join(" ");
+  }
+
+  function displayValidationMessage(message) {
+    return String(message ?? "").replace(/\b(asset_id|asset_name|asset_type|business_capability|business_criticality|lifecycle_status|annual_cost|technical_health|business_value|data_platform)\b/g, (field) => displayTitle(field));
+  }
   const labState = {
     artifact: null,
     mapping: null,
@@ -14,43 +30,11 @@
     candidate: null,
     assessmentStarted: false
   };
-
-  const samples = {
-    retail: [
-      ["RET-APP-01", "Store Operations Portal", "application", "Store Operations", "Java / Oracle", "High", "Retail Operations", "aging", "RET-DAT-01", 680000, "poor", "high"],
-      ["RET-APP-02", "Digital Commerce Platform", "application", "Digital Commerce", ".NET / SQL Server", "Critical", "Digital Products", "supported", "RET-DAT-02", 940000, "fair", "critical"],
-      ["RET-APP-03", "Merchandising Workbench", "application", "Merchandising", "Oracle Forms", "High", "Merchandising", "end of support", "RET-DAT-01", 510000, "critical", "high"],
-      ["RET-DAT-01", "Retail Analytics Warehouse", "data_platform", "Customer Insights", "Oracle Exadata", "Critical", "Data Office", "end of support", "", 1450000, "critical", "critical"],
-      ["RET-DAT-02", "Commerce Event Platform", "data_platform", "Digital Commerce", "Kafka / Cassandra", "High", "Digital Products", "supported", "", 820000, "good", "high"],
-      ["RET-DAT-03", "Supplier Data Lake", "data_platform", "Supply Chain", "Hadoop", "Medium", "Supply Chain Data", "aging", "RET-MISSING", 730000, "poor", "medium"]
-    ],
-    manufacturing: [
-      ["MFG-APP-01", "Plant Maintenance System", "application", "Plant Operations", "IBM Maximo", "Critical", "Manufacturing IT", "aging", "MFG-DAT-01", 1150000, "poor", "critical"],
-      ["MFG-APP-02", "Supplier Quality Portal", "application", "Supplier Quality", "Java / Oracle", "High", "Quality Office", "supported", "MFG-DAT-02", 620000, "fair", "high"],
-      ["MFG-APP-03", "Dealer Order Management", "application", "Order Management", "Oracle Forms", "High", "Commercial Systems", "end of support", "MFG-DAT-01", 780000, "critical", "high"],
-      ["MFG-DAT-01", "Manufacturing Data Mart", "data_platform", "Plant Operations", "Teradata", "Critical", "Data Engineering", "aging", "", 1380000, "poor", "critical"],
-      ["MFG-DAT-02", "Supplier Data Lake", "data_platform", "Supplier Quality", "Hadoop", "High", "Supply Chain Data", "aging", "", 910000, "fair", "high"],
-      ["MFG-DAT-03", "Product Telemetry Platform", "data_platform", "Connected Products", "Kafka / Cassandra", "High", "Product Engineering", "supported", "", 860000, "good", "strategic"]
-    ],
-    "financial-services": [
-      ["FIN-APP-01", "Customer Servicing Portal", "application", "Customer Service", ".NET / SQL Server", "Critical", "Customer Operations", "aging", "FIN-DAT-01", 920000, "poor", "critical"],
-      ["FIN-APP-02", "Credit Decision Workbench", "application", "Credit Risk", "Java / Oracle", "Critical", "Risk Technology", "supported", "FIN-DAT-02", 1080000, "fair", "critical"],
-      ["FIN-APP-03", "Regulatory Reporting Hub", "application", "Regulatory Reporting", "Oracle Forms", "Critical", "Finance Technology", "end of support", "FIN-DAT-01", 880000, "critical", "high"],
-      ["FIN-DAT-01", "Customer Analytics Warehouse", "data_platform", "Customer Intelligence", "Oracle Exadata", "Critical", "Data Office", "end of support", "", 1620000, "critical", "critical"],
-      ["FIN-DAT-02", "Risk Data Mart", "data_platform", "Credit Risk", "Teradata", "Critical", "Risk Data", "aging", "", 1240000, "poor", "critical"],
-      ["FIN-DAT-03", "Payment Event Platform", "data_platform", "Payments", "Kafka / Cassandra", "High", "Payments Technology", "supported", "", 970000, "good", "strategic"]
-    ]
-  };
-
-  function sampleRecords(sector) {
-    return samples[sector].map((values, index) => Object.fromEntries([
-      ...engine.SCHEMA.map((field, fieldIndex) => [field, values[fieldIndex]]),
-      ["__row", index + 1]
-    ]));
-  }
+  let returnToHomeAfterLab = false;
 
   function setEntryVisible(visible) {
     document.querySelector("#entry-launchpad").hidden = !visible;
+    globalThis.syncApplicationNavigation?.();
   }
 
   function setLabVisible(visible) {
@@ -58,6 +42,7 @@
     lab.hidden = !visible;
     document.body.classList.toggle("portfolio-lab-active", visible);
     if (visible) { lab.scrollTop = 0; document.querySelector("#upload-lab-title").focus(); }
+    globalThis.syncApplicationNavigation?.();
   }
 
   function clearWorkbench() {
@@ -78,11 +63,12 @@
   }
 
   function openLab() {
+    returnToHomeAfterLab = !document.querySelector("#entry-launchpad").hidden;
     setEntryVisible(false);
     setLabVisible(true);
   }
 
-  function closeLab(showEntry = false) {
+  function closeLab(showEntry = returnToHomeAfterLab) {
     setLabVisible(false);
     if (showEntry) setEntryVisible(true);
   }
@@ -156,13 +142,13 @@
     panel.hidden = false;
     const fields = document.querySelector("#mapping-fields");
     fields.className = "mapping-fields";
-    fields.innerHTML = engine.SCHEMA.map((field) => `<label><span>${escapeHtml(field)}</span><select data-map-field="${field}"><option value="">Select source column</option>${labState.artifact.headers.map((header) => `<option value="${escapeHtml(header)}"${labState.mapping[field] === header ? " selected" : ""}>${escapeHtml(header)}</option>`).join("")}</select></label>`).join("");
+    fields.innerHTML = engine.SCHEMA.map((field) => `<label><span>${escapeHtml(displayTitle(field))}</span><select data-map-field="${field}"><option value="">Select Source Column</option>${labState.artifact.headers.map((header) => `<option value="${escapeHtml(header)}"${labState.mapping[field] === header ? " selected" : ""}>${escapeHtml(displayTitle(header))}</option>`).join("")}</select></label>`).join("");
   }
 
   function applyMapping() {
     const mapping = Object.fromEntries([...document.querySelectorAll("[data-map-field]")].map((select) => [select.dataset.mapField, select.value]));
     const missing = engine.SCHEMA.filter((field) => !mapping[field]);
-    if (missing.length) { showArtifactError(`Missing column mappings: ${missing.join(", ")}.`); return; }
+    if (missing.length) { showArtifactError(`Missing Column Mappings: ${missing.map(displayTitle).join(", ")}.`); return; }
     labState.mapping = mapping;
     validateMappedRecords();
   }
@@ -186,7 +172,7 @@
     const warnings = labState.validation.issues.filter((issue) => issue.severity === "warning").length;
     document.querySelector("#upload-validation-summary").innerHTML = `<span><small>SOURCE RECORDS</small><strong>${labState.validation.sourceCount}</strong></span><span><small>ACCEPTED</small><strong>${labState.validation.accepted.length}</strong></span><span><small>REJECTED</small><strong>${labState.validation.rejectedCount}</strong></span><span><small>ISSUES</small><strong>${errors} ERROR · ${warnings} WARN</strong></span>`;
     document.querySelector("#upload-validation-issues").innerHTML = labState.validation.issues.length
-      ? labState.validation.issues.map((issue) => `<div class="validation-issue ${issue.severity === "error" ? "is-error" : ""}"><strong>${issue.severity.toUpperCase()}</strong><span>${issue.row ? `Row ${issue.row}: ` : ""}${escapeHtml(issue.message)}</span></div>`).join("")
+      ? labState.validation.issues.map((issue) => `<div class="validation-issue ${issue.severity === "error" ? "is-error" : ""}"><strong>${displayTitle(issue.severity)}</strong><span>${issue.row ? `Row ${issue.row}: ` : ""}${escapeHtml(displayValidationMessage(issue.message))}</span></div>`).join("")
       : `<div class="validation-issue"><strong>READY</strong><span>No schema, ID, type, dependency, or empty-row issues found.</span></div>`;
     document.querySelector("#continue-accepted").disabled = !labState.validation.accepted.length;
     document.querySelector("#empty-portfolio-actions").hidden = labState.validation.accepted.length > 0;
@@ -201,7 +187,7 @@
   function renderUnitLimit() {
     document.querySelector("#unit-limit-panel").hidden = false;
     document.querySelector("#unit-selector").className = "unit-selector";
-    document.querySelector("#unit-selector").innerHTML = labState.validation.accepted.map((record, index) => `<label><input type="checkbox" data-unit-index="${index}"><span>${escapeHtml(record.asset_name)}</span><small>${escapeHtml(record.asset_type)}</small></label>`).join("") + `<p class="unit-selection-status" id="unit-selection-status">0 of 10 selected</p>`;
+    document.querySelector("#unit-selector").innerHTML = labState.validation.accepted.map((record, index) => `<label><input type="checkbox" data-unit-index="${index}"><span>${escapeHtml(record.asset_name)}</span><small>${escapeHtml(displayTitle(record.asset_type))}</small></label>`).join("") + `<p class="unit-selection-status" id="unit-selection-status">0 of 10 selected</p>`;
   }
 
   function showUnitSelector() {
@@ -246,7 +232,7 @@
       recommendation.className = "candidate-recommendation no-qualified-candidate";
       recommendation.innerHTML = `<div><small>QUALIFICATION RESULT · MINIMUM ${engine.MIN_MODERNIZATION_SCORE}</small><strong>No Qualified Modernization Candidate</strong><span>The highest score is ${top ? top.total : 0}. Review the primary qualification factors before adding evidence or reassessing the portfolio.</span><ul><li>Low business value</li><li>Low technical urgency</li><li>Insufficient evidence</li><li>Dependency readiness</li></ul></div>`;
     }
-    document.querySelector("#score-table").innerHTML = `<div class="score-row is-header"><span>Asset</span><span>Priority</span><span>Tech urgency</span><span>Business value</span><span>Op. cost</span><span>Dependency</span><span>Risk reduction</span><span>Evidence</span></div>${labState.scores.map((score) => `<div class="score-row"><strong>${escapeHtml(score.record.asset_name)}</strong><span class="total-score">${score.total}</span><span>${score.technicalUrgency}</span><span>${score.businessValue}</span><span>${score.operatingCost}</span><span>${score.dependencyReadiness}</span><span>${score.riskReduction}</span><span>${score.evidenceConfidence}</span></div>`).join("")}`;
+    document.querySelector("#score-table").innerHTML = `<div class="score-row is-header"><span>Asset</span><span>Priority</span><span>Technical Urgency</span><span>Business Value</span><span>Operating Cost</span><span>Dependency Readiness</span><span>Risk Reduction</span><span>Evidence Confidence</span></div>${labState.scores.map((score) => `<div class="score-row"><strong>${escapeHtml(score.record.asset_name)}</strong><span class="total-score">${score.total}</span><span>${score.technicalUrgency}</span><span>${score.businessValue}</span><span>${score.operatingCost}</span><span>${score.dependencyReadiness}</span><span>${score.riskReduction}</span><span>${score.evidenceConfidence}</span></div>`).join("")}`;
     const startButton = document.querySelector("#start-uploaded-journey");
     startButton.disabled = !candidate;
     startButton.innerHTML = candidate ? `Start Modernization Journey <svg aria-hidden="true"><use href="#icon-arrow"></use></svg>` : "No Qualified Candidate";
@@ -302,17 +288,6 @@
     URL.revokeObjectURL(url);
   }
 
-  function loadSample(sector) {
-    resetLab();
-    setEntryVisible(false);
-    setLabVisible(true);
-    const records = sampleRecords(sector);
-    labState.artifact = { format: "SAMPLE", headers: [...engine.SCHEMA], records, emptyRows: 0 };
-    labState.mapping = Object.fromEntries(engine.SCHEMA.map((field) => [field, field]));
-    document.querySelector("#portfolio-file-name").textContent = `${sector.replace(/-/g, " ")} synthetic sample`;
-    validateMappedRecords();
-  }
-
   function escapeHtml(value) {
     return String(value ?? "").replace(/[&<>'"]/g, (character) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", "'": "&#39;", '"': "&quot;" }[character]));
   }
@@ -320,9 +295,8 @@
   function bindLabEvents() {
     document.querySelector("#entry-guided-demo").addEventListener("click", () => { setEntryVisible(false); setGuidedDemo(true); });
     document.querySelector("#entry-upload").addEventListener("click", openLab);
-    document.querySelectorAll("[data-sample-sector]").forEach((button) => button.addEventListener("click", () => loadSample(button.dataset.sampleSector)));
     document.querySelector("#open-portfolio-lab").addEventListener("click", openLab);
-    document.querySelector("#close-portfolio-lab").addEventListener("click", () => closeLab(false));
+    document.querySelector("#close-portfolio-lab").addEventListener("click", () => closeLab());
     document.querySelector("#cancel-upload").addEventListener("click", () => closeLab(true));
     document.querySelector("#cancel-validation").addEventListener("click", () => closeLab(true));
     document.querySelector("#reset-upload-lab").addEventListener("click", resetLab);
@@ -333,7 +307,7 @@
     document.querySelector("#apply-column-mapping").addEventListener("click", applyMapping);
     document.querySelector("#continue-accepted").addEventListener("click", continueAccepted);
     document.querySelector("#retry-upload").addEventListener("click", retryUpload);
-    document.querySelector("#load-empty-sample").addEventListener("click", () => loadSample("manufacturing"));
+    document.querySelector("#load-empty-sample").addEventListener("click", () => globalThis.loadSyntheticSamplePortfolio?.());
     document.querySelector("#download-template").addEventListener("click", downloadTemplate);
     document.querySelector("#analyze-first-ten").addEventListener("click", () => analyzeRecords(engine.selectModernizationUnits(labState.validation.accepted, "first")));
     document.querySelector("#select-ten").addEventListener("click", showUnitSelector);
@@ -342,7 +316,7 @@
     document.querySelector("#start-uploaded-journey").addEventListener("click", startJourney);
     document.querySelector("#return-to-scores").addEventListener("click", () => document.querySelector("#analysis-results").scrollIntoView({ behavior: "smooth", block: "start" }));
     document.querySelector("#return-upload-lab").addEventListener("click", openLab);
-    document.addEventListener("keydown", (event) => { if (event.key === "Escape" && !document.querySelector("#portfolio-upload-lab").hidden) closeLab(false); });
+    document.addEventListener("keydown", (event) => { if (event.key === "Escape" && !document.querySelector("#portfolio-upload-lab").hidden) closeLab(); });
   }
 
   document.addEventListener("DOMContentLoaded", bindLabEvents);
