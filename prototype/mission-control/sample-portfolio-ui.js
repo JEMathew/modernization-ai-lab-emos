@@ -29,7 +29,7 @@
 
   function waitForStage() {
     if (reducedMotion()) return Promise.resolve();
-    return new Promise((resolve) => globalThis.setTimeout(resolve, 1400));
+    return new Promise((resolve) => globalThis.setTimeout(resolve, 3400));
   }
 
   function setEntryProgress(value, message) {
