@@ -1563,7 +1563,8 @@ body {
   grid-template-columns: 1fr repeat(4, auto);
 }
 .entry-launchpad,
-.portfolio-upload-lab {
+.portfolio-upload-lab,
+.sample-engagement-experience {
   top: var(--app-navigation-height);
 }
 @media (max-width: 820px) {
