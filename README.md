@@ -115,7 +115,7 @@ The latest recorded product checkpoint includes:
 
 - **159 Python tests passed**.
 - **10 JavaScript suites passed**.
-- Focused canonical 6R validation: **38 tests passed**.
+- Focused canonical 6R validation: **13 tests passed**.
 - Python syntax compilation and dependency checks passed.
 - Credential-pattern and private-path scans passed.
 - Streamlit health check returned `ok`.
