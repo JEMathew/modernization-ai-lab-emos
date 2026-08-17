@@ -1620,3 +1620,18 @@ body {
     transition: none;
   }
 }
+
+.landing-hero { padding: 64px 40px 48px; }
+.landing-hero-panel { max-width: 900px; margin: 0 auto; }
+.landing-hero h1 { margin: 0 0 16px; font-size: 2.6rem; font-weight: 700; line-height: 1.15; }
+.landing-hero-tagline { margin: 0 0 14px; font-size: 1.05rem; font-weight: 600; color: var(--teal); }
+.landing-hero-subhead { margin: 0 0 36px; max-width: 640px; font-size: 1rem; line-height: 1.6; color: #b4c3c6; }
+.landing-hero-pills { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1px; background: var(--line); border: 1px solid var(--line); margin-bottom: 36px; }
+.landing-hero-pill { background: linear-gradient(150deg, rgba(18, 36, 46, .98), rgba(10, 24, 32, .98)); padding: 20px; }
+.landing-hero-pill .pill-label { display: inline-block; margin-bottom: 10px; padding: 4px 10px; border: 1px solid; border-radius: 20px; font: 650 .55rem ui-monospace, SFMono-Regular, Menlo, monospace; letter-spacing: .1em; text-transform: uppercase; }
+.landing-hero-pill.is-implemented .pill-label { color: var(--teal); border-color: var(--teal); background: var(--teal-soft); }
+.landing-hero-pill.is-demonstrated .pill-label { color: #8bb4e8; border-color: #8bb4e8; background: rgba(139,180,232,.1); }
+.landing-hero-pill.is-development .pill-label { color: var(--amber); border-color: var(--amber); background: rgba(243,184,91,.07); }
+.landing-hero-pill p { margin: 0; font-size: .8rem; line-height: 1.5; color: #b4c3c6; }
+.landing-hero-cta { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; }
+.landing-hero-cta-note { font-size: .76rem; color: #7c9095; }

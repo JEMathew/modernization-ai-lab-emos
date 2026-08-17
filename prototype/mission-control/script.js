@@ -2172,6 +2172,7 @@ function resetGuidedPresentation() {
 }
 
 function applicationSurface() {
+  if (!$("#landing-hero").hidden) return "home";
   if (!$("#entry-launchpad").hidden) return "home";
   if (!$("#sample-engagement-experience").hidden) return "sample-engagement";
   if (!$("#portfolio-upload-lab").hidden) return "portfolio-lab";
@@ -2188,11 +2189,12 @@ function workspaceLabel() {
 
 function syncApplicationNavigation() {
   const surface = applicationSurface();
-  const activeOverlayId = {
-    home: "entry-launchpad",
-    "sample-engagement": "sample-engagement-experience",
-    "portfolio-lab": "portfolio-upload-lab"
-  }[surface] || null;
+  const activeOverlayId = surface === "home"
+    ? (!$("#landing-hero").hidden ? "landing-hero" : "entry-launchpad")
+    : {
+        "sample-engagement": "sample-engagement-experience",
+        "portfolio-lab": "portfolio-upload-lab"
+      }[surface] || null;
   [...$("#application-workspace").children].forEach((element) => {
     element.toggleAttribute("inert", Boolean(activeOverlayId && element.id !== activeOverlayId));
   });
@@ -2256,10 +2258,11 @@ function openApplicationHome() {
   $("#sample-engagement-experience").hidden = true;
   $("#portfolio-upload-lab").hidden = true;
   document.body.classList.remove("portfolio-lab-active");
-  $("#entry-launchpad").hidden = false;
+  $("#entry-launchpad").hidden = true;
+  $("#landing-hero").hidden = false;
   history.replaceState(null, "", "#home");
   syncApplicationNavigation();
-  focusWorkspaceHeading("#entry-title");
+  focusWorkspaceHeading("#landing-hero-title");
 }
 
 function openMissionControlFromNavigation() {
@@ -3093,7 +3096,13 @@ function init() {
   $$('[data-view]').forEach((control) => control.addEventListener("click", () => navigate(control.dataset.view)));
   $$('[data-view-link]').forEach((link) => link.addEventListener("click", (event) => { event.preventDefault(); navigate(link.dataset.viewLink, false); openExperience("mission-control"); }));
   $$('[data-app-destination="home"]').forEach((control) => control.addEventListener("click", (event) => { event.preventDefault(); openApplicationHome(); }));
-  $$("[data-home-link]").forEach((control) => control.addEventListener("click", (event) => { event.preventDefault(); openApplicationHome(); }));
+$$("[data-home-link]").forEach((control) => control.addEventListener("click", (event) => { event.preventDefault(); openApplicationHome(); }));
+$("#landing-hero-begin")?.addEventListener("click", () => {
+  $("#landing-hero").hidden = true;
+  $("#entry-launchpad").hidden = false;
+  syncApplicationNavigation();
+  focusWorkspaceHeading("#entry-title");
+});
   $('[data-app-destination="mission-control"]').addEventListener("click", openMissionControlFromNavigation);
   $('[data-app-destination="hq"]').addEventListener("click", openHqFromNavigation);
   $("#app-guided-journey").addEventListener("click", returnToGuidedJourney);
