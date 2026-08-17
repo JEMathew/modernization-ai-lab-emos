@@ -669,11 +669,11 @@ body.guided-inspector-collapsed {
 .guided-cue {
   position: fixed !important;
   z-index: 50;
-  top: 12px !important;
+  top: calc(var(--app-navigation-height) + 12px) !important;
   right: 12px !important;
   bottom: 12px !important;
   width: var(--guided-inspector-width) !important;
-  max-height: calc(100vh - 24px);
+  max-height: calc(100vh - var(--app-navigation-height) - 24px);
   margin: 0 !important;
   padding: 0 !important;
   overflow: auto;
@@ -686,7 +686,7 @@ body.guided-inspector-collapsed {
 }
 .guided-cue.is-collapsed {
   bottom: auto !important;
-  max-height: calc(100vh - 24px);
+  max-height: calc(100vh - var(--app-navigation-height) - 24px);
 }
 .guided-journey-header {
   position: sticky;
