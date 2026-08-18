@@ -189,6 +189,15 @@ function createExecutiveDecisionRecord() {
   return { id: "EDR-DR-CIC-001", caseId: "DR-CIC-001", decision: "Approve Wave 1", approver: "Mission Commander", status: "Execution Ready with Conditions", owner: "Transformation Office", nextAction: "Launch Wave 1", evidenceReference: "Executive Evidence Chain · 11 stages", validationReference: "VC-DR-CIC-001 · 7/7 passed", roadmapReference: "PR-DR-CIC-001 · baseline Wave 1", remainingCondition: "Resolve ownership and change authority for twelve dependent finance reports before cutover" };
 }
 
+const STAGE_STRIP_GROUPS = [
+  { id: "discovery", steps: [1, 2] },
+  { id: "assessment", steps: [3] },
+  { id: "decision", steps: [4, 5] },
+  { id: "engineering", steps: [6] },
+  { id: "validation", steps: [7, 8] },
+  { id: "roadmap", steps: [9] }
+];
+
 const guidedDemoSteps = [
   { title: "Portfolio Discovery", objective: "Reveal evidence quality and portfolio dependencies.", expected: "Ten products resolve into ready, incomplete, or conflicting evidence states.", presenter: "Start with evidence, not opinions.", duration: 15 },
   { title: "Capability Formation", objective: "Turn related products into one modernization case.", expected: "Three products form the Customer Intelligence Capability with one external finance dependency.", presenter: "Modernization follows business consequence, not system boundaries.", duration: 18 },
@@ -2227,6 +2236,14 @@ function syncApplicationNavigation() {
     trail = `Home / Mission Control / ${workspaceLabel()}${state.guidedDemo ? ` / Guided Journey · ${$("#guided-step-title").textContent}` : ""}`;
   }
   $("#app-breadcrumbs").textContent = trail;
+  const currentStep = currentDemoStep();
+  $$("#app-stage-strip span").forEach((el) => {
+    const group = STAGE_STRIP_GROUPS.find((g) => g.id === el.dataset.stage);
+    if (!group) return;
+    const maxStep = Math.max(...group.steps);
+    const minStep = Math.min(...group.steps);
+    el.dataset.state = currentStep > maxStep ? "complete" : currentStep >= minStep ? "current" : "pending";
+  });
   const skipLink = $(".skip-link");
   skipLink.href = surface === "home"
     ? "#entry-title"
