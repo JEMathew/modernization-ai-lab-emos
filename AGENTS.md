@@ -72,3 +72,4 @@ Every implementation packet must define its objective, acceptance criteria,
 dependencies, exclusions, validation, and completion report before scope is
 expanded. Architecture decisions that meet an ADR trigger use the template in
 `docs/adr/0000-template.md`.
+<!-- trigger: connect Cloudflare Workers auto-deploy --> 
