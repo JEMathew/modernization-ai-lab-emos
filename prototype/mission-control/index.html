@@ -22,6 +22,7 @@
   <body>
     <a class="skip-link" href="#application-workspace">Skip to current workspace</a>
     <nav class="app-navigation" aria-label="Primary application navigation">
+    <div class="app-navigation-primary">
       <div class="app-destinations">
         <button type="button" id="app-home" data-app-destination="home" aria-current="page">Home</button>
         <div class="experience-switch" role="group" aria-label="Enterprise workspaces">
@@ -32,7 +33,12 @@
         <button class="dna-explorer-entry" id="open-enterprise-dna-explorer" type="button" aria-pressed="false">Enterprise DNA Explorer</button>
         <button class="app-journey-return" id="app-guided-journey" data-app-destination="guided-journey" type="button" hidden>Guided Journey</button>
       </div>
-      <div class="app-stage-strip" id="app-stage-strip" role="img" aria-label="Modernization journey stage">
+      <div class="app-orientation" id="app-orientation" aria-live="polite" aria-atomic="true">
+        <small>You are here</small>
+        <span id="app-breadcrumbs">Home</span>
+      </div>
+    </div>
+    <div class="app-stage-strip" id="app-stage-strip" role="img" aria-label="Modernization journey stage">
         <span data-stage="discovery" data-state="current">Discovery</span>
         <span data-stage="assessment" data-state="pending">Assessment</span>
         <span data-stage="decision" data-state="pending">Decision</span>
@@ -40,11 +46,7 @@
         <span data-stage="validation" data-state="pending">Validation</span>
         <span data-stage="roadmap" data-state="pending">Roadmap</span>
       </div>
-      <div class="app-orientation" id="app-orientation" aria-live="polite" aria-atomic="true">
-        <small>You are here</small>
-        <span id="app-breadcrumbs">Home</span>
-      </div>
-    </nav>
+  </nav>
     <svg class="icon-library" aria-hidden="true">
       <symbol id="icon-grid" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></symbol>
       <symbol id="icon-nodes" viewBox="0 0 24 24"><circle cx="5" cy="12" r="2.5"/><circle cx="19" cy="6" r="2.5"/><circle cx="19" cy="18" r="2.5"/><path d="m7.4 11 9.2-4M7.4 13l9.2 4"/></symbol>
