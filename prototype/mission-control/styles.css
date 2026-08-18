@@ -1437,7 +1437,9 @@ body.guided-inspector-collapsed {
 
 /* Persistent application navigation and orientation. */
 :root {
-  --app-navigation-height: 54px;
+  --app-navigation-primary-height: 54px;
+  --app-stage-strip-height: 34px;
+  --app-navigation-height: calc(var(--app-navigation-primary-height) + var(--app-stage-strip-height));
 }
 body {
   padding-top: var(--app-navigation-height);
@@ -1465,12 +1467,23 @@ body {
   left: 0;
   display: flex;
   height: var(--app-navigation-height);
-  align-items: center;
-  gap: 16px;
-  padding: 5px max(18px, calc((100vw - 1760px) / 2 + 34px));
+  flex-direction: column;
+  align-items: stretch;
+  gap: 0;
+  padding: 0;
   border-bottom: 1px solid #36515a;
   background: rgba(6, 18, 24, .985);
   box-shadow: 0 10px 30px rgba(0, 0, 0, .24);
+}
+
+.app-navigation-primary {
+  display: flex;
+  min-width: 0;
+  height: var(--app-navigation-primary-height);
+  flex: 0 0 var(--app-navigation-primary-height);
+  align-items: center;
+  gap: 16px;
+  padding: 5px max(18px, calc((100vw - 1760px) / 2 + 34px));
 }
 .app-destinations {
   display: flex;
@@ -1562,10 +1575,14 @@ body {
 }
 .app-stage-strip {
   display: flex;
+  width: 100%;
+  height: var(--app-stage-strip-height);
+  flex: 0 0 var(--app-stage-strip-height);
   align-items: center;
-  margin-left: 18px;
-  padding-left: 18px;
-  border-left: 1px solid #253c44;
+  justify-content: center;
+  margin-left: 0;
+  padding: 0 max(18px, calc((100vw - 1760px) / 2 + 34px));
+  border-top: 1px solid #253c44;
   white-space: nowrap;
 }
 .app-stage-strip span {
@@ -1612,12 +1629,16 @@ body {
   top: var(--app-navigation-height);
 }
 @media (max-width: 820px) {
+  :root {
+    --app-stage-strip-height: 0px;
+  }
+
   .app-stage-strip { display: none; }
 
   .topbar {
     grid-template-columns: 1fr auto auto auto;
   }
-  .app-navigation {
+  .app-navigation-primary {
     gap: 8px;
     padding-right: 8px;
     padding-left: 8px;
