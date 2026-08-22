@@ -96,19 +96,6 @@ flowchart LR
     J["Enterprise and cloud adapters<br/>future"] -.-> H
 ```
 
-## Hackathon Judging Guide
-
-These are common hackathon evaluation themes, not a claim about any organizer's official rubric.
-
-| Likely criterion | What to inspect |
-|---|---|
-| **Business impact** | The Executive Engagement Brief, Mission Control priorities, business outcomes, and the approved modernization wave. |
-| **Product differentiation** | Enterprise DNA as shared context, modernization cases as primary work objects, and coordinated specialist responsibilities instead of a chatbot. |
-| **Technical execution** | Deterministic Python scoring, canonical 6R logic, synchronized browser state, stored artifacts, and regression evidence. |
-| **Responsible AI and trust** | Synthetic-data disclosure, separation of deterministic and AI-assisted behavior, evidence blockers, human decision gates, and no implied execution authority. |
-| **User experience** | The uninterrupted three-minute route, persistent navigation, Guided Journey orientation, responsive layout, keyboard support, and reduced-motion behavior. |
-| **Scalability of the idea** | The provider-agnostic Enterprise DNA, agency, workflow, contract, and adapter boundaries—clearly separated from the capabilities implemented today. |
-
 ## Validation Evidence
 
 The latest recorded product checkpoint includes:
